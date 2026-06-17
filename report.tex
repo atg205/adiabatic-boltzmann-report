@@ -9,7 +9,9 @@
 \usepackage{bm}
 \usepackage{glossaries}
 \usepackage{hyperref}
-\makeglossaries
+\usepackage{graphicx}
+\usepackage{subcaption}
+
 
 
 
@@ -19,6 +21,10 @@
 \newacronym{lsb}{LSB}{Langevin Simulated Bifurcation}
 \newacronym{cem}{CEM}{Conditional Expectation Matching}
 \newacronym{srbm}{SRBM}{Semi-Restricted Boltzmann Machine}
+\newacronym{tfim}{TFIM}{Transverse Field Ising Model}
+\newacronym{qubo}{QUBO}{quadratically binary unconstrained optimization}
+\newacronym{tts}{TTS}{time to solution}
+\makeglossaries
 
 \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
 \author{Philipp Hanussek}
@@ -27,12 +33,86 @@
 \begin{document}
 \maketitle
 \printglossary
-\section{Motivation}
-Since the development of the quantum computers, many claims regarding quantum advantage have been made. Often, these advantage claims did not last long. In this work, we focus exclusively on the D-Wave Quantum Annealer, which leverages quantum technology to solve quadratically unconstrained binary optimization (QUBO) problems. D-Wave is among the first companies to commercially sell quantum computers. In 2025, researcher from D-Wave claimed to have solved a scientifically relevant problem fast using quantum technology, than it would have been possible on classical devices. However, it is currently an open question whether the D-Wave Quantum Annealer is able to solve other problems well, and possible faster than convential computers. In this work, we assess the D-Wave's ability to sample from a probability distribution, to approximate the ground state of different statistical mechanical models using variational algorithms.  
-\subsection{Previous Work}
-The D-Wave's Quantum Annealers performance scaling for finding the ground state (corresponding to the minimum of the quadratic binary cost function) has been extensively studied, with classical methods exhibiting better scaling and solution times. This has been done on a wide range of problems, ranging from cryptographic instances to physics inspired models.
-\section{Sampling Methods}
-In this section we briefly outline the main computational and algorithmic methods used in this work.
+\section{Overview}
+Since the development of the quantum computers, many claims regarding quantum advantage have been made. Often, these advantage claims did not last long. In this work, we focus exclusively on the D-Wave Quantum Annealer, which leverages quantum technology to solve \gls{qubo} problems. D-Wave is among the first companies to commercially sell quantum computers. In 2025, researcher from D-Wave claimed to have solved a scientifically relevant problem fast using quantum technology, than it would have been possible on classical devices. However, it is currently an open question whether the D-Wave Quantum Annealer is able to solve other problems well, and possible faster than convential computers. In this work, we assess the D-Wave's ability to sample from a probability distribution, to approximate the ground state of different statistical mechanical models using variational algorithms.  
+\subsection{Previous Work \& Motivation}
+\subsubsection{Quantum Annealing Performance}
+The D-Wave's Quantum Annealers performance scaling for finding the ground state (corresponding to the minimum of the quadratic binary cost function) has been extensively studied, in the area of cryptography and physical simulation. In general, classical methods exhibit faster solving times and better scaling.
+We briefly report on previous work in the field of simulating physical systems using quantum annealing hardware. Previously, we used a method presented in \cite{} to encode the solution to the wave function of different Hamiltonians into a \gls{qubo} problem. These instances were then solved on different physical und physics-inspired solvers. We evaluate the scaling of the samplers using the \gls{tts} metric, which corresponds to the computational time needed to solve the optimisation problem with a success probability of at least $P_\text{target}$. The TTS is defined as
+\begin{equation}
+\text{TTS} = \frac{\ln(1-P_\text{target})}{\ln(1-P_\text{success})} T_r,
+\end{equation}
+where $P_\text{success}$ is the probability of obtaining the ground state in a single run, and $T_r$ denotes the runtime of a single run.
+
+ It is important to note that current D-Wave devices exhibit limiting connectivity. As a consequence, most problem instances need to be adapted in an additional \textit{embedding} step, increasing the number of physical qubits required. We compare two problem formulations, one advantageous for the quantum annealer, as no extra embedding step is required, and a second one after embedding. Classical devices dominate in both cases (see \autoref{fig:tta_overview}).
+
+\begin{figure}[htbp]
+\centering
+
+\begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/tta_overview_1.pdf}
+    \caption{D-Wave native formulation. This corresponds to a single-qubit $Y$ rotation, governed by $H_1 = \frac{\pi}{2}\sigma_y$.}
+\end{subfigure}
+\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/tta_overview_3.pdf}
+    \caption{Non-native formulation. This corresponds to System 3 (single-qubit Rabi oscillations driven along $y$), described by $H_3 = \pi\left(\frac{3}{4}\mathbb{1} - \frac{1}{4}\sigma_y\right)$.}
+\end{subfigure}
+
+\caption{TTS99 vs.\ $N$: exponential scaling $\propto \exp(N/\beta)$. GPU solvers dominate for $N \gtrsim 100$; missing points indicate zero success probability.}
+
+    \label{fig:tta_overview}
+\end{figure}
+
+\subsubsection{Motivation}
+\section{Methods}
+In this section we briefly outline the simulated physical systems as well as the main computational and algorithmic methods used in this work.
+\subsection{Quantum Ising Models}
+The Ising model consists of discrete spins arranged on a lattice, interacting via nearest-neighbour couplings. In its quantum extension, the \gls{tfim}, a transverse magnetic field is added, introducing quantum fluctuations through non-commuting terms in the Hamiltonian.
+\subsubsection{Transverse Field Ising Model}
+The Hamiltonian for the one-dimensional \gls{tfim} is given by 
+\begin{equation}
+H=-J\sum_i\sigma_i^z\sigma_{i+1}^z-h\sum_i\sigma_i^z
+\end{equation}
+where $J$ is the coupling strength and $h$ is the transverse magnetic field strength. The 1D \gls{tfim} serves as a benchmark for our models, as it is exactly solvable via the Jordan–Wigner transformation. Despite its simplicity, it displays non-trivial quantum behavior, including a quantum phase transition and quantum fluctuations. 
+\subsubsection{Long-range Transverse Field Ising Model}
+The Hamiltonian for the one-dimensional long-range transverse-field Ising model (LRTFIM) is given by
+\begin{equation}
+H = - \sum_{i<j} \frac{J}{|i-j|^\alpha}\sigma_i^z \sigma_j^z - h \sum_i \sigma_i^x
+\end{equation}
+where $J$ sets the interaction strength, $\alpha$ controls the power-law decay of the interactions, and $h$ is the transverse magnetic field strength. The model serves as an extension of the 1D-\gls{tfim} and allows us to assess the ability of our models to capture long-range interactions.
+\subsection{Heisenberg Models}
+
+The Heisenberg model describes spins on lattice sites interacting via exchange coupling:
+
+\begin{equation}
+    H = \sum_{\langle i,j \rangle} J_{ij}\,\boldsymbol{\sigma}_i \cdot \boldsymbol{\sigma}_j
+\end{equation}
+
+where $\boldsymbol{\sigma}_i = (\sigma_i^x, \sigma_i^y, \sigma_i^z)$ are the Pauli spin operators, $J_{ij}$ is the exchange coupling between sites $i$ and $j$, and $\langle i,j \rangle$ denotes nearest-neighbour pairs. In contrast to the \gls{tfim}, the Heisenberg model couples all three spin components.
+
+\subsubsection{XXZ Heisenberg Chain}
+
+We study the one-dimensional XXZ Heisenberg chain with periodic boundary conditions:
+
+\begin{equation}
+    H = J \sum_{i=1}^{N} \left[ \sigma_i^x \sigma_{i+1}^x + \sigma_i^y \sigma_{i+1}^y + \Delta\, \sigma_i^z \sigma_{i+1}^z \right],
+\end{equation}
+
+where $J$ is the exchange coupling and $\Delta$ is the anisotropy parameter. Setting $\Delta = 1$ gives the isotropic Heisenberg model, while $\Delta = 0$ reduces to the XY chain. Unlike the \gls{tfim}, the model couples all three spin components, making it a more general and challenging benchmark.
+
+\subsubsection{Frustrated $J_1$-$J_2$ Heisenberg Chain}
+
+The frustrated $J_1$-$J_2$ Heisenberg chain extends the XXZ model with a next-nearest-neighbour exchange term:
+
+\begin{equation}
+    H = J_1 \sum_{i} \boldsymbol{\sigma}_i \cdot \boldsymbol{\sigma}_{i+1} + J_2 \sum_{i} \boldsymbol{\sigma}_i \cdot \boldsymbol{\sigma}_{i+2},
+\end{equation}
+
+where $J_1$ and $J_2$ are the nearest- and next-nearest-neighbour coupling strengths. The competing interactions frustrate the system, preventing simultaneous minimisation of both exchange terms. Setting $J_2 = 0$ recovers the standard Heisenberg chain, while increasing $J_2/J_1$ drives the system into a more frustrated regime that poses a more stringent test for variational methods.
+
 \subsection{Quantum (inspired) solvers}
 Here we present two solver types: First, a special quantum machine designed to find the ground state of an Ising Hamiltonian, and second, a classical quantum inspired algorithm. 
 \subsubsection{Adiabatic Quantum Computing}
@@ -65,16 +145,18 @@ Each Ising spin is represented by continuous dynamical variables, position \(x_i
 
 \paragraph{Langevin Simulated Bifurcation}
 
-\gls{lsb} is a stochastic adaptation of SB designed to function as a Boltzmann sampler for training energy-based models such as Semi-Restricted Boltzmann Machines (SRBMs). While SB is a deterministic optimization method, LSB introduces stochasticity to approximate a Boltzmann distribution $B_{\beta_{\mathrm{eff}}}$ with an unknown effective inverse temperature \(\beta_{\mathrm{eff}}\).
-
-LSB preserves the parallel symplectic Euler update rules of SB but introduces a stochastic reset at the end of each iteration: the position variables are discretized $x_i \rightarrow \mathrm{sgn}(x_i)$, and the momentum variables are re-initialized according to a Gaussian distribution \(y_i \sim \mathcal{N}(0,\sigma)\). This prevents convergence to a single minimum and allows exploration of the energy landscape, enabling sampling performance comparable to sequential MCMC methods at significantly higher computational speed. To handle the unknown \(\beta_{\mathrm{eff}}\) during learning, LSB is often combined with \gls{cem}.
+\gls{lsb} is a stochastic adaptation of SB designed to function as a Boltzmann sampler for training energy-based models such as Semi-Restricted Boltzmann Machines (SRBMs). While SB is a deterministic optimization method, LSB introduces stochasticity to approximate a Boltzmann distribution $B_{\beta_{\mathrm{eff}}}$ with an unknown effective inverse temperature \(\beta_{\mathrm{eff}}\). To handle the unknown \(\beta_{\mathrm{eff}}\) during learning, LSB is often combined with \gls{cem}.
 
 \paragraph{Conditional Expectation Matching}
 \gls{cem} accounts for the fact that, in order to produce samples using \gls{lsb}, a parameter $\beta_\text{eff}$, which is unknown and instance dependent, has to be found. This parameter is called the effective inverse temperature and it defines the distribution returned by the sampler. In \gls{srbm}, hidden variables are conditionally independent when the visible units are fixed to a condition vector $r$. This allows the direct calculation of the expectation value of a hidden unit:
 \begin{equation}
-\langle h\rangle_{\beta,r}
+\langle h\rangle_{\beta,r}=\tanh \left\lbrace\beta\left(c_j+\sum_{i=1}^{N_v}r_i W_{ij}\right)\right\rbrace
 \end{equation} 
-
+To estimate the expectation value, denoted $\langle h_j \rangle_{r,C}$ \gls{cem} then performs conditional \gls{lsb} sampling, fixing $v=r$. In the \textit{matching} step, CEM then minimizes the squared difference between both expectation values:
+\begin{equation}
+\beta_\text{eff}=\operatorname*{arg\,min}_{\beta>0}\sum_{j=1}^{N_h}\left\lbrace\langle h_j \rangle_{r,C}-\langle h\rangle_{\beta,r}\right\rbrace^2
+\end{equation}
+\gls{cem} can also be used with other temperature-dependent solvers, e.g. the D-Wave Quantum Annealer.
 \subsection{Metropolis-Hastings inspired methods}
 We use several \gls{mcmc} methods to generate samples from probability distribution from which direct sampling would be difficult. All of these methods can be traced back to the Metropolis-Hastings algorithm, which we explain below.
 \subsubsection{Metropolis-Hastings Algorithm}
