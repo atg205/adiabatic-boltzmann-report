@@ -1,5 +1,5 @@
 \documentclass[10pt,a4paper]{article}
-\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 \usepackage[english]{babel}
 \usepackage{amsmath}
 \usepackage{amsfonts}
@@ -24,6 +24,7 @@
 \newacronym{tfim}{TFIM}{Transverse Field Ising Model}
 \newacronym{qubo}{QUBO}{quadratically binary unconstrained optimization}
 \newacronym{tts}{TTS}{time to solution}
+\newacronym{rbm}{RBM}{restricted Boltzmann machine}
 \makeglossaries
 
 \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
@@ -35,10 +36,11 @@
 \printglossary
 \section{Overview}
 Since the development of the quantum computers, many claims regarding quantum advantage have been made. Often, these advantage claims did not last long. In this work, we focus exclusively on the D-Wave Quantum Annealer, which leverages quantum technology to solve \gls{qubo} problems. D-Wave is among the first companies to commercially sell quantum computers. In 2025, researcher from D-Wave claimed to have solved a scientifically relevant problem fast using quantum technology, than it would have been possible on classical devices. However, it is currently an open question whether the D-Wave Quantum Annealer is able to solve other problems well, and possible faster than convential computers. In this work, we assess the D-Wave's ability to sample from a probability distribution, to approximate the ground state of different statistical mechanical models using variational algorithms.  
-\subsection{Previous Work \& Motivation}
+\subsection{Previous work \& motivation}
+We give an overview of the current research on quantum computing devices and present our motivation for using variational algorithms to simulate quantum systems.
 \subsubsection{Quantum Annealing Performance}
 The D-Wave's Quantum Annealers performance scaling for finding the ground state (corresponding to the minimum of the quadratic binary cost function) has been extensively studied, in the area of cryptography and physical simulation. In general, classical methods exhibit faster solving times and better scaling.
-We briefly report on previous work in the field of simulating physical systems using quantum annealing hardware. Previously, we used a method presented in \cite{} to encode the solution to the wave function of different Hamiltonians into a \gls{qubo} problem. These instances were then solved on different physical und physics-inspired solvers. We evaluate the scaling of the samplers using the \gls{tts} metric, which corresponds to the computational time needed to solve the optimisation problem with a success probability of at least $P_\text{target}$. The TTS is defined as
+We briefly report on previous work in the field of simulating physical systems using quantum annealing hardware. In \cite{rrf3-jm5m}, we used a method presented in \cite{jalowiecki2020parallel} to encode the solution to the wave function of different Hamiltonians into a \gls{qubo} problem. These instances were then solved on different physical und physics-inspired solvers. We evaluate the scaling of the samplers using the \gls{tts} metric, which corresponds to the computational time needed to solve the optimisation problem with a success probability of at least $P_\text{target}$. The TTS is defined as
 \begin{equation}
 \text{TTS} = \frac{\ln(1-P_\text{target})}{\ln(1-P_\text{success})} T_r,
 \end{equation}
@@ -58,15 +60,16 @@ where $P_\text{success}$ is the probability of obtaining the ground state in a s
 \begin{subfigure}[t]{0.48\textwidth}
     \centering
     \includegraphics[width=\textwidth]{figures/tta_overview_3.pdf}
-    \caption{Non-native formulation. This corresponds to System 3 (single-qubit Rabi oscillations driven along $y$), described by $H_3 = \pi\left(\frac{3}{4}\mathbb{1} - \frac{1}{4}\sigma_y\right)$.}
+    \caption{Non-native formulation. This corresponds a single-qubit Rabi oscillations driven along $y$, described by $H_3 = \pi\left(\frac{3}{4}\mathbb{1} - \frac{1}{4}\sigma_y\right)$.}
 \end{subfigure}
 
-\caption{TTS99 vs.\ $N$: exponential scaling $\propto \exp(N/\beta)$. GPU solvers dominate for $N \gtrsim 100$; missing points indicate zero success probability.}
+\caption{Previous work on sampling the exact ground state to simulate quantum systems. TTS99 vs.\ $N$: exponential scaling $\propto \exp(N/\beta)$. GPU solvers dominate for $N \gtrsim 100$; missing points indicate zero success probability.}
 
     \label{fig:tta_overview}
 \end{figure}
 
 \subsubsection{Motivation}
+As previously shown, results return by the quantum annealer are inherently noisy. This makes it difficult to sample the \textit{exact} ground state of the submitted Hamiltonian. In this work, we therefore assess the device's ability to act as a Gibbs sampler and sample from the Boltzmann distribution. It has been shown earlier that the D-Wave device can in fact be used as a Gibbs sampler\cite{Mehta_2025}\cite{Nelson_2022}. Here, we systematically evaluate the quality and time of these samples on computationally hard problems, which allows us to rigorously compare the quantum annealer to classical physics inspired algorithms.
 \section{Methods}
 In this section we briefly outline the simulated physical systems as well as the main computational and algorithmic methods used in this work.
 \subsection{Quantum Ising Models}
@@ -137,6 +140,13 @@ H(s) = A(s)H_D + B(s)H_P
 \end{equation}
 where $s \in [0,1]$ is the normalized time. $A(s)$ decreases the driving terms in $H_D$ as $s$ increases,
 and $B(s)$ activates the terms of the problem Hamiltonian $H_P$. At the end of the evolution, if the process happens slow enough, and assuming a noiseless environment, the system will be in the ground state of the problem Hamiltonian according to the adiabatic theorem.
+\begin{figure*}
+\subfloat[\label{anneal_schedule}]{\includegraphics[width=0.33\linewidth]{figures/anneal_schedule_plot.pdf}}%
+    \subfloat[\label{pegasus}]{\includegraphics[width=0.33\linewidth]{figures/pegasus.pdf}}%
+    \subfloat[\label{zephyr}]{\includegraphics[width=0.33\linewidth]{figures/zephyr.pdf}}
+\caption{(a) Time-dependent energy scales executed by the D-Wave quantum annealer. The coefficient $A(s)$ (red) multiplies the transverse-field term that enables quantum tunnelling and therefore falls rapidly as the run progresses. The coefficient $B(s)$ (blue) multiplies the problem Hamiltonian and rises smoothly, so that the device moves from a tunnelling-dominated regime at $s=0$ to a problem-dominated regime at $s=1$. (b) Native connectivity map for the Pegasus architecture (D-Wave Advantage). Circles mark individual superconducting qubits; blue lines are internal couplers and orangle lines mark external couplers (c) Connectivity map for the newer Zephyr architecture (D-Wave Advantage2), which increases the number of couplers per qubit and introduces longer-range links.}
+\label{fig:anneal:overview}
+\end{figure*}
 \subsubsection{Simulated Bifurcation}
 
 Simulated Bifurcation (SB) is a heuristic algorithm that numerically simulates adiabatic and ergodic (chaotic) evolutions of classical nonlinear Hamiltonian systems to solve combinatorial optimization problems. Inspired by quantum adiabatic optimization using networks of \Gls{kpo}, the algorithm encodes the ground state of an Ising Hamiltonian into the stable states of a network of classical oscillators.
@@ -175,13 +185,23 @@ Variational algorithms are a class of hybrid quantum-classical optimization meth
 	\item On gate-based quantum computers, measuring can be used to gather expectation values of the modified ansatz and improve it further
 	\item In adiabatic quantum computing, the quantum device is used to generate representative samples of the modified ansatz. These samples are then used to approximate the expectation value. 
 \end{itemize}
-Mathematically, the problem can be described as follows:
-The goal is to approximate the ground state, that is, the eigenstate corresponding to the lowest eigenvalue of a Hamiltonian $H$. In physics, a Hamiltonian is defined to be an operator that describes the energy of a system.  Efficient methods exist to encode many classical problems, such as scheduling or integer factoring, into Hamiltonians. The ground state of this Hamiltonian is often used to represent the problem's solution. Calculating this solution analytically using for example exact diagonalisation is computationally difficult, as the Hilbert space grows exponentially with the size of the quantum state.
+As we are interested in comparing current quantum annealing devices with their classical counterparts, we focus solely on the second case. The goal is to approximate the ground state, that is, the eigenstate corresponding to the lowest eigenvalue of a Hamiltonian $H$. 
 In the adiabatic case, the ansatz can be written as 
 \begin{equation}
 \ket\Phi =\sum_v\Phi(v)\ket v, \text{ with } \Phi (v)= \sum e^{-\Phi(v,h)}
 \end{equation}
-The network is specified by the weights $\bm a, \bm b, \bm W$, which are respectively applied to the vector of visible units $\bm v=(v_1, \ldots, v_N)$ and hidden units $\bm h=(h_1, \ldots, h_N)$. 
+with $\Phi(v,h)=\bm a\cdot \bm v +\bm b\cdot \bm h + \bm h\cdot \bm W\cdot \bm v$. The network is specified by the weights $\bm a, \bm b, \bm W$, which are respectively applied to the vector of visible units $\bm v=(v_1, \ldots, v_N)$ and hidden units $\bm h=(h_1, \ldots, h_N)$. The ansatz is defined as 
+\begin{equation}
+\Psi(v)=\sqrt{\sum e^{-\Phi(v,h)}}=\sqrt{\Phi(v)}
+\end{equation}
+with probability distribution
+\begin{equation}
+\rho(v)=\frac{|\Psi(v)|^2}{\sum_{v'}|\Psi(v')|^2}
+\end{equation}
+which is however intractable for large Hilbert spaces.
+\subsection{Boltzman machine}
+\gls{rbm} is an artificial neural network consisting of visible and hidden units that form a bipartite graph. That is, no inter-layer connections are allowed. During training, the \gls{rbm} learns to approximate a probability distribution.
+The main idea is that expectation values with respect to the quantum state can be estimated using samples drawn from the probability distribution $|\Psi(v)|^2$. Since the wavefunction ansatz is represented by a Restricted Boltzmann Machine, which corresponds to a classical stochastic Ising model, configurations $v$ can be sampled approximately using a D-Wave quantum annealer.
 \bibliography{bib}{}
 \bibliographystyle{plain}
 
