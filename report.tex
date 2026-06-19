@@ -200,9 +200,29 @@ with probability distribution
 \end{equation}
 which is however intractable for large Hilbert spaces.
 \subsection{Boltzman machine}
-\gls{rbm} is an artificial neural network consisting of visible and hidden units that form a bipartite graph. That is, no inter-layer connections are allowed. During training, the \gls{rbm} learns to approximate a probability distribution.
+A \gls{rbm} is an artificial neural network consisting of visible and hidden units that form a bipartite graph. That is, no inter-layer connections are allowed. During training, the \gls{rbm} learns to approximate a probability distribution.
 The main idea is that expectation values with respect to the quantum state can be estimated using samples drawn from the probability distribution $|\Psi(v)|^2$. Since the wavefunction ansatz is represented by a Restricted Boltzmann Machine, which corresponds to a classical stochastic Ising model, configurations $v$ can be sampled approximately using a D-Wave quantum annealer.
-\bibliography{bib}{}
+
+\begin{figure}[t]
+    \centering
+    \begin{subfigure}[b]{0.6\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/rbm_abstract.pdf}
+        \caption{}
+        \label{fig:rbm-abstract}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/embedding_full_zephyr.pdf}
+        \label{fig:embedding-zephyr}
+        \caption{}
+    \end{subfigure}
+    \caption{(a) RBM with $24$ visible and $24$ hidden units. (b) Embedding of the corresponding bipartite graph onto the Zephyr hardware topology. Blue nodes are visible units, red nodes are hidden units, orange nodes are auxiliary chain qubits. Each physical node is connected to one auxillary qubit.}
+    \label{fig:rbm-embedding}
+\end{figure}
+
+\bibliography{bib}
 \bibliographystyle{plain}
 
 \end{document}	
