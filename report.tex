@@ -23,6 +23,7 @@
 \newacronym{srbm}{SRBM}{Semi-Restricted Boltzmann Machine}
 \newacronym{tfim}{TFIM}{Transverse Field Ising Model}
 \newacronym{qubo}{QUBO}{quadratically binary unconstrained optimization}
+\newacronym{sa}{SA}{simulated annealing}
 \newacronym{tts}{TTS}{time to solution}
 \newacronym{rbm}{RBM}{restricted Boltzmann machine}
 \makeglossaries
@@ -78,6 +79,7 @@ The Ising model consists of discrete spins arranged on a lattice, interacting vi
 The Hamiltonian for the one-dimensional \gls{tfim} is given by 
 \begin{equation}
 H=-J\sum_i\sigma_i^z\sigma_{i+1}^z-h\sum_i\sigma_i^z
+\label{eq:tfim}
 \end{equation}
 where $J$ is the coupling strength and $h$ is the transverse magnetic field strength. The 1D \gls{tfim} serves as a benchmark for our models, as it is exactly solvable via the Jordan–Wigner transformation. Despite its simplicity, it displays non-trivial quantum behavior, including a quantum phase transition and quantum fluctuations. 
 \subsubsection{Long-range Transverse Field Ising Model}
@@ -176,7 +178,7 @@ A(x_n\rightarrow x^*) =\min\left(1, \frac{f(x^*)}{f(x^n)}\times\frac{q(x_n|x*)}{
 \end{equation}
 For the evaluation of $\frac{f(x^*)}{f(x^n)}$, knowledge of the normalization constant is not necessary. The candidate $x^*$ is accepted with probability $A(x_n\rightarrow x^*)$.
 \subsubsection{Simulated Annealing}
-Simulated Annealing is the classical analogue and predecessor of quantum annealing. It works by exploring the neighborhood of a given configuration, accepting the proposed solution with a temperature dependent probability, or if the new configuration has a lower energy than the current one. 
+\gls{sa} is the classical analogue and predecessor of quantum annealing. It works by exploring the neighborhood of a given configuration, accepting the proposed solution with a temperature dependent probability, or if the new configuration has a lower energy than the current one. 
 \subsubsection{Gibbs sampling}
 Gibbs sampling can be considered a special case of the Metropolis-Hastings algorithm. It is used when sampling directly from a joint distribution is difficult, but sampling from the full conditional distributions is tractable. The algorithm constructs a Markov chain by iteratively sampling each variable (or block of variables) from its distribution conditioned on the current values of all other variables. This procedure generates a chain whose stationary distribution is the target joint distribution. 
 \section{Variational Algorithms}
@@ -221,7 +223,45 @@ The main idea is that expectation values with respect to the quantum state can b
     \caption{(a) RBM with $24$ visible and $24$ hidden units. (b) Embedding of the corresponding bipartite graph onto the Zephyr hardware topology. Blue nodes are visible units, red nodes are hidden units, orange nodes are auxiliary chain qubits. Each physical node is connected to one auxillary qubit.}
     \label{fig:rbm-embedding}
 \end{figure}
+\section{Experimental Analysis}
+We conduct experiments analyzing sampler quality and physical properties or samplers and models.
+\subsection{Sampling Quality}
+While some of the samplers are guaranteed to sample from the Boltzman distribution, others are not. In this section, we analyze the quality of samplers with regard to various parameters.
+One measure for sampling quality is the \textit{total variation distance} $D_{TV}$. It is defined as 
+\begin{equation}
+      D_{\mathrm{TV}}(\mu, \nu) = \frac{1}{2}\sum_{\boldsymbol{\sigma} \in \{-1,+1\}^N} \left|\mu(\boldsymbol{\sigma}) - \nu(\boldsymbol{\sigma})\right|,
+  \end{equation}
+where $\mu$ is the histogram returned from the sampler and $\nu(\boldsymbol{\sigma}) \propto |\Psi(\boldsymbol{\sigma})|^2$ is the \gls{rbm} distribution.
+As every sampler has a range of parameters, we are interested in how well the sampling performs with regards to the different tuning parameters. \Gls{sa}, Gibbs, and Metropolis can be tuned by the number of \textit{sweeps}, that is, the number of single-spin-flip proposals, whereas \gls{lsb} is tunable by the number of \textit{steps} which updates all spins simultaneously. 
 
+We use the following workflow to determine $D_{TV}$: First, we use a \gls{sa} pretrained \gls{rbm} and compute its exact distribution $|\Psi|^2$ numerically by enumerating all possible spin configurations. We then collect samples from different samplers and compare the resulting empirical histogram to the exact distribution.
+
+The results are presented in \autoref{anneal_schedule}. As a sanity check, it can be seen that Metropolis and Gibbs sampling perform theoretically near-optimal, as is expected. We observe that \gls{lsb} significantly underperforms the other solvers for this small-scale example. The performance of both \gls{lsb} and \gls{sa} improves as the transverse field bias $h$ increases. In \autoref{fig:dtv_classical_N8_M8}\textbf{(b)} the exact histogram of configurations $\Psi(v)|^2$ is plotted. For $h=0.5$ the distribution is peaked around a handful of highly probable sample configuration, whereas the distribution becomes more uniform for stronger values of $h$. This explains the performance increase for \gls{lsb} and \gls{sa} samplers.
+
+The peaked distribution originates from the fact that the spins in the \gls{tfim} description given by \autoref{eq:tfim} are aligned for low $h$ values (\textit{ferromagnetic} phase). For $h\rightarrow\infty$ the transverse field dominates and the ground state becomes a product of single-spin $\sigma_x$ eigenstates. Measured in the z-basis, this leads to a uniform distribution in the thermodynamic limit.
+\begin{figure}
+    \centering
+
+    \begin{subfigure}{\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/dtv_classical_N8_M8.pdf}
+        \caption{Total variation distance as a function of sampling effort.}
+    \end{subfigure}
+
+    \vspace{0.5em}
+
+    \begin{subfigure}{\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/dtv_classical_N8_M8_dist.pdf}
+        \caption{Exact histogram of configurations.}
+    \end{subfigure}
+
+    \caption{Sampling quality for different samplers for a \gls{rbm} approximating the ground state of a \gls{tfim} with 8 spins, corresponding to a \gls{rbm} with 8 visible and 8 hidden units. The sampling floor is the best possible total variational distance reachable with the given number of samples. Effort is measured in sweeps for SA, metropolis and Gibbs, and in steps for LSB.}
+    \label{fig:dtv_classical_N8_M8}
+\end{figure}
+\subsection{Sampling temperature}
+
+\clearpage
 \bibliography{bib}
 \bibliographystyle{plain}
 
