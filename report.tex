@@ -30,7 +30,7 @@
 
 \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
 \author{Philipp Hanussek}
-\title{Quantum Variational Algorithms on Adiabatic Quantum Computing Devices}
+\title{Quantum Variational Algorithms on Adabatic Quantum Computing Devices}
 
 \begin{document}
 \maketitle
@@ -157,8 +157,7 @@ Each Ising spin is represented by continuous dynamical variables, position \(x_i
 
 \paragraph{Langevin Simulated Bifurcation}
 
-\gls{lsb} is a stochastic adaptation of SB designed to function as a Boltzmann sampler for training energy-based models such as Semi-Restricted Boltzmann Machines (SRBMs). While SB is a deterministic optimization method, LSB introduces stochasticity to approximate a Boltzmann distribution $B_{\beta_{\mathrm{eff}}}$ with an unknown effective inverse temperature \(\beta_{\mathrm{eff}}\). To handle the unknown \(\beta_{\mathrm{eff}}\) during learning, LSB is often combined with \gls{cem}.
-
+\gls{lsb} is a stochastic adaptation of SB designed to function as a Boltzmann sampler for training energy-based models such as Semi-Restricted Boltzmann Machines (SRBMs). While SB is a deterministic optimization method, LSB introduces stochasticity to approximate a Boltzmann distribution $B_{\beta_{\mathrm{eff}}}$ with an unknown effective inverse temperature \(\beta_{\mathrm{eff}}\). To handle the unknown \(\beta_{\mathrm{eff}}\) during learning, LSB is often combined with \gls{cem}. A detailed analysis of different temperature parameters is provided in \autoref{sec:exper:temp}.
 \paragraph{Conditional Expectation Matching}
 \gls{cem} accounts for the fact that, in order to produce samples using \gls{lsb}, a parameter $\beta_\text{eff}$, which is unknown and instance dependent, has to be found. This parameter is called the effective inverse temperature and it defines the distribution returned by the sampler. In \gls{srbm}, hidden variables are conditionally independent when the visible units are fixed to a condition vector $r$. This allows the direct calculation of the expectation value of a hidden unit:
 \begin{equation}
@@ -260,7 +259,41 @@ The peaked distribution originates from the fact that the spins in the \gls{tfim
     \label{fig:dtv_classical_N8_M8}
 \end{figure}
 \subsection{Sampling temperature}
+In this section, we evaluate the influence of temperature on different models and solvers. We focus on two quantities: the rescaling factor $\beta_x$ and the effective temperature $\beta_\text{eff}$. Sampling from an ansatz, all weights in the \gls{rbm} are rescaled by $\beta_x$. For an ideal Gibbs sampler, the following equation holds:
+\begin{equation}
+\beta_\text{eff}=\frac{1}{\beta_x}.
+\end{equation}
+\subsection{Langevin Simulated Bifurcation}
+As \gls{lsb} is a temperature dependent solver and not guaranteed to sample from the Boltzmann distribution, it can be used to illustrate the influence of the input temperature $\beta_x$ on the solution quality. Contrary to the quantum annealer, sampling using \gls{lsb} does not involve additional costs. To evaluate the inpact of the scaling parameter $\beta_x$, we calculate the total variational distance $D_\text{TV}$ between the samples and the precise Boltzmann distribution by numerical enumeration. \autoref{fig:dtv_beta_scale_N8} clearly illustrates that the sampler temperature is problem dependent. $D_\text{TV}$ is minimal at the point where the effective temperature $\beta_\text{eff}$ is 1.
+\label{sec:exper:temp}
 
+\begin{figure}[t]
+    \centering
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/dtv_beta_scale_dtv_N8}
+        \subcaption{Total variation distance $D_\mathrm{TV}$ between the LSB empirical
+        histogram and the exact distribution $|\Psi(v)|^2$.
+        The horizontal dashed line marks the sampling floor.}
+        \label{fig:dtv_beta_dtv_N8}
+    \end{subfigure}
+
+    \vspace{0.5em}
+
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/dtv_beta_scale_beta_N8}
+        \subcaption{Effective inverse temperature $\beta_\mathrm{eff}$ of the LSB samples,
+        estimated by minimizing the total variational distance between the samples and the actual distribution. The dashed curve shows the ideal $1/\beta_x$ prediction for a perfect Gibbs sampler, the horizontal dotted line marks the VMC target $\beta_\mathrm{eff}=1$.}
+        \label{fig:dtv_beta_beta_N8}
+    \end{subfigure}
+
+    \caption{%
+        Influence of the LSB energy-scale parameter $\beta_x$ on sampling quality for a trained \gls{tfim} \gls{rbm} with $N=8$ visible spins.
+        The vertical dotted line in each panel marks the $\beta_x$ that minimises $D_\mathrm{TV}$.
+    }
+    \label{fig:dtv_beta_scale_N8}
+\end{figure}
 \clearpage
 \bibliography{bib}
 \bibliographystyle{plain}
