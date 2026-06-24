@@ -294,6 +294,51 @@ As \gls{lsb} is a temperature dependent solver and not guaranteed to sample from
     }
     \label{fig:dtv_beta_scale_N8}
 \end{figure}
+\subsubsection{CEM}
+
+\subsection{Limitations of real-valued \glspl{rbm}}
+Limitations 
+
+\begin{figure*}[t]
+    \centering
+
+    \begin{subfigure}[t]{0.33\textwidth}
+        \vspace{0pt}
+        \centering
+        \includegraphics[width=\textwidth]{figures/fig_sign_barrier_proof.pdf}
+        \caption{Sign impurity $\epsilon$ (top) and theoretical energy floor
+        for any real positive ansatz vs.\ best RBM error (bottom), computed
+        by exact enumeration at four values of $J_2/J_1$ for $N=8$ and
+        $N=12$. The floor equals zero for $J_2/J_1 \le 0.5$
+        (Marshall theorem).}
+        \label{fig:sign_barrier_proof}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.65\textwidth}
+        \vspace{0pt}
+        \centering
+        \includegraphics[width=\textwidth]{figures/fig_convergence_best.pdf}
+        \caption{Best RBM convergence curves ($E/N$ vs.\ SR iteration) for
+        $N \in \{8,12\}$ and $J_2/J_1 \in \{0.3,0.5,0.7,0.9\}$.
+        The red dashed line marks the exact ground-state energy
+        $E_\mathrm{exact}/N$. Before and at the Majumdar--Ghosh point
+        ($J_2/J_1 \le 0.5$) the RBM converges to the ground state
+        (relative error $0.0\%$). Beyond it the optimiser stalls well
+        above the exact energy, with the gap growing with $J_2/J_1$
+        and with system size $N$.}
+        \label{fig:convergence_best}
+    \end{subfigure}
+
+    \caption{The sign problem as the fundamental barrier for real-valued
+    RBMs on the frustrated $J_1$--$J_2$ Heisenberg chain. Left:
+    exact-enumeration proof that the barrier is a representational
+    limitation, not an optimisation failure. Right: the corresponding
+    training dynamics.}
+    \label{fig:sign_barrier}
+\end{figure*}
+
+
+
 \clearpage
 \bibliography{bib}
 \bibliographystyle{plain}
