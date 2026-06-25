@@ -113,6 +113,7 @@ where $J$ is the exchange coupling and $\Delta$ is the anisotropy parameter. Set
 The frustrated $J_1$-$J_2$ Heisenberg chain extends the XXZ model with a next-nearest-neighbour exchange term:
 
 \begin{equation}
+\label{eq:j1j2heisenberg}
     H = J_1 \sum_{i} \boldsymbol{\sigma}_i \cdot \boldsymbol{\sigma}_{i+1} + J_2 \sum_{i} \boldsymbol{\sigma}_i \cdot \boldsymbol{\sigma}_{i+2},
 \end{equation}
 
@@ -193,6 +194,7 @@ In the adiabatic case, the ansatz can be written as
 \end{equation}
 with $\Phi(v,h)=\bm a\cdot \bm v +\bm b\cdot \bm h + \bm h\cdot \bm W\cdot \bm v$. The network is specified by the weights $\bm a, \bm b, \bm W$, which are respectively applied to the vector of visible units $\bm v=(v_1, \ldots, v_N)$ and hidden units $\bm h=(h_1, \ldots, h_N)$. The ansatz is defined as 
 \begin{equation}
+\label{eq:rawansatz}
 \Psi(v)=\sqrt{\sum e^{-\Phi(v,h)}}=\sqrt{\Phi(v)}
 \end{equation}
 with probability distribution
@@ -200,6 +202,11 @@ with probability distribution
 \rho(v)=\frac{|\Psi(v)|^2}{\sum_{v'}|\Psi(v')|^2}
 \end{equation}
 which is however intractable for large Hilbert spaces.
+Tracing out hidden variables in the ansatz given in \autoref{eq:rawansatz}, the ansatz becomes:
+\begin{equation}
+\label{eq:ansatz}
+\Psi(\mathbf{v}) = e^{-\mathbf{a} \cdot \mathbf{v}/2} \prod_{j=1}^{N_h} \left[ 2\cosh\!\left(b_j + \sum_i W_{ji} v_i\right) \right]^{1/2}.
+\end{equation}
 \subsection{Boltzman machine}
 A \gls{rbm} is an artificial neural network consisting of visible and hidden units that form a bipartite graph. That is, no inter-layer connections are allowed. During training, the \gls{rbm} learns to approximate a probability distribution.
 The main idea is that expectation values with respect to the quantum state can be estimated using samples drawn from the probability distribution $|\Psi(v)|^2$. Since the wavefunction ansatz is represented by a Restricted Boltzmann Machine, which corresponds to a classical stochastic Ising model, configurations $v$ can be sampled approximately using a D-Wave quantum annealer.
@@ -296,16 +303,36 @@ As \gls{lsb} is a temperature dependent solver and not guaranteed to sample from
 \end{figure}
 \subsubsection{CEM}
 
-\subsection{Limitations of real-valued \glspl{rbm}}
-Limitations 
+\subsection{Limitations of variational methods}
+In this section we describe computational and theoretical limitations to using variational methods in a hybrid quantum-classical setup.
+\subsubsection{The Sign Problem}
+It is well known that capturing quantum dynamics with non-trivial sign structure using a real-valued variational ansatz is computationally hard (\textit{sign problem}). This does not pose a problem for the \gls{tfim} models, as its ground state has only positive amplitudes. More complex models, such as some J1J2-Heisenberg models on the other hand cannot be simulated using our methods. The reason for this is that the factors  $e^{-\mathbf{a}\cdot\mathbf{v}/2}$ and $\cosh(\cdot)$ of the ansatz defined in \autoref{eq:ansatz} are strictly positive for real parameters and therefore the ansatz does not allow for the representation of negative amplitudes. 
 
+\paragraph{The Marshall sign rule}
+For certain Heisenberg models with bipartite lattice structure, the Marshall sign rule can be used to remove the non-trivial sign structure of the ground state wavefunction by basis transformation. Considering the following unitary transformation on bipartite lattices $A \cup B$:
+\[
+U = \prod_{i \in A} e^{i\pi S_i^z},
+\]
+the ground state wavefunction can be written as
+\[
+U |\psi_0\rangle = \sum_{\sigma} |c_\sigma| \, |\sigma\rangle,
+\]
+with only positive amplitudes. We measure the impact of the sign problem on a given probability distribution by the average sign\cite{Troyer_2005}. It is given by:
+  \begin{equation}
+      \langle s \rangle = \frac{\sum_{\mathbf{v}} \Psi(\mathbf{v})}{\sum_{\mathbf{v}} |\Psi(\mathbf{v})|}
+  \end{equation}
+Interestingly, we empirically observe that even for frustrated Heisenberg models with $0\leq\frac{J_2}{J_1}\leq0.5$ the \gls{rbm} with the Marshall sign correction can accurately approach the ground state energy, whereas without the correction the variational energy degrades significantly (see \autoref{fig:sign_barrier}).
+
+
+  
+  
 \begin{figure*}[t]
     \centering
 
     \begin{subfigure}[t]{0.33\textwidth}
         \vspace{0pt}
         \centering
-        \includegraphics[width=\textwidth]{figures/fig_sign_barrier_proof.pdf}
+        \includegraphics[width=\textwidth]{figures/marshall_comparison.pdf}
         \caption{Sign impurity $\epsilon$ (top) and theoretical energy floor
         for any real positive ansatz vs.\ best RBM error (bottom), computed
         by exact enumeration at four values of $J_2/J_1$ for $N=8$ and
@@ -329,15 +356,10 @@ Limitations
         \label{fig:convergence_best}
     \end{subfigure}
 
-    \caption{The sign problem as the fundamental barrier for real-valued
-    RBMs on the frustrated $J_1$--$J_2$ Heisenberg chain. Left:
-    exact-enumeration proof that the barrier is a representational
-    limitation, not an optimisation failure. Right: the corresponding
-    training dynamics.}
+    \caption{Visualization of the sign problem on the $J_1$--$J_2$ Heisenberg chain. Left:
+    sign impurity and overall training dynamics, Right: best run for selected instances.}
     \label{fig:sign_barrier}
 \end{figure*}
-
-
 
 \clearpage
 \bibliography{bib}
