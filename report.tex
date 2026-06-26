@@ -11,8 +11,9 @@
 \usepackage{hyperref}
 \usepackage{graphicx}
 \usepackage{subcaption}
-
-
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{xcolor}
 
 
 \newacronym{vqe}{VQE}{Variational Quantum Eigensolver}
@@ -26,6 +27,9 @@
 \newacronym{sa}{SA}{simulated annealing}
 \newacronym{tts}{TTS}{time to solution}
 \newacronym{rbm}{RBM}{restricted Boltzmann machine}
+\newacronym{sr}{SR}{stochastic reconfiguration}
+\newacronym{cg}{CG}{conjugate gradient}
+
 \makeglossaries
 
 \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
@@ -34,7 +38,8 @@
 
 \begin{document}
 \maketitle
-\printglossary
+
+\printglossary[type=\acronymtype]
 \section{Overview}
 Since the development of the quantum computers, many claims regarding quantum advantage have been made. Often, these advantage claims did not last long. In this work, we focus exclusively on the D-Wave Quantum Annealer, which leverages quantum technology to solve \gls{qubo} problems. D-Wave is among the first companies to commercially sell quantum computers. In 2025, researcher from D-Wave claimed to have solved a scientifically relevant problem fast using quantum technology, than it would have been possible on classical devices. However, it is currently an open question whether the D-Wave Quantum Annealer is able to solve other problems well, and possible faster than convential computers. In this work, we assess the D-Wave's ability to sample from a probability distribution, to approximate the ground state of different statistical mechanical models using variational algorithms.  
 \subsection{Previous work \& motivation}
@@ -322,7 +327,12 @@ with only positive amplitudes. We measure the impact of the sign problem on a gi
       \langle s \rangle = \frac{\sum_{\mathbf{v}} \Psi(\mathbf{v})}{\sum_{\mathbf{v}} |\Psi(\mathbf{v})|}
   \end{equation}
 Interestingly, we empirically observe that even for frustrated Heisenberg models with $0\leq\frac{J_2}{J_1}\leq0.5$ the \gls{rbm} with the Marshall sign correction can accurately approach the ground state energy, whereas without the correction the variational energy degrades significantly (see \autoref{fig:sign_barrier}).
-
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{figures/spin_ordering_across_qpt}
+  \caption{Spin configurations sampled from a trained RBM-VMC model for the one-dimensional Transverse-Field Ising Model (TFIM) at three values of the transverse field $h$. \textbf{Top row:} each column shows 2\,000 spin configurations $\boldsymbol{\sigma} \in \{-1,+1\}^N$ sampled from the learned wave function $|\Psi_\theta|^2$, sorted by total magnetisation. \textbf{Bottom row:} spin-spin correlation $C(r) = \langle \sigma^z_0 \sigma^z_r \rangle$ as a function of distance $r$, computed from VMC samples (solid line) and exact diagonalisation (dashed line). The relative energy error $\varepsilon = |E_\mathrm{VMC} - E_\mathrm{exact}|/|E_\mathrm{exact}|$ is shown in each panel. The model is a fully-connected RBM ($N = N_h = 16$) trained for 300 iterations of Stochastic Reconfiguration with 500 Metropolis-Hastings samples per step.}
+  \label{fig:tfim_ordering}
+\end{figure}
 
   
   
@@ -360,7 +370,126 @@ Interestingly, we empirically observe that even for frustrated Heisenberg models
     sign impurity and overall training dynamics, Right: best run for selected instances.}
     \label{fig:sign_barrier}
 \end{figure*}
+\section{Implementation}
+In this chapter, we are going to describe the conceptual and technological aspects of implementing variational algorithms in a hybrid quantum / classical setup. 
+\subsection{Stochastic gradient descent versus Stochastic reconfiguration}
+Traditionally, neural networks are trained using gradient descent. We will not go into details about this well known approach, as it is extensively covered by literature. Gradients are computed efficiently using backpropagation which exploits the chain rule, reusing intermediate derivatives to evaluate the compositions of continuous functions. For most of this article, we use the \gls{sr} method introduced in \cite{Sorella_2001}. The main advantage of \gls{sr} over gradient descent is that it exploits more knowledge about the ansatz than gradient descent. In particular, gradient descent lives in the \textit{parameter space}, and does not take into account the influence of parameter changes on the actual wave function \textit{probability space} $|\Psi|^2$.
 
+\subsubsection{Stochastic reconfiguration}
+\gls{sr} is implemented as follows: given the logarithmic derivative for each parameter $k$, that is the gradient observable
+\begin{equation}
+    O_k(\mathbf{v}) = \frac{\partial \log \Psi(\mathbf{v})}{\partial \theta_k},
+\end{equation}
+with $\boldsymbol{\theta} = \{\mathbf{a}, \mathbf{b}, W\}$, the energy gradient or force vector is defined as
+\begin{equation}
+    F_k = \langle O_k E_\text{loc} \rangle - \langle O_k \rangle \langle E_\text{loc} \rangle,
+\end{equation}
+which is the covariance of the gradient observable and the local energy. The next step then is to define the quantum geometric tensor $S$, the sample covariance of the $O_k$ vectors, which measures how sensitive the Born distribution $|\Psi|^2$ is to each parameter direction. In matrix form, if $\bar{O}$ is the matrix of mean-centred gradients, then $S = \frac{1}{N_s}\bar{O}^\top \bar{O}$. After solving the \gls{sr} system 
+\begin{equation}
+\label{eq:srsystem}
+S \cdot \delta\theta = F
+\end{equation}
+for $\delta\theta$, the parameters are updated by
+\begin{equation}
+    \theta \leftarrow \theta - \eta\,\delta\theta,
+\end{equation}
+with learning rate $\eta$.
+\begin{algorithm}
+\caption{Stochastic Reconfiguration}
+\begin{algorithmic}[1]
+\Require Parameters $\boldsymbol{\theta} = \{\mathbf{a}, \mathbf{b}, W\}$,
+         learning rate $\eta$, regularisation $\lambda$
+\For{$t = 1, 2, \ldots$}
+    \State Sample $\mathbf{v}^{(s)} \sim |\Psi_{\boldsymbol{\theta}}|^2$
+           for $s = 1, \ldots, N_s$ \Comment{MCMC}
+    \State $E_\text{loc}(\mathbf{v}^{(s)}) \leftarrow
+           \sum_{\mathbf{v}'} H_{\mathbf{v}\mathbf{v}'}
+           \,\Psi(\mathbf{v}')/\Psi(\mathbf{v})$ \quad for each $s$
+    \State $O_k(\mathbf{v}^{(s)}) \leftarrow
+           \partial \log \Psi(\mathbf{v}^{(s)}) / \partial \theta_k$
+           \quad for each $s, k$
+    \State $F_k \leftarrow
+           \langle O_k E_\text{loc} \rangle -
+           \langle O_k \rangle \langle E_\text{loc} \rangle$
+    \State $S \leftarrow \tfrac{1}{N_s}\bar{O}^\top \bar{O} + \lambda I$
+    \State Solve $S\,\delta\boldsymbol{\theta} = \mathbf{F}$
+           \Comment{conjugate gradient, matrix-free}
+    \State $\boldsymbol{\theta} \leftarrow \boldsymbol{\theta} -
+           \eta\,\delta\boldsymbol{\theta}$
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Conjugate gradient}
+As $S \in \mathbb{R}^{N_\text{params} \times N_\text{params}}$ grows quadratically with the number of parameters $N_\text{params} = N + M + NM$, with $N$ and $M$ the number of visible and hidden units respectively, solving the \gls{sr} system in \autoref{eq:srsystem} is intractable for large system sizes. We therefore apply a technique called \gls{cg}, which requires only matrix vector products $S \cdot x$ 
+and converges for any symmetric positive-definite matrix.Computing the matrix--vector product then costs only $\mathcal{O}(N_s \cdot N_\text{params})$:
+\begin{equation}
+    S \cdot x = \frac{1}{N_s}\bar{O}^\top(\bar{O}\,x) + \lambda x
+\end{equation}
+\subsection{Exact Solving}
+
+
+
+
+% -------------------- Appendix -------------------- *
+\clearpage
+\section{Appendix}
+\textbf{Claim.} Given the regularised quantum geometric tensor 
+$S = \frac{1}{N_s}\bar{O}^\top\bar{O} + \lambda I$, 
+its product with any vector $x \in \mathbb{R}^{N_\text{params}}$ satisfies
+\begin{equation}
+    S\,x = \frac{1}{N_s}\bar{O}^\top(\bar{O}\,x) + \lambda x.
+\end{equation}
+
+\textbf{Derivation.}
+
+\textit{Step 1: Write $S$ in sample form.}
+By definition, $S_{kl} = \langle O_k O_l \rangle - \langle O_k \rangle\langle O_l \rangle$.
+Introducing the matrix $O \in \mathbb{R}^{N_s \times N_\text{params}}$ with entries 
+$O_{sk} = O_k(\mathbf{v}^{(s)})$, the sample estimates are
+\begin{equation}
+    \langle O_k O_l \rangle = \frac{1}{N_s}\sum_s O_{sk}\,O_{sl} 
+    = \frac{1}{N_s}(O^\top O)_{kl}, \qquad
+    \langle O_k \rangle\langle O_l \rangle = \mu_k \mu_l,
+\end{equation}
+where $\mu_k = \frac{1}{N_s}\sum_s O_{sk}$ is the sample mean of the $k$-th observable.
+
+\textit{Step 2: Express $S$ via the mean-centred matrix.}
+Define $\bar{O} \in \mathbb{R}^{N_s \times N_\text{params}}$ by $\bar{O}_{sk} = O_{sk} - \mu_k$.
+Then
+\begin{equation}
+    \frac{1}{N_s}(\bar{O}^\top\bar{O})_{kl} 
+    = \frac{1}{N_s}\sum_s (O_{sk}-\mu_k)(O_{sl}-\mu_l)
+    = \langle O_k O_l \rangle - \mu_k\mu_l
+    = S_{kl} - \lambda\delta_{kl},
+\end{equation}
+so, including regularisation,
+\begin{equation}
+    S = \frac{1}{N_s}\bar{O}^\top\bar{O} + \lambda I.
+\end{equation}
+
+\textit{Step 3: Apply to $x$.}
+Since matrix multiplication is associative,
+\begin{equation}
+    S\,x = \frac{1}{N_s}\bar{O}^\top\bar{O}\,x + \lambda I\,x
+         = \frac{1}{N_s}\bar{O}^\top\!\underbrace{(\bar{O}\,x)}_{z\,\in\,\mathbb{R}^{N_s}} + \lambda x. \qquad\square
+\end{equation}
+
+\textit{Step 4: Two-pass interpretation.}
+The product $Sx$ therefore decomposes into two operations:
+\begin{enumerate}
+    \item \textbf{Forward pass.} Compute $z = \bar{O}\,x \in \mathbb{R}^{N_s}$, 
+          where $z_s = \sum_k \bar{O}_{sk}\,x_k$ is the projection of $x$ 
+          onto the centred gradient of sample $s$. 
+          Cost: $\mathcal{O}(N_s \cdot N_\text{params})$.
+    \item \textbf{Backward pass.} Compute $\bar{O}^\top z \in \mathbb{R}^{N_\text{params}}$, 
+          where $(\bar{O}^\top z)_k = \sum_s \bar{O}_{sk}\,z_s$ back-projects 
+          the per-sample scalars into parameter space. 
+          Cost: $\mathcal{O}(N_s \cdot N_\text{params})$.
+\end{enumerate}
+The matrix $S \in \mathbb{R}^{N_\text{params} \times N_\text{params}}$ is never formed. 
+Total cost per matrix--vector product: $\mathcal{O}(N_s \cdot N_\text{params})$, 
+identical to evaluating the gradient once.
 \clearpage
 \bibliography{bib}
 \bibliographystyle{plain}
