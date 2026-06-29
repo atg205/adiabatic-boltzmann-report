@@ -31,15 +31,17 @@
 \newacronym{cg}{CG}{conjugate gradient}
 
 \makeglossaries
-
 \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
 \author{Philipp Hanussek}
 \title{Quantum Variational Algorithms on Adabatic Quantum Computing Devices}
 
 \begin{document}
 \maketitle
+\clearpage
 
 \printglossary[type=\acronymtype]
+\clearpage
+
 \section{Overview}
 Since the development of the quantum computers, many claims regarding quantum advantage have been made. Often, these advantage claims did not last long. In this work, we focus exclusively on the D-Wave Quantum Annealer, which leverages quantum technology to solve \gls{qubo} problems. D-Wave is among the first companies to commercially sell quantum computers. In 2025, researcher from D-Wave claimed to have solved a scientifically relevant problem fast using quantum technology, than it would have been possible on classical devices. However, it is currently an open question whether the D-Wave Quantum Annealer is able to solve other problems well, and possible faster than convential computers. In this work, we assess the D-Wave's ability to sample from a probability distribution, to approximate the ground state of different statistical mechanical models using variational algorithms.  
 \subsection{Previous work \& motivation}
@@ -322,7 +324,7 @@ the ground state wavefunction can be written as
 \[
 U |\psi_0\rangle = \sum_{\sigma} |c_\sigma| \, |\sigma\rangle,
 \]
-with only positive amplitudes. We measure the impact of the sign problem on a given probability distribution by the average sign\cite{Troyer_2005}. It is given by:
+with only positive amplitudes. We measure the impact of the sign problem on a given probability distribution by the average sign\cite{He_2017}. It is given by:
   \begin{equation}
       \langle s \rangle = \frac{\sum_{\mathbf{v}} \Psi(\mathbf{v})}{\sum_{\mathbf{v}} |\Psi(\mathbf{v})|}
   \end{equation}
@@ -427,6 +429,51 @@ and converges for any symmetric positive-definite matrix.Computing the matrix--v
     S \cdot x = \frac{1}{N_s}\bar{O}^\top(\bar{O}\,x) + \lambda x
 \end{equation}
 \subsection{Exact Solving}
+Determining the exact value of the ground state up to numerical precision is crucial for evaluating the performance of the trained models. For \gls{tfim}, exact solving is possible for arbitrary system sizes, whereas solving the J1J2 Heisenberg model is computationally hard.
+\subsubsection{\gls{tfim} ground state solving in $O(N)$} 
+By transforming spin operators to fermionic operators using the Jordan-Wigner transformation and diagonalizing them in the fermionic basis, the 1d \gls{tfim} can be solved exactly in $O(N)$. The difference between spins and fermions is that spin operators on different sites need to commute, whereas the fermion's creation and annhiliation operators must anticommute. Spin operators can be mapped to fermionic operators in the following way:
+\begin{align}
+c_j&=\left(\prod_{k<j}\sigma_k^z\right)\sigma_j^{-}\\
+c_j^\dagger&=\left(\prod_{k<j}\sigma_k^z\right)\sigma_j^{+}
+\end{align}
+After transformation, the \gls{tfim} from \autoref{eq:tfim} can be expressed as quadratic fermion Hamiltonian
+\begin{equation}
+H=-J\sum_j(c_j^\dagger-c_j(c_{j+1}\dagger+c_{j+1})-h\sum_j(1-2c_j^\dagger c_j).
+\end{equation}
+Bogugliev transformation allows us to calculate the energy needed to excite a single quasiparticle with momentum $k$\cite{He_2017}:
+\begin{equation}
+\epsilon(k)=\sqrt{J^2+h^2-2Jh\cos(k)}.
+\end{equation}
+The ground state energy is then the sum of all quasiparticle energies taken negative\cite{mpg},
+\begin{equation}
+    E_0 = -\sum_k \epsilon(k),
+\end{equation}
+since in the Bogoliubov vacuum every mode contributes $-\epsilon(k)$ to the vacuum energy.
+
+With periodic boundary conditions on the spin chain, the allowed momenta depend on
+the total fermion parity. There are two possible parity sectors, leading to $k$ from a periodic or anti-periodic boundary condition\cite{He_2017}
+\begin{align}
+    k_m^{(\text{even})}  &= \frac{\pi(2m+1)}{N}, \quad m = 0, \ldots, N-1
+    \quad \text{(even parity)}, \\
+    k_m^{(\text{odd})} &= \frac{2\pi m}{N}, \quad m = 0, \ldots, N-1
+    \quad \text{(odd parity)}.
+\end{align}
+where $N_f$ is the total number of fermions. Since the parity of the ground state depends on the system parameters, both sectors are evaluated and the true ground state energy is taken as the minimum.
+The ground state energy is the lower of the two sectors,
+\begin{equation}
+    E_0 = \min\!\left(
+        -\sum_m \epsilon\!\left(k_m^{(\text{even})}\right),\;
+        -\sum_m \epsilon\!\left(k_m^{(\text{odd})}\right)
+    \right),
+\end{equation}
+which sector gives the lower ground state energy depends on $N$ and $h$. This gives an exact result for any system
+size $N$ in $O(N)$ time.
+\subsubsection{Exact Diagonalization}
+In cases where mapping to a quadratic fermion Hamiltonian is not possible, e.g. in the case of long range interactions, exact diagonalization is used for small system sizes $N$. 
+Exact diagonalization works by enumerating all $2^N$ basis states of the Hilbert space, constructing the Hamiltonian as a $2^N \times 2^N$ matrix in that basis, and finding its lowest eigenvalue via the Lanczos algorithm. Lanczos algorithm avoids diagonalizing the entire matrix and only returns the matrix' lowest eigenvalue. We use \texttt{scipy}'s \texttt{eigsh} implementation of this algorithm.
+\subsubsection{Other methods}
+The lowest energy returned by variational models using Gibb's sampling can be regarded as an upper bound, as it can never be lower than the ground state due to the variational principle.
+
 
 
 
