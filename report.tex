@@ -14,6 +14,7 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{xcolor}
+\usepackage{listings} 
 
 
 \newacronym{vqe}{VQE}{Variational Quantum Eigensolver}
@@ -29,6 +30,7 @@
 \newacronym{rbm}{RBM}{restricted Boltzmann machine}
 \newacronym{sr}{SR}{stochastic reconfiguration}
 \newacronym{cg}{CG}{conjugate gradient}
+\newacronym{jit}{JIT}{just-in-time}
 
 \makeglossaries
 \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
@@ -375,6 +377,7 @@ Interestingly, we empirically observe that even for frustrated Heisenberg models
 \section{Implementation}
 In this chapter, we are going to describe the conceptual and technological aspects of implementing variational algorithms in a hybrid quantum / classical setup. 
 \subsection{Stochastic gradient descent versus Stochastic reconfiguration}
+\label{sec:stochsticreconfig}
 Traditionally, neural networks are trained using gradient descent. We will not go into details about this well known approach, as it is extensively covered by literature. Gradients are computed efficiently using backpropagation which exploits the chain rule, reusing intermediate derivatives to evaluate the compositions of continuous functions. For most of this article, we use the \gls{sr} method introduced in \cite{Sorella_2001}. The main advantage of \gls{sr} over gradient descent is that it exploits more knowledge about the ansatz than gradient descent. In particular, gradient descent lives in the \textit{parameter space}, and does not take into account the influence of parameter changes on the actual wave function \textit{probability space} $|\Psi|^2$.
 
 \subsubsection{Stochastic reconfiguration}
@@ -386,7 +389,17 @@ with $\boldsymbol{\theta} = \{\mathbf{a}, \mathbf{b}, W\}$, the energy gradient 
 \begin{equation}
     F_k = \langle O_k E_\text{loc} \rangle - \langle O_k \rangle \langle E_\text{loc} \rangle,
 \end{equation}
-which is the covariance of the gradient observable and the local energy. The next step then is to define the quantum geometric tensor $S$, the sample covariance of the $O_k$ vectors, which measures how sensitive the Born distribution $|\Psi|^2$ is to each parameter direction. In matrix form, if $\bar{O}$ is the matrix of mean-centred gradients, then $S = \frac{1}{N_s}\bar{O}^\top \bar{O}$. After solving the \gls{sr} system 
+which is the covariance of the gradient observable and the local energy. The local energy $E_\text{loc}(\mathbf{v})$ estimates the variational energy $\langle H \rangle$ of the current \gls{rbm} ansatz using samples drawn from $|\Psi(\mathbf{v})|^2$ :
+\begin{equation}
+\label{eq:localenergy}  
+  E_\text{loc}(\mathbf{v}) = \frac{\langle \mathbf{v} | H | \Psi \rangle}{\langle
+  \mathbf{v} | \Psi \rangle} = \sum_{\mathbf{v}'} H_{\mathbf{v}\mathbf{v}'}
+  \frac{\Psi(\mathbf{v}')}{\Psi(\mathbf{v})}
+\end{equation}
+
+
+
+The next step then is to define the quantum geometric tensor $S$, the sample covariance of the $O_k$ vectors, which measures how sensitive the Born distribution $|\Psi|^2$ is to each parameter direction. In matrix form, if $\bar{O}$ is the matrix of mean-centred gradients, then $S = \frac{1}{N_s}\bar{O}^\top \bar{O}$. After solving the \gls{sr} system 
 \begin{equation}
 \label{eq:srsystem}
 S \cdot \delta\theta = F
@@ -472,11 +485,44 @@ size $N$ in $O(N)$ time.
 In cases where mapping to a quadratic fermion Hamiltonian is not possible, e.g. in the case of long range interactions, exact diagonalization is used for small system sizes $N$. 
 Exact diagonalization works by enumerating all $2^N$ basis states of the Hilbert space, constructing the Hamiltonian as a $2^N \times 2^N$ matrix in that basis, and finding its lowest eigenvalue via the Lanczos algorithm. Lanczos algorithm avoids diagonalizing the entire matrix and only returns the matrix' lowest eigenvalue. We use \texttt{scipy}'s \texttt{eigsh} implementation of this algorithm.
 \subsubsection{Other methods}
-The lowest energy returned by variational models using Gibb's sampling can be regarded as an upper bound, as it can never be lower than the ground state due to the variational principle.
+The lowest energy returned by variational models using Gibb's sampling can be regarded as an upper bound to the ground state, as it can never be lower than the ground state due to the variational principle.
+\subsection{JAX}
+(Quantum) variational algorithms do not only strain \textit{quantum} ressources, but also push \textit{classical} computers to their limits. Notably, at each iteration, the stochastic reconfiguration process described in \autoref{sec:stochsticreconfig} adapts all parameters of the weights and biases. We use several techniques in this project to speed up this process. JAX, implementing the \textit{functional programming} paradigm, allows for the speed up of function calls and linear algebra caluclation by offering features such as \gls{jit} compilation and XLA (accelerated linear algebra). We will describe the features of JAX in detail and give examples from our codebase.
+\subsubsection{Just-in-time compilation}
+JAX transformation require function to be \textit{functionally pure}. To summarize, a function is considered functionally pure, if its output depends only on the function's input parameters, and all output is passed through the return variable. As an example, a function that involves \texttt{print()} statements or writes to global variables is not considered to be functionally pure, as its output does not exclusively pass through the \texttt{return} statement. JAX does not guarantee the proper behavior of impure functions. During \gls{jit} compilation, the function is transformed to primitives, which in JAX are defined to be "fundamental units of computation"\cite{jaxGlossaryTerms}. As an example, the following function header is used to calculate the local energy (\autoref{eq:localenergy}):
 
+\begin{lstlisting}[language=Python]
+  @functools.partial(jax.jit, static_argnums=(4, 5))
+  def _local_energy_1d_jit(
+      V: jax.Array,  # (ns, N) -- spin configs
+      W: jax.Array,  # (N, M)  -- RBM weights
+      a: jax.Array,  # (N,)    -- visible biases
+      b: jax.Array,  # (M,)    -- hidden biases
+      h: float,      # static
+      N: int,        # static
+  ) -> jax.Array:    # (ns,)   local energies
+      ...
+  \end{lstlisting}
+$h$ and $N$ are passed as static parameters, meaning that they will be hard-coded in the compiled function after \gls{jit}. Jax compiles a kernel for each combination of static variables; as $h$ and $N$ never change during a training run, this means that the function is only compiled once. 
 
+\subsubsection{Vectorized Map}
 
+\texttt{jax.vmap} takes a function written for a single input and returns a new function that maps it over a leading batch axis as a single vectorised kernel.
 
+As a concrete example, consider \texttt{log\_psi\_fn} defined for a single spin configuration $\mathbf{v} \in \{-1,+1\}^N$. Evaluating it over all $n_s$ sampled configurations reduces to:
+
+\begin{lstlisting}[language=Python]
+log_p_V = jax.vmap(log_psi_fn)(V)   # V: (ns, N) -> log_p_V: (ns,)
+\end{lstlisting}
+
+XLA compiles this as a single operation over the batch dimension rather than $n_s$ independent kernel launches. The resulting operation can be compiled using \gls{jit} for faster execution:
+
+\begin{lstlisting}[language=Python]
+batched_f = jax.jit(jax.vmap(log_psi_fn))
+\end{lstlisting}
+
+\subsubsection{Autograd}
+Jax offers automatic differentation to compute function gradients. However, we do not make use of this feature as gradients are calculated analytically (see \cite{Gardas_2018}).
 
 % -------------------- Appendix -------------------- *
 \clearpage
