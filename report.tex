@@ -338,8 +338,6 @@ Interestingly, we empirically observe that even for frustrated Heisenberg models
   \label{fig:tfim_ordering}
 \end{figure}
 
-  
-  
 \begin{figure*}[t]
     \centering
 
@@ -374,6 +372,36 @@ Interestingly, we empirically observe that even for frustrated Heisenberg models
     sign impurity and overall training dynamics, Right: best run for selected instances.}
     \label{fig:sign_barrier}
 \end{figure*}
+\subsection{D-Wave Topology constraints}
+\begin{figure}[t]
+    \centering
+    \begin{subfigure}[b]{0.31\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/sparse_graph_construction/a.pdf}
+        \caption{}
+        \label{fig:sparse-graph-a}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.31\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/sparse_graph_construction/b.pdf}
+        \caption{}
+        \label{fig:sparse-graph-b}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.31\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/sparse_graph_construction/c.pdf}
+        \caption{}
+        \label{fig:sparse-graph-c}
+    \end{subfigure}
+
+    \vspace{0.5em}
+    \includegraphics[width=0.6\linewidth]{figures/sparse_graph_construction/legend.pdf}
+
+    \caption{Construction of a chain-free sparse RBM from a D-Wave Zephyr hardware graph ($N=8$ visible units). \textbf{(a)} Identify cross-shore edges (green) and non-cross-shore edges (purple) in a local neighborhood of physical qubits and couplers. \textbf{(b)} Creation of bipartite graph by restricting to cross-shore couplers, splitting into hidden unit candidates (red) and visible units (blue). \textbf{(c)} RBM's visible-hidden connectivity mask by selecting the hidden units which maximize connectivity while keeping a min-set-cover. Non-selected candidates (grey) are dropped.}
+    \label{fig:sparse-graph-construction}
+\end{figure}
 \section{Implementation}
 In this chapter, we are going to describe the conceptual and technological aspects of implementing variational algorithms in a hybrid quantum / classical setup. 
 \subsection{Stochastic gradient descent versus Stochastic reconfiguration}
