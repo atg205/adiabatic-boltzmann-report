@@ -131,6 +131,7 @@ where $J_1$ and $J_2$ are the nearest- and next-nearest-neighbour coupling stren
 \subsection{Quantum (inspired) solvers}
 Here we present two solver types: First, a special quantum machine designed to find the ground state of an Ising Hamiltonian, and second, a classical quantum inspired algorithm. 
 \subsubsection{Adiabatic Quantum Computing}
+\label{sec:solvers:quantum:adiab}
  Adiabatic Quantum Computing is based on the adiabatic theorem, which states: \textit{A physical system remains in its instantaneous eigenstate if a given perturbation is acting on it slowly enough and if there is a gap between the eigenvalue and the rest of the Hamiltonian's spectrum.}
 In this work we focus on the D-Wave Quantum Annealer, which acts according to the adiabatic theorem in the following way: 
 In the beginning of the annealing process, the device is initiated in the ground state of a initial driver Hamiltonian $H_D$ that can be easily constructed:
@@ -152,6 +153,42 @@ H(s) = A(s)H_D + B(s)H_P
 \end{equation}
 where $s \in [0,1]$ is the normalized time. $A(s)$ decreases the driving terms in $H_D$ as $s$ increases,
 and $B(s)$ activates the terms of the problem Hamiltonian $H_P$. At the end of the evolution, if the process happens slow enough, and assuming a noiseless environment, the system will be in the ground state of the problem Hamiltonian according to the adiabatic theorem.
+It is important to note that the qubits in the D-Wave Quantum Annealer are not \textit{all-to-all} connected. The qubits are lined out in an architecture dependent grid. In the Pegasus topology, one qubit couples on average to 15 other qubits, while Zephyr qubits couple to 20 other qubits. Therefore, most problems require an additional embedding step, in which multiple physical qubits are \textit{chained} together to form one logical qubit. For a toy-problem example of embedding a triangle shaped connectivity pattern on a QPU, see \autoref{fig:embedding-toy-result}.
+\begin{figure}[t]
+    \centering
+    \begin{subfigure}[b]{0.30\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/embedding/a.pdf}
+        \caption{}
+        \label{fig:embedding-toy-source}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.30\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/embedding/b.pdf}
+        \caption{}
+        \label{fig:embedding-toy-target}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.30\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/embedding/c.pdf}
+        \caption{}
+        \label{fig:embedding-toy-result}
+    \end{subfigure}
+
+    \vspace{0.5em}
+    \includegraphics[width=0.7\linewidth]{figures/embedding/legend.pdf}
+
+    \caption{Minor embedding of a triangle onto a sparser hardware graph.\textbf{(a)} Logical problem graph: a triangle requires a coupler between every pair of nodes. \textbf{(b)} Target hardware graph: a 4-cycle, whose qubits admit no triangle directly. \textbf{(c)} A valid embedding: one logical node is realized as a chain of two physical qubits (joined by a strong ferromagnetic coupling, dashed), so that the three logical edges are each realized by a single physical coupler.}
+    \label{fig:embedding-toy}
+\end{figure}
+There exist three different types of couplers, connecting physical qubits: 
+\begin{itemize}
+\item \textbf{Internal Couplers} connecting qubits of opposite orientation
+\item \textbf{External Couplers} connecting qubits aligned in parallel
+\item \textbf{Odd Couplers} which connect similarly aligned pairs of qubits
+\end{itemize}
 \begin{figure*}
 \subfloat[\label{anneal_schedule}]{\includegraphics[width=0.33\linewidth]{figures/anneal_schedule_plot.pdf}}%
     \subfloat[\label{pegasus}]{\includegraphics[width=0.33\linewidth]{figures/pegasus.pdf}}%
@@ -159,6 +196,7 @@ and $B(s)$ activates the terms of the problem Hamiltonian $H_P$. At the end of t
 \caption{(a) Time-dependent energy scales executed by the D-Wave quantum annealer. The coefficient $A(s)$ (red) multiplies the transverse-field term that enables quantum tunnelling and therefore falls rapidly as the run progresses. The coefficient $B(s)$ (blue) multiplies the problem Hamiltonian and rises smoothly, so that the device moves from a tunnelling-dominated regime at $s=0$ to a problem-dominated regime at $s=1$. (b) Native connectivity map for the Pegasus architecture (D-Wave Advantage). Circles mark individual superconducting qubits; blue lines are internal couplers and orangle lines mark external couplers (c) Connectivity map for the newer Zephyr architecture (D-Wave Advantage2), which increases the number of couplers per qubit and introduces longer-range links.}
 \label{fig:anneal:overview}
 \end{figure*}
+See \autoref{fig:anneal:overview} for visualization of different QPU topologies. 
 \subsubsection{Simulated Bifurcation}
 
 Simulated Bifurcation (SB) is a heuristic algorithm that numerically simulates adiabatic and ergodic (chaotic) evolutions of classical nonlinear Hamiltonian systems to solve combinatorial optimization problems. Inspired by quantum adiabatic optimization using networks of \Gls{kpo}, the algorithm encodes the ground state of an Ising Hamiltonian into the stable states of a network of classical oscillators.
@@ -348,8 +386,7 @@ Interestingly, we empirically observe that even for frustrated Heisenberg models
         \caption{Sign impurity $\epsilon$ (top) and theoretical energy floor
         for any real positive ansatz vs.\ best RBM error (bottom), computed
         by exact enumeration at four values of $J_2/J_1$ for $N=8$ and
-        $N=12$. The floor equals zero for $J_2/J_1 \le 0.5$
-        (Marshall theorem).}
+        $N=12$.}
         \label{fig:sign_barrier_proof}
     \end{subfigure}
     \hfill
@@ -360,11 +397,7 @@ Interestingly, we empirically observe that even for frustrated Heisenberg models
         \caption{Best RBM convergence curves ($E/N$ vs.\ SR iteration) for
         $N \in \{8,12\}$ and $J_2/J_1 \in \{0.3,0.5,0.7,0.9\}$.
         The red dashed line marks the exact ground-state energy
-        $E_\mathrm{exact}/N$. Before and at the Majumdar--Ghosh point
-        ($J_2/J_1 \le 0.5$) the RBM converges to the ground state
-        (relative error $0.0\%$). Beyond it the optimiser stalls well
-        above the exact energy, with the gap growing with $J_2/J_1$
-        and with system size $N$.}
+        $E_\mathrm{exact}/N$.}
         \label{fig:convergence_best}
     \end{subfigure}
 
@@ -373,6 +406,7 @@ Interestingly, we empirically observe that even for frustrated Heisenberg models
     \label{fig:sign_barrier}
 \end{figure*}
 \subsection{D-Wave Topology constraints}
+As described in \autoref{sec:solvers:quantum:adiab}, problems implementable on quantum annealer often need to be fit to the QPU in an additional embedding step. We are interested in whether a sparse, but native \gls{rbm}, that is, one that fits natively on the QPU, performers reasonably. The sparse \gls{rbm} is creating according to the following algorithm: First, constructe a bipartite graph by keeping only edges that correspond to internal couplers on the D-Wave QPU. One set of the graph corresponds to visible \gls{rbm} units, the other one to hidden units. Then, greedily pick qubits for the visible units, by maximizing the overlap between neighbor sets of visible units. After all visible units are chosen, create a minimum set-cover by picking the fewest hidden qubits such that every visible qubit has at least one hidden neighbor. The remaining hidden units are filled by best connected qubits. See also \autoref{fig:sparse-graph-construction} for a visual overview of the algorithm.
 \begin{figure}[t]
     \centering
     \begin{subfigure}[b]{0.31\linewidth}
@@ -399,8 +433,27 @@ Interestingly, we empirically observe that even for frustrated Heisenberg models
     \vspace{0.5em}
     \includegraphics[width=0.6\linewidth]{figures/sparse_graph_construction/legend.pdf}
 
-    \caption{Construction of a chain-free sparse RBM from a D-Wave Zephyr hardware graph ($N=8$ visible units). \textbf{(a)} Identify cross-shore edges (green) and non-cross-shore edges (purple) in a local neighborhood of physical qubits and couplers. \textbf{(b)} Creation of bipartite graph by restricting to cross-shore couplers, splitting into hidden unit candidates (red) and visible units (blue). \textbf{(c)} RBM's visible-hidden connectivity mask by selecting the hidden units which maximize connectivity while keeping a min-set-cover. Non-selected candidates (grey) are dropped.}
+    \caption{Construction of a chain-free sparse RBM from a D-Wave Zephyr hardware graph ($N=8$ visible units). \textbf{(a)} Identify internal couplers (green) and external/odd couplers (purple)\textbf{(b)} Creation of bipartite graph by restricting to internal couplers, splitting into hidden unit candidates (red) and visible units (blue). \textbf{(c)} RBM's visible-hidden connectivity mask by selecting the hidden units which maximize connectivity while keeping a min-set-cover. Non-selected candidates (grey) are dropped.}
     \label{fig:sparse-graph-construction}
+\end{figure}
+We also looked directly at the effect of sparsity on its own, keeping the number of hidden units equal to the number of visible units and only changing how many of the real couplers are removed from the connectivity mask. When removing couplers, we always removed one from the hidden unit with the highest remaining degree, so that no visible or hidden unit was ever left with zero connections. \autoref{fig:sparsity-ablation} shows the resulting energy error as a function of sparsity, for both classical training and training with samples from the real QPU. In both cases, error increases sharply as sparsity increases, and the real QPU curve gets worse faster than the classical one at high sparsity — real hardware sampling adds an extra penalty on top of the sparsity itself.
+\begin{figure}[t]
+    \centering
+    \begin{subfigure}[b]{0.48\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/sparsity/sparsity_ablation_heatmap.pdf}
+        \caption{}
+        \label{fig:sparsity-heatmap}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/sparsity/sparsity_ablation_qpu_vs_classical.pdf}
+        \caption{}
+        \label{fig:sparsity-line}
+    \end{subfigure}
+    \caption{Error as a function of sparsity, with the number of hidden units kept equal t in both plots. \textbf{(a)} Error for different values of $h$. \textbf{(b)} Error at $h=1$, comparing classical training to training on the real QPU. The dotted line marks the lowestllows at this size.}
+    \label{fig:sparsity-simple}
 \end{figure}
 \section{Implementation}
 In this chapter, we are going to describe the conceptual and technological aspects of implementing variational algorithms in a hybrid quantum / classical setup. 
