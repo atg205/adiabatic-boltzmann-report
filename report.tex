@@ -61,13 +61,13 @@ where $P_\text{success}$ is the probability of obtaining the ground state in a s
 \begin{figure}[htbp]
 \centering
 
-\begin{subfigure}[t]{0.48\textwidth}
+\begin{subfigure}{0.48\textwidth}
     \centering
     \includegraphics[width=\textwidth]{figures/tta_overview_1.pdf}
     \caption{D-Wave native formulation. This corresponds to a single-qubit $Y$ rotation, governed by $H_1 = \frac{\pi}{2}\sigma_y$.}
 \end{subfigure}
 \hfill
-\begin{subfigure}[t]{0.48\textwidth}
+\begin{subfigure}{0.48\textwidth}
     \centering
     \includegraphics[width=\textwidth]{figures/tta_overview_3.pdf}
     \caption{Non-native formulation. This corresponds a single-qubit Rabi oscillations driven along $y$, described by $H_3 = \pi\left(\frac{3}{4}\mathbb{1} - \frac{1}{4}\sigma_y\right)$.}
@@ -154,23 +154,23 @@ H(s) = A(s)H_D + B(s)H_P
 where $s \in [0,1]$ is the normalized time. $A(s)$ decreases the driving terms in $H_D$ as $s$ increases,
 and $B(s)$ activates the terms of the problem Hamiltonian $H_P$. At the end of the evolution, if the process happens slow enough, and assuming a noiseless environment, the system will be in the ground state of the problem Hamiltonian according to the adiabatic theorem.
 It is important to note that the qubits in the D-Wave Quantum Annealer are not \textit{all-to-all} connected. The qubits are lined out in an architecture dependent grid. In the Pegasus topology, one qubit couples on average to 15 other qubits, while Zephyr qubits couple to 20 other qubits. Therefore, most problems require an additional embedding step, in which multiple physical qubits are \textit{chained} together to form one logical qubit. For a toy-problem example of embedding a triangle shaped connectivity pattern on a QPU, see \autoref{fig:embedding-toy-result}.
-\begin{figure}[t]
+\begin{figure}[h]
     \centering
-    \begin{subfigure}[b]{0.30\linewidth}
+    \begin{subfigure}[]{0.30\linewidth}
         \centering
         \includegraphics[width=\linewidth]{figures/embedding/a.pdf}
         \caption{}
         \label{fig:embedding-toy-source}
     \end{subfigure}
     \hfill
-    \begin{subfigure}[b]{0.30\linewidth}
+    \begin{subfigure}[]{0.30\linewidth}
         \centering
         \includegraphics[width=\linewidth]{figures/embedding/b.pdf}
         \caption{}
         \label{fig:embedding-toy-target}
     \end{subfigure}
     \hfill
-    \begin{subfigure}[b]{0.30\linewidth}
+    \begin{subfigure}[]{0.30\linewidth}
         \centering
         \includegraphics[width=\linewidth]{figures/embedding/c.pdf}
         \caption{}
@@ -258,16 +258,16 @@ Tracing out hidden variables in the ansatz given in \autoref{eq:rawansatz}, the 
 A \gls{rbm} is an artificial neural network consisting of visible and hidden units that form a bipartite graph. That is, no inter-layer connections are allowed. During training, the \gls{rbm} learns to approximate a probability distribution.
 The main idea is that expectation values with respect to the quantum state can be estimated using samples drawn from the probability distribution $|\Psi(v)|^2$. Since the wavefunction ansatz is represented by a Restricted Boltzmann Machine, which corresponds to a classical stochastic Ising model, configurations $v$ can be sampled approximately using a D-Wave quantum annealer.
 
-\begin{figure}[t]
+\begin{figure}[h]
     \centering
-    \begin{subfigure}[b]{0.6\linewidth}
+    \begin{subfigure}{0.6\linewidth}
         \centering
         \includegraphics[width=\linewidth]{figures/rbm_abstract.pdf}
         \caption{}
         \label{fig:rbm-abstract}
     \end{subfigure}
     \hfill
-    \begin{subfigure}[b]{0.3\linewidth}
+    \begin{subfigure}{0.3\linewidth}
         \centering
         \includegraphics[width=\linewidth]{figures/embedding_full_zephyr.pdf}
         \label{fig:embedding-zephyr}
@@ -321,9 +321,9 @@ In this section, we evaluate the influence of temperature on different models an
 As \gls{lsb} is a temperature dependent solver and not guaranteed to sample from the Boltzmann distribution, it can be used to illustrate the influence of the input temperature $\beta_x$ on the solution quality. Contrary to the quantum annealer, sampling using \gls{lsb} does not involve additional costs. To evaluate the inpact of the scaling parameter $\beta_x$, we calculate the total variational distance $D_\text{TV}$ between the samples and the precise Boltzmann distribution by numerical enumeration. \autoref{fig:dtv_beta_scale_N8} clearly illustrates that the sampler temperature is problem dependent. $D_\text{TV}$ is minimal at the point where the effective temperature $\beta_\text{eff}$ is 1.
 \label{sec:exper:temp}
 
-\begin{figure}[t]
+\begin{figure}[h]
     \centering
-    \begin{subfigure}[b]{\textwidth}
+    \begin{subfigure}{\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/dtv_beta_scale_dtv_N8}
         \subcaption{Total variation distance $D_\mathrm{TV}$ between the LSB empirical
@@ -334,7 +334,7 @@ As \gls{lsb} is a temperature dependent solver and not guaranteed to sample from
 
     \vspace{0.5em}
 
-    \begin{subfigure}[b]{\textwidth}
+    \begin{subfigure}{\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/dtv_beta_scale_beta_N8}
         \subcaption{Effective inverse temperature $\beta_\mathrm{eff}$ of the LSB samples,
@@ -376,10 +376,10 @@ Interestingly, we empirically observe that even for frustrated Heisenberg models
   \label{fig:tfim_ordering}
 \end{figure}
 
-\begin{figure*}[t]
+\begin{figure*}[h]
     \centering
 
-    \begin{subfigure}[t]{0.33\textwidth}
+    \begin{subfigure}{0.33\textwidth}
         \vspace{0pt}
         \centering
         \includegraphics[width=\textwidth]{figures/marshall_comparison.pdf}
@@ -390,7 +390,7 @@ Interestingly, we empirically observe that even for frustrated Heisenberg models
         \label{fig:sign_barrier_proof}
     \end{subfigure}
     \hfill
-    \begin{subfigure}[t]{0.65\textwidth}
+    \begin{subfigure}{0.65\textwidth}
         \vspace{0pt}
         \centering
         \includegraphics[width=\textwidth]{figures/fig_convergence_best.pdf}
@@ -405,9 +405,11 @@ Interestingly, we empirically observe that even for frustrated Heisenberg models
     sign impurity and overall training dynamics, Right: best run for selected instances.}
     \label{fig:sign_barrier}
 \end{figure*}
-\subsection{D-Wave Topology constraints}
+\subsection{Improving D-Wave Topology performance}
+A crucial factor in the success of an annealing progress is the \textit{problem embedding} on the chip. Here, we assess two aspects related to embedding: First, introducing sparsity to fit the \gls{rbm} natively on the chip, and, second, embedding the problem multiple times to save computing time.
+\subsubsection{Sparse embedding}
 As described in \autoref{sec:solvers:quantum:adiab}, problems implementable on quantum annealer often need to be fit to the QPU in an additional embedding step. We are interested in whether a sparse, but native \gls{rbm}, that is, one that fits natively on the QPU, performers reasonably. The sparse \gls{rbm} is creating according to the following algorithm: First, constructe a bipartite graph by keeping only edges that correspond to internal couplers on the D-Wave QPU. One set of the graph corresponds to visible \gls{rbm} units, the other one to hidden units. Then, greedily pick qubits for the visible units, by maximizing the overlap between neighbor sets of visible units. After all visible units are chosen, create a minimum set-cover by picking the fewest hidden qubits such that every visible qubit has at least one hidden neighbor. The remaining hidden units are filled by best connected qubits. See also \autoref{fig:sparse-graph-construction} for a visual overview of the algorithm.
-\begin{figure}[t]
+\begin{figure}[h]
     \centering
     \begin{subfigure}[b]{0.31\linewidth}
         \centering
@@ -437,7 +439,7 @@ As described in \autoref{sec:solvers:quantum:adiab}, problems implementable on q
     \label{fig:sparse-graph-construction}
 \end{figure}
 We also looked directly at the effect of sparsity on its own, keeping the number of hidden units equal to the number of visible units and only changing how many of the real couplers are removed from the connectivity mask. When removing couplers, we always removed one from the hidden unit with the highest remaining degree, so that no visible or hidden unit was ever left with zero connections. \autoref{fig:sparsity-ablation} shows the resulting energy error as a function of sparsity, for both classical training and training with samples from the real QPU. In both cases, error increases sharply as sparsity increases, and the real QPU curve gets worse faster than the classical one at high sparsity — real hardware sampling adds an extra penalty on top of the sparsity itself.
-\begin{figure}[t]
+\begin{figure}[h]
     \centering
     \begin{subfigure}[b]{0.48\linewidth}
         \centering
@@ -454,6 +456,26 @@ We also looked directly at the effect of sparsity on its own, keeping the number
     \end{subfigure}
     \caption{Error as a function of sparsity, with the number of hidden units kept equal t in both plots. \textbf{(a)} Error for different values of $h$. \textbf{(b)} Error at $h=1$, comparing classical training to training on the real QPU. The dotted line marks the lowestllows at this size.}
     \label{fig:sparsity-simple}
+\end{figure}
+\subsubsection{Parallel Embeddings}
+To speed up calculation and save computing time, it is possible to embed multiple smaller, independent problems on the QPU. For example, it is possible to gather 1000 independent samples using only 250 annealing runs, by embedding the \gls{rbm} four times on the QPU. We experimentacally validate that this approach produces meaningful results, as can be seen in \autoref{fig:parallel-embedding}. The left subfigure visualizes a possible parallel embedding. In the right subfigure, it can be seen that parallel approaches convergence faster to the ground state, using less QPU time. 
+\begin{figure}[h]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/parallel_embedding/parallel_embedding_np4_pegasus.pdf}
+        \caption{Four independent $K_{8,8}$ RBM embeddings ($n_\mathrm{parallel}=4$) placed simultaneously on the Pegasus chip. Colors distinguish copy 1-4; hatched markers denote visible units, solid markers denote hidden units.}
+        \label{fig:parallel-embedding-chip}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/parallel_embedding/parallel_embedding_np_best_qpu_time.pdf}
+        \caption{Energy vs.\ cumulative QPU access time for $n_\mathrm{parallel} \in \{1,3,5\}$ (best of 3 seeds each). Higher $n_\mathrm{parallel}$ reaches the converged energy plateau using less real QPU time.}
+        \label{fig:parallel-embedding-qpu-time}
+    \end{subfigure}
+    \caption{Parallel embedding on a D-Wave QPU: (a) physical embedding layout, (b) resulting training speedup.}
+    \label{fig:parallel-embedding}
 \end{figure}
 \section{Implementation}
 In this chapter, we are going to describe the conceptual and technological aspects of implementing variational algorithms in a hybrid quantum / classical setup. 
