@@ -154,7 +154,7 @@ H(s) = A(s)H_D + B(s)H_P
 where $s \in [0,1]$ is the normalized time. $A(s)$ decreases the driving terms in $H_D$ as $s$ increases,
 and $B(s)$ activates the terms of the problem Hamiltonian $H_P$. At the end of the evolution, if the process happens slow enough, and assuming a noiseless environment, the system will be in the ground state of the problem Hamiltonian according to the adiabatic theorem.
 It is important to note that the qubits in the D-Wave Quantum Annealer are not \textit{all-to-all} connected. The qubits are lined out in an architecture dependent grid. In the Pegasus topology, one qubit couples on average to 15 other qubits, while Zephyr qubits couple to 20 other qubits. Therefore, most problems require an additional embedding step, in which multiple physical qubits are \textit{chained} together to form one logical qubit. For a toy-problem example of embedding a triangle shaped connectivity pattern on a QPU, see \autoref{fig:embedding-toy-result}.
-\begin{figure}[h]
+\begin{figure}[htbp]
     \centering
     \begin{subfigure}[]{0.30\linewidth}
         \centering
@@ -189,7 +189,7 @@ There exist three different types of couplers, connecting physical qubits:
 \item \textbf{External Couplers} connecting qubits aligned in parallel
 \item \textbf{Odd Couplers} which connect similarly aligned pairs of qubits
 \end{itemize}
-\begin{figure*}
+\begin{figure*}[ht]
 \subfloat[\label{anneal_schedule}]{\includegraphics[width=0.33\linewidth]{figures/anneal_schedule_plot.pdf}}%
     \subfloat[\label{pegasus}]{\includegraphics[width=0.33\linewidth]{figures/pegasus.pdf}}%
     \subfloat[\label{zephyr}]{\includegraphics[width=0.33\linewidth]{figures/zephyr.pdf}}
@@ -258,7 +258,7 @@ Tracing out hidden variables in the ansatz given in \autoref{eq:rawansatz}, the 
 A \gls{rbm} is an artificial neural network consisting of visible and hidden units that form a bipartite graph. That is, no inter-layer connections are allowed. During training, the \gls{rbm} learns to approximate a probability distribution.
 The main idea is that expectation values with respect to the quantum state can be estimated using samples drawn from the probability distribution $|\Psi(v)|^2$. Since the wavefunction ansatz is represented by a Restricted Boltzmann Machine, which corresponds to a classical stochastic Ising model, configurations $v$ can be sampled approximately using a D-Wave quantum annealer.
 
-\begin{figure}[h]
+\begin{figure}[htbp]
     \centering
     \begin{subfigure}{0.6\linewidth}
         \centering
@@ -292,7 +292,7 @@ We use the following workflow to determine $D_{TV}$: First, we use a \gls{sa} pr
 The results are presented in \autoref{anneal_schedule}. As a sanity check, it can be seen that Metropolis and Gibbs sampling perform theoretically near-optimal, as is expected. We observe that \gls{lsb} significantly underperforms the other solvers for this small-scale example. The performance of both \gls{lsb} and \gls{sa} improves as the transverse field bias $h$ increases. In \autoref{fig:dtv_classical_N8_M8}\textbf{(b)} the exact histogram of configurations $\Psi(v)|^2$ is plotted. For $h=0.5$ the distribution is peaked around a handful of highly probable sample configuration, whereas the distribution becomes more uniform for stronger values of $h$. This explains the performance increase for \gls{lsb} and \gls{sa} samplers.
 
 The peaked distribution originates from the fact that the spins in the \gls{tfim} description given by \autoref{eq:tfim} are aligned for low $h$ values (\textit{ferromagnetic} phase). For $h\rightarrow\infty$ the transverse field dominates and the ground state becomes a product of single-spin $\sigma_x$ eigenstates. Measured in the z-basis, this leads to a uniform distribution in the thermodynamic limit.
-\begin{figure}
+\begin{figure}[htbp]
     \centering
 
     \begin{subfigure}{\linewidth}
@@ -312,16 +312,16 @@ The peaked distribution originates from the fact that the spins in the \gls{tfim
     \caption{Sampling quality for different samplers for a trained \gls{rbm} approximating the ground state of a \gls{tfim} with 8 spins, corresponding to a \gls{rbm} with 8 visible and 8 hidden units. The sampling floor is the best possible total variational distance reachable with the given number of samples. Effort is measured in sweeps for SA, metropolis and Gibbs, and in steps for LSB.}
     \label{fig:dtv_classical_N8_M8}
 \end{figure}
-\subsection{Sampling temperature}
+\subsection{Sampling temperature \& CEM}
 In this section, we evaluate the influence of temperature on different models and solvers. We focus on two quantities: the rescaling factor $\beta_x$ and the effective temperature $\beta_\text{eff}$. Sampling from an ansatz, all weights in the \gls{rbm} are rescaled by $\beta_x$. For an ideal Gibbs sampler, the following equation holds:
 \begin{equation}
 \beta_\text{eff}=\frac{1}{\beta_x}.
 \end{equation}
-\subsection{Langevin Simulated Bifurcation}
+\subsubsection{Langevin Simulated Bifurcation}
 As \gls{lsb} is a temperature dependent solver and not guaranteed to sample from the Boltzmann distribution, it can be used to illustrate the influence of the input temperature $\beta_x$ on the solution quality. Contrary to the quantum annealer, sampling using \gls{lsb} does not involve additional costs. To evaluate the inpact of the scaling parameter $\beta_x$, we calculate the total variational distance $D_\text{TV}$ between the samples and the precise Boltzmann distribution by numerical enumeration. \autoref{fig:dtv_beta_scale_N8} clearly illustrates that the sampler temperature is problem dependent. $D_\text{TV}$ is minimal at the point where the effective temperature $\beta_\text{eff}$ is 1.
 \label{sec:exper:temp}
 
-\begin{figure}[h]
+\begin{figure}[htbp]
     \centering
     \begin{subfigure}{\textwidth}
         \centering
@@ -349,6 +349,35 @@ As \gls{lsb} is a temperature dependent solver and not guaranteed to sample from
     \label{fig:dtv_beta_scale_N8}
 \end{figure}
 \subsubsection{CEM}
+We have seen that correctly choosing the sampling temeperature is crucial in obtaining meaningful distributions. \gls{cem}\cite{kubo2025unlockingpowerboltzmannmachines} is a technique to dynamically estimate the temperature based on conditionally drawn samples. The hidden units' conditional expectation value
+\begin{equation}
+\langle h_j \rangle = \tanh\left(\beta \cdot \Theta_j\right), \qquad \Theta_j = b_j + \sum_i v_i W_{ij}
+\end{equation}
+for some fixed visibile units vector. $\beta_\text{eff}$ is then given by finding (\textit{matching}) the optimal $\beta$,
+\begin{equation}
+\beta_\text{eff} = \arg\min_\beta F(\beta), \text{ with } F(\beta)= \sum_j((h_{j, \text{observed}}-\tanh(\beta\cdot\Theta_j))^2
+\end{equation}
+, where $h_{j, \text{observed}}$ are actual samples of the hidden unit $j$ drawn from the sampler.
+
+The matching step is visualized in \autoref{fig:cem_matching}, where the left subfigure shows multiple candidate functions $\tanh(\beta\Theta)$ dependent on $\beta$ that can be used to match the returned samples. The right subfigure describes the corresponding minimization, in which the squared loss function $F(\beta)$ is minized over $\beta$ (in practice using scipy's \texttt{minimize\_scalar} function).
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}{0.48\linewidth}
+        \includegraphics[width=\linewidth]{figures/cem_matching_candidates.pdf}
+        \caption{Candidate fits vs.\ observed hidden units.}
+        \label{fig:cem_matching_candidates}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.48\linewidth}
+        \includegraphics[width=\linewidth]{figures/cem_matching_objective.pdf}
+        \caption{Matching objective $F(\beta)$.}
+        \label{fig:cem_matching_objective}
+    \end{subfigure}
+    \caption{%
+        The CEM matching step for $N=16$ spins with $h=1.0$. (a) Several candidate $\tanh(\beta\Theta)$ curves against the empirically observed hidden-unit samples. $\beta_{\mathrm{eff}}=1.94$ hugs the data and represents the best estimate of the sampler's temperature. (b) The sqaured loss function to be minimized
+    }
+    \label{fig:cem_matching}
+\end{figure}
 
 \subsection{Limitations of variational methods}
 In this section we describe computational and theoretical limitations to using variational methods in a hybrid quantum-classical setup.
@@ -369,14 +398,14 @@ with only positive amplitudes. We measure the impact of the sign problem on a gi
       \langle s \rangle = \frac{\sum_{\mathbf{v}} \Psi(\mathbf{v})}{\sum_{\mathbf{v}} |\Psi(\mathbf{v})|}
   \end{equation}
 Interestingly, we empirically observe that even for frustrated Heisenberg models with $0\leq\frac{J_2}{J_1}\leq0.5$ the \gls{rbm} with the Marshall sign correction can accurately approach the ground state energy, whereas without the correction the variational energy degrades significantly (see \autoref{fig:sign_barrier}).
-\begin{figure}[h]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=\linewidth]{figures/spin_ordering_across_qpt}
   \caption{Spin configurations sampled from a trained RBM-VMC model for the one-dimensional Transverse-Field Ising Model (TFIM) at three values of the transverse field $h$. \textbf{Top row:} each column shows 2\,000 spin configurations $\boldsymbol{\sigma} \in \{-1,+1\}^N$ sampled from the learned wave function $|\Psi_\theta|^2$, sorted by total magnetisation. \textbf{Bottom row:} spin-spin correlation $C(r) = \langle \sigma^z_0 \sigma^z_r \rangle$ as a function of distance $r$, computed from VMC samples (solid line) and exact diagonalisation (dashed line). The relative energy error $\varepsilon = |E_\mathrm{VMC} - E_\mathrm{exact}|/|E_\mathrm{exact}|$ is shown in each panel. The model is a fully-connected RBM ($N = N_h = 16$) trained for 300 iterations of Stochastic Reconfiguration with 500 Metropolis-Hastings samples per step.}
   \label{fig:tfim_ordering}
 \end{figure}
 
-\begin{figure*}[h]
+\begin{figure*}[htbp]
     \centering
 
     \begin{subfigure}{0.33\textwidth}
@@ -409,7 +438,7 @@ Interestingly, we empirically observe that even for frustrated Heisenberg models
 A crucial factor in the success of an annealing progress is the \textit{problem embedding} on the chip. Here, we assess two aspects related to embedding: First, introducing sparsity to fit the \gls{rbm} natively on the chip, and, second, embedding the problem multiple times to save computing time.
 \subsubsection{Sparse embedding}
 As described in \autoref{sec:solvers:quantum:adiab}, problems implementable on quantum annealer often need to be fit to the QPU in an additional embedding step. We are interested in whether a sparse, but native \gls{rbm}, that is, one that fits natively on the QPU, performers reasonably. The sparse \gls{rbm} is creating according to the following algorithm: First, constructe a bipartite graph by keeping only edges that correspond to internal couplers on the D-Wave QPU. One set of the graph corresponds to visible \gls{rbm} units, the other one to hidden units. Then, greedily pick qubits for the visible units, by maximizing the overlap between neighbor sets of visible units. After all visible units are chosen, create a minimum set-cover by picking the fewest hidden qubits such that every visible qubit has at least one hidden neighbor. The remaining hidden units are filled by best connected qubits. See also \autoref{fig:sparse-graph-construction} for a visual overview of the algorithm.
-\begin{figure}[h]
+\begin{figure}[htbp]
     \centering
     \begin{subfigure}[b]{0.31\linewidth}
         \centering
@@ -438,8 +467,8 @@ As described in \autoref{sec:solvers:quantum:adiab}, problems implementable on q
     \caption{Construction of a chain-free sparse RBM from a D-Wave Zephyr hardware graph ($N=8$ visible units). \textbf{(a)} Identify internal couplers (green) and external/odd couplers (purple)\textbf{(b)} Creation of bipartite graph by restricting to internal couplers, splitting into hidden unit candidates (red) and visible units (blue). \textbf{(c)} RBM's visible-hidden connectivity mask by selecting the hidden units which maximize connectivity while keeping a min-set-cover. Non-selected candidates (grey) are dropped.}
     \label{fig:sparse-graph-construction}
 \end{figure}
-We also looked directly at the effect of sparsity on its own, keeping the number of hidden units equal to the number of visible units and only changing how many of the real couplers are removed from the connectivity mask. When removing couplers, we always removed one from the hidden unit with the highest remaining degree, so that no visible or hidden unit was ever left with zero connections. \autoref{fig:sparsity-ablation} shows the resulting energy error as a function of sparsity, for both classical training and training with samples from the real QPU. In both cases, error increases sharply as sparsity increases, and the real QPU curve gets worse faster than the classical one at high sparsity — real hardware sampling adds an extra penalty on top of the sparsity itself.
-\begin{figure}[h]
+We also looked directly at the effect of sparsity on its own, keeping the number of hidden units equal to the number of visible units and only changing how many of the real couplers are removed from the connectivity mask. When removing couplers, we always removed one from the hidden unit with the highest remaining degree, so that no visible or hidden unit was ever left with zero connections. \autoref{fig:sparsity-simple} shows the resulting energy error as a function of sparsity, for both classical training and training with samples from the real QPU. In both cases, error increases sharply as sparsity increases, and the real QPU curve gets worse faster than the classical one at high sparsity — real hardware sampling adds an extra penalty on top of the sparsity itself.
+\begin{figure}[htbp]
     \centering
     \begin{subfigure}[b]{0.48\linewidth}
         \centering
@@ -688,6 +717,6 @@ Total cost per matrix--vector product: $\mathcal{O}(N_s \cdot N_\text{params})$,
 identical to evaluating the gradient once.
 \clearpage
 \bibliography{bib}
-\bibliographystyle{plain}
+\bibliographystyle{unsrt}
 
 \end{document}	
