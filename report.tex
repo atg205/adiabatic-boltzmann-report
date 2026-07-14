@@ -208,13 +208,13 @@ Each Ising spin is represented by continuous dynamical variables, position \(x_i
 
 \gls{lsb} is a stochastic adaptation of SB designed to function as a Boltzmann sampler for training energy-based models such as Semi-Restricted Boltzmann Machines (SRBMs). While SB is a deterministic optimization method, LSB introduces stochasticity to approximate a Boltzmann distribution $B_{\beta_{\mathrm{eff}}}$ with an unknown effective inverse temperature \(\beta_{\mathrm{eff}}\). To handle the unknown \(\beta_{\mathrm{eff}}\) during learning, LSB is often combined with \gls{cem}. A detailed analysis of different temperature parameters is provided in \autoref{sec:exper:temp}.
 \paragraph{Conditional Expectation Matching}
-\gls{cem} accounts for the fact that, in order to produce samples using \gls{lsb}, a parameter $\beta_\text{eff}$, which is unknown and instance dependent, has to be found. This parameter is called the effective inverse temperature and it defines the distribution returned by the sampler. In \gls{srbm}, hidden variables are conditionally independent when the visible units are fixed to a condition vector $r$. This allows the direct calculation of the expectation value of a hidden unit\cite{kubo2025unlockingpowerboltzmannmachines}:
+\gls{cem} accounts for the fact that, in order to produce samples using \gls{lsb}, a parameter $\beta_\text{eff}$, which is unknown and instance dependent, has to be found. This parameter is called the effective inverse temperature and it defines the distribution returned by the sampler. In \gls{srbm}, hidden variables are conditionally independent when the visible units are fixed to a condition vector $\mathbf{r}$. This allows the direct calculation of the expectation value of a hidden unit\cite{kubo2025unlockingpowerboltzmannmachines}:
 \begin{equation}
-\langle h\rangle_{\beta,r}=\tanh \left\lbrace\beta\left(c_j+\sum_{i=1}^{N_v}r_i W_{ij}\right)\right\rbrace
-\end{equation} 
-To estimate the expectation value, denoted $\langle h_j \rangle_{r,C}$ \gls{cem} then performs conditional \gls{lsb} sampling, fixing $v=r$. In the \textit{matching} step, CEM then minimizes the squared difference between both expectation values:
+\langle h\rangle_{\beta,\mathbf{r}}=\tanh \left\lbrace\beta\left(c_j+\sum_{i=1}^{N_v}r_i W_{ij}\right)\right\rbrace
+\end{equation}
+To estimate the expectation value, denoted $\langle h_j \rangle_{\mathbf{r},C}$ \gls{cem} then performs conditional \gls{lsb} sampling, fixing $\mathbf{v}=\mathbf{r}$. In the \textit{matching} step, CEM then minimizes the squared difference between both expectation values:
 \begin{equation}
-\beta_\text{eff}=\operatorname*{arg\,min}_{\beta>0}\sum_{j=1}^{N_h}\left\lbrace\langle h_j \rangle_{r,C}-\langle h\rangle_{\beta,r}\right\rbrace^2
+\beta_\text{eff}=\operatorname*{arg\,min}_{\beta>0}\sum_{j=1}^{N_h}\left\lbrace\langle h_j \rangle_{\mathbf{r},C}-\langle h\rangle_{\beta,\mathbf{r}}\right\rbrace^2
 \end{equation}
 \gls{cem} can also be used with other temperature-dependent solvers, e.g. the D-Wave Quantum Annealer.
 \subsection{Metropolis-Hastings inspired methods}
@@ -238,16 +238,16 @@ Variational algorithms are a class of hybrid quantum-classical optimization meth
 As we are interested in comparing current quantum annealing devices with their classical counterparts, we focus solely on the second case. The goal is to approximate the ground state, that is, the eigenstate corresponding to the lowest eigenvalue of a Hamiltonian $H$. 
 In the adiabatic case, the ansatz is defined via an energy function over visible and hidden units,
 \begin{equation}
-E_\theta(\bm v,\bm h)=\bm a\cdot \bm v +\bm b\cdot \bm h + \bm h\cdot \bm W\cdot \bm v,
+E_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})=\mathbf{a}\cdot \mathbf{v} +\mathbf{b}\cdot \mathbf{h} + \mathbf{h}\cdot \mathbf{W}\cdot \mathbf{v},
 \end{equation}
-with weights $\bm\theta=\{\bm a, \bm b, \bm W\}$ respectively applied to the vector of visible units $\bm v=(v_1, \ldots, v_N)$ and hidden units $\bm h=(h_1, \ldots, h_M)$. The joint quantum state is
+with weights $\boldsymbol\theta=\{\mathbf{a}, \mathbf{b}, \mathbf{W}\}$ respectively applied to the vector of visible units $\mathbf{v}=(v_1, \ldots, v_N)$ and hidden units $\mathbf{h}=(h_1, \ldots, h_M)$. The joint quantum state is
 \begin{equation}
 \label{eq:rawansatz}
-\ket\Psi =\sum_v\Psi(v)\ket v, \qquad \Psi(v)=\sqrt{\sum_h e^{-E_\theta(v,h)}},
+\ket\Psi =\sum_{\mathbf{v}}\Psi(\mathbf{v})\ket{\mathbf{v}}, \qquad \Psi(\mathbf{v})=\sqrt{\sum_{\mathbf{h}} e^{-E_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})}},
 \end{equation}
-so that $|\Psi(v)|^2=\sum_h e^{-E_\theta(v,h)}$ is, up to normalization, the marginal over hidden units of the joint Boltzmann distribution $p_\theta(v,h)=Z^{-1}e^{-E_\theta(v,h)}$, $Z=\sum_{v,h}e^{-E_\theta(v,h)}$, i.e.\ $|\Psi(v)|^2 \propto \sum_h p_\theta(v,h)$. The corresponding Born probability distribution is
+so that $|\Psi(\mathbf{v})|^2=\sum_{\mathbf{h}} e^{-E_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})}$ is, up to normalization, the marginal over hidden units of the joint Boltzmann distribution $p_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})=Z^{-1}e^{-E_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})}$, $Z=\sum_{\mathbf{v},\mathbf{h}}e^{-E_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})}$, i.e.\ $|\Psi(\mathbf{v})|^2 \propto \sum_{\mathbf{h}} p_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})$. The corresponding Born probability distribution is
 \begin{equation}
-\rho(v)=\frac{|\Psi(v)|^2}{\sum_{v'}|\Psi(v')|^2},
+\rho(\mathbf{v})=\frac{|\Psi(\mathbf{v})|^2}{\sum_{\mathbf{v}'}|\Psi(\mathbf{v}')|^2},
 \end{equation}
 which is however intractable to normalize for large Hilbert spaces.
 Tracing out the hidden variables in \autoref{eq:rawansatz}, the ansatz becomes:
@@ -255,10 +255,10 @@ Tracing out the hidden variables in \autoref{eq:rawansatz}, the ansatz becomes:
 \label{eq:ansatz}
 \Psi(\mathbf{v}) = e^{-\mathbf{a} \cdot \mathbf{v}/2} \prod_{j=1}^{N_h} \left[ 2\cosh\!\left(b_j + \sum_i W_{ji} v_i\right) \right]^{1/2}.
 \end{equation}
-Two sampling regimes are used in this work. Classical Metropolis-Hastings sampling operates directly on the closed-form marginal $\Psi(v)$ of \autoref{eq:ansatz}: only the visible units are instantiated, and $h$ never appears as an explicit random variable. Gibbs sampling on the D-Wave annealer instead targets the joint distribution $p_\theta(v,h)$: both $v$ and $h$ are encoded as physical qubits (\autoref{fig:rbm-embedding}), the annealer returns samples of the pair $(v,h)$, and $h$ is subsequently discarded (marginalized) to obtain samples of $v$ distributed as $\rho(v)$. Since D-Wave qubit biases and coupler strengths are restricted to a fixed hardware range, $\bm a, \bm b, \bm W$ are rescaled by a common factor $\beta_x$ before being programmed onto the device; this rescaling is the origin of the effective inverse temperature $\beta_\text{eff}$ discussed in \autoref{sec:exper:temp}.
+Two sampling regimes are used in this work. Classical Metropolis-Hastings sampling operates directly on the closed-form marginal $\Psi(\mathbf{v})$ of \autoref{eq:ansatz}: only the visible units are instantiated, and $\mathbf{h}$ never appears as an explicit random variable. Gibbs sampling on the D-Wave annealer instead targets the joint distribution $p_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})$: both $\mathbf{v}$ and $\mathbf{h}$ are encoded as physical qubits (\autoref{fig:rbm-embedding}), the annealer returns samples of the pair $(\mathbf{v},\mathbf{h})$, and $\mathbf{h}$ is subsequently discarded (marginalized) to obtain samples of $\mathbf{v}$ distributed as $\rho(\mathbf{v})$. Since D-Wave qubit biases and coupler strengths are restricted to a fixed hardware range, $\mathbf{a}, \mathbf{b}, \mathbf{W}$ are rescaled by a common factor $\beta_x$ before being programmed onto the device; this rescaling is the origin of the effective inverse temperature $\beta_\text{eff}$ discussed in \autoref{sec:exper:temp}.
 \subsection{Boltzmann machine}
 A \gls{rbm} is an artificial neural network consisting of visible and hidden units that form a bipartite graph. That is, no inter-layer connections are allowed. During training, the \gls{rbm} learns to approximate a probability distribution.
-The main idea is that expectation values with respect to the quantum state can be estimated using samples drawn from the probability distribution $|\Psi(v)|^2$. Since the wavefunction ansatz is represented by a Restricted Boltzmann Machine, which corresponds to a classical stochastic Ising model, configurations $v$ can be sampled approximately using a D-Wave quantum annealer.
+The main idea is that expectation values with respect to the quantum state can be estimated using samples drawn from the probability distribution $|\Psi(\mathbf{v})|^2$. Since the wavefunction ansatz is represented by a Restricted Boltzmann Machine, which corresponds to a classical stochastic Ising model, configurations $\mathbf{v}$ can be sampled approximately using a D-Wave quantum annealer.
 
 \begin{figure}[htbp]
     \centering
@@ -291,7 +291,7 @@ As every sampler has a range of parameters, we are interested in how well the sa
 
 We use the following workflow to determine $D_{TV}$: First, we use a \gls{sa} pretrained \gls{rbm} and compute its exact distribution $|\Psi|^2$ numerically by enumerating all possible spin configurations. We then collect samples from different samplers and compare the resulting empirical histogram to the exact distribution.
 
-The results are presented in \autoref{anneal_schedule}. As a sanity check, it can be seen that Metropolis and Gibbs sampling perform theoretically near-optimal, as is expected. We observe that \gls{lsb} significantly underperforms the other solvers for this small-scale example. The performance of both \gls{lsb} and \gls{sa} improves as the transverse field bias $h$ increases. In \autoref{fig:dtv_classical_N8_M8}\textbf{(b)} the exact histogram of configurations $\Psi(v)|^2$ is plotted. For $h=0.5$ the distribution is peaked around a handful of highly probable sample configuration, whereas the distribution becomes more uniform for stronger values of $h$. This explains the performance increase for \gls{lsb} and \gls{sa} samplers.
+The results are presented in \autoref{anneal_schedule}. As a sanity check, it can be seen that Metropolis and Gibbs sampling perform theoretically near-optimal, as is expected. We observe that \gls{lsb} significantly underperforms the other solvers for this small-scale example. The performance of both \gls{lsb} and \gls{sa} improves as the transverse field bias $h$ increases. In \autoref{fig:dtv_classical_N8_M8}\textbf{(b)} the exact histogram of configurations $|\Psi(\mathbf{v})|^2$ is plotted. For $h=0.5$ the distribution is peaked around a handful of highly probable sample configuration, whereas the distribution becomes more uniform for stronger values of $h$. This explains the performance increase for \gls{lsb} and \gls{sa} samplers.
 
 The peaked distribution originates from the fact that the spins in the \gls{tfim} description given by \autoref{eq:tfim} are aligned for low $h$ values (\textit{ferromagnetic} phase). For $h\rightarrow\infty$ the transverse field dominates and the ground state becomes a product of single-spin $\sigma_x$ eigenstates. Measured in the z-basis, this leads to a uniform distribution in the thermodynamic limit.
 \begin{figure}[htbp]
@@ -315,7 +315,7 @@ The peaked distribution originates from the fact that the spins in the \gls{tfim
     \label{fig:dtv_classical_N8_M8}
 \end{figure}
 \subsection{Sampling temperature \& CEM}
-In this section, we evaluate the influence of temperature on different models and solvers. We focus on two quantities: the rescaling factor $\beta_x$ and the effective temperature $\beta_\text{eff}$. Sampling from an ansatz, all weights in the \gls{rbm} are rescaled by $\beta_x$, that is, the sampler is programmed with $E_\text{in}=\alpha E_\theta$, $\alpha=1/\beta_x$. If the device samples at hardware inverse temperature $\beta_\text{hw}$, it draws from $p(v,h)\propto e^{-\beta_\text{hw}E_\text{in}(v,h)}=e^{-(\alpha\beta_\text{hw})E_\theta(v,h)}$, i.e.\ relative to the unscaled model $\beta_\text{eff}=\alpha\beta_\text{hw}$. For an ideal Gibbs sampler held at $\beta_\text{hw}=1$, the following equation holds:
+In this section, we evaluate the influence of temperature on different models and solvers. We focus on two quantities: the rescaling factor $\beta_x$ and the effective temperature $\beta_\text{eff}$. Sampling from an ansatz, all weights in the \gls{rbm} are rescaled by $\beta_x$, that is, the sampler is programmed with $E_\text{in}=\alpha E_{\boldsymbol\theta}$, $\alpha=1/\beta_x$. If the device samples at hardware inverse temperature $\beta_\text{hw}$, it draws from $p(\mathbf{v},\mathbf{h})\propto e^{-\beta_\text{hw}E_\text{in}(\mathbf{v},\mathbf{h})}=e^{-(\alpha\beta_\text{hw})E_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})}$, i.e.\ relative to the unscaled model $\beta_\text{eff}=\alpha\beta_\text{hw}$. For an ideal Gibbs sampler held at $\beta_\text{hw}=1$, the following equation holds:
 \begin{equation}
 \beta_\text{eff}=\frac{1}{\beta_x}.
 \end{equation}
@@ -418,23 +418,33 @@ with only positive amplitudes. This transformation is exact only for the unfrust
   \begin{equation}
       \langle s \rangle = \frac{\sum_{\mathbf{v}} \Psi(\mathbf{v})}{\sum_{\mathbf{v}} |\Psi(\mathbf{v})|}
   \end{equation}
-Interestingly, we empirically observe that even for frustrated Heisenberg models with $0\leq\frac{J_2}{J_1}\leq0.5$ the \gls{rbm} with the Marshall sign correction can accurately approach the ground state energy, whereas without the correction the variational energy degrades significantly — consistent with \cite{Richter_1994}, who found that the sign rule can empirically survive frustration over part of the parameter range even though the proof no longer strictly applies beyond $J_2=0$. Empirically, we observe that the lowest achieved relative error increases as $J_2/J_1$ increases (\autoref{fig:convergence_best}), in line with expectations that stronger frustration increasingly violates the positive-amplitude assumption underlying the ansatz. We did not test a phase-capable ansatz (e.g.\ a complex-valued \gls{rbm} or a separate amplitude-and-phase network); such a comparison is left as future work.
+Interestingly, we empirically observe that even for frustrated Heisenberg models with $0\leq\frac{J_2}{J_1}\leq0.5$ the \gls{rbm} with the Marshall sign correction can accurately approach the ground state energy, whereas without the correction the variational energy degrades significantly — consistent with \cite{Richter_1994}, who found that the sign rule can empirically survive frustration over part of the parameter range even though the proof no longer strictly applies beyond $J_2=0$. Empirically, we observe that the median relative error over independent seeds rises sharply once $J_2/J_1$ exceeds $0.5$ (\autoref{fig:convergence_median}), in line with expectations that stronger frustration increasingly violates the positive-amplitude assumption underlying the ansatz. We did not test a phase-capable ansatz (e.g.\ a complex-valued \gls{rbm} or a separate amplitude-and-phase network); such a comparison is left as future work.
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\linewidth]{figures/spin_ordering_across_qpt}
-  \caption{Spin configurations sampled from a trained RBM-VMC model for the one-dimensional Transverse-Field Ising Model (TFIM) at three values of the transverse field $h$. \textbf{Top row:} each column shows 2\,000 spin configurations $\boldsymbol{\sigma} \in \{-1,+1\}^N$ sampled from the learned wave function $|\Psi_\theta|^2$, sorted by total magnetisation. \textbf{Bottom row:} spin-spin correlation $C(r) = \langle \sigma^z_0 \sigma^z_r \rangle$ as a function of distance $r$, computed from VMC samples (solid line) and exact diagonalisation (dashed line). The relative energy error $\varepsilon = |E_\mathrm{VMC} - E_\mathrm{exact}|/|E_\mathrm{exact}|$ is shown in each panel. The model is a fully-connected RBM ($N = N_h = 16$) trained for 300 iterations of Stochastic Reconfiguration with 500 Metropolis-Hastings samples per step.}
+  \caption{Spin configurations sampled from a trained RBM-VMC model for the one-dimensional Transverse-Field Ising Model (TFIM) at three values of the transverse field $h$. \textbf{Top row:} each column shows 2\,000 spin configurations $\boldsymbol{\sigma} \in \{-1,+1\}^N$ sampled from the learned wave function $|\Psi_{\boldsymbol\theta}|^2$, sorted by total magnetisation. \textbf{Bottom row:} spin-spin correlation $C(r) = \langle \sigma^z_0 \sigma^z_r \rangle$ as a function of distance $r$, computed from VMC samples (solid line) and exact diagonalisation (dashed line). The relative energy error $\varepsilon = |E_\mathrm{VMC} - E_\mathrm{exact}|/|E_\mathrm{exact}|$ is shown in each panel. The model is a fully-connected RBM ($N = N_h = 16$) trained for 300 iterations of Stochastic Reconfiguration with 500 Metropolis-Hastings samples per step.}
   \label{fig:tfim_ordering}
 \end{figure}
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=\linewidth]{figures/fig_convergence_best.pdf}
-    \caption{Best RBM convergence curves ($E/N$ vs.\ SR iteration) for
+    \includegraphics[width=\linewidth]{figures/fig_convergence_median.pdf}
+    \caption{RBM convergence curves ($E/N$ vs.\ SR iteration) for
     $N \in \{8,12\}$ and $J_2/J_1 \in \{0.3,0.5,0.7,0.9\}$ on the frustrated
-    $J_1$--$J_2$ Heisenberg chain. The red dashed line marks the exact
-    ground-state energy $E_\mathrm{exact}/N$. The lowest achieved relative
-    error increases with $J_2/J_1$.}
-    \label{fig:convergence_best}
+    $J_1$--$J_2$ Heisenberg chain, using Gibbs sampling. The solid line is
+    the median over $n$ independent evaluation seeds (annotated per panel);
+    the shaded band is the interquartile range. For each panel, the
+    hyperparameter configuration was selected beforehand on a disjoint
+    tuning set (Optuna trials, tuning seeds excluded from evaluation);
+    $\varepsilon_\mathrm{med}$ denotes the median relative error of the
+    tail-averaged energy. Where $n$ is reported as $a/b$, $b$ seeds were
+    attempted and $b-a$ runs diverged (non-finite energy) under the selected
+    configuration and are retained as failures rather than silently dropped;
+    divergence is frequent in the strongly frustrated regime
+    ($N=8$, $J_2/J_1 \geq 0.7$). The red dashed line marks the exact
+    ground-state energy $E_\mathrm{exact}/N$. The median relative error
+    rises sharply beyond $J_2/J_1 = 0.5$.}
+    \label{fig:convergence_median}
 \end{figure}
 \subsection{Improving D-Wave Topology performance}
 A crucial factor in the success of an annealing progress is the \textit{problem embedding} on the chip. Here, we assess two aspects related to embedding: First, introducing sparsity to fit the \gls{rbm} natively on the chip, and, second, embedding the problem multiple times to save computing time.
@@ -521,7 +531,7 @@ Traditionally, neural networks are trained using gradient descent. We will not g
 \begin{equation}
     O_k(\mathbf{v}) = \frac{\partial \log \Psi(\mathbf{v})}{\partial \theta_k},
 \end{equation}
-with $\boldsymbol{\theta} = \{\mathbf{a}, \mathbf{b}, W\}$, the energy gradient or force vector is defined as
+with $\boldsymbol{\theta} = \{\mathbf{a}, \mathbf{b}, \mathbf{W}\}$, the energy gradient or force vector is defined as
 \begin{equation}
     F_k = \langle O_k E_\text{loc} \rangle - \langle O_k \rangle \langle E_\text{loc} \rangle,
 \end{equation}
@@ -535,20 +545,20 @@ which is the covariance of the gradient observable and the local energy. The loc
 
 
 
-The next step then is to define the quantum geometric tensor $S$, the sample covariance of the $O_k$ vectors, which measures how sensitive the Born distribution $|\Psi|^2$ is to each parameter direction. In matrix form, if $\bar{O}$ is the matrix of mean-centred gradients, then $S = \frac{1}{N_s}\bar{O}^\top \bar{O}$. After solving the \gls{sr} system 
+The next step then is to define the quantum geometric tensor $\mathbf{S}$, the sample covariance of the $O_k$ vectors, which measures how sensitive the Born distribution $|\Psi|^2$ is to each parameter direction. In matrix form, if $\bar{\mathbf{O}}$ is the matrix of mean-centred gradients, then $\mathbf{S} = \frac{1}{N_s}\bar{\mathbf{O}}^\top \bar{\mathbf{O}}$. After solving the \gls{sr} system
 \begin{equation}
 \label{eq:srsystem}
-S \cdot \delta\theta = F
+\mathbf{S} \cdot \delta\boldsymbol{\theta} = \mathbf{F}
 \end{equation}
-for $\delta\theta$, the parameters are updated by
+for $\delta\boldsymbol{\theta}$, the parameters are updated by
 \begin{equation}
-    \theta \leftarrow \theta - \eta\,\delta\theta,
+    \boldsymbol{\theta} \leftarrow \boldsymbol{\theta} - \eta\,\delta\boldsymbol{\theta},
 \end{equation}
 with learning rate $\eta$.
 \begin{algorithm}
 \caption{Stochastic Reconfiguration}
 \begin{algorithmic}[1]
-\Require Parameters $\boldsymbol{\theta} = \{\mathbf{a}, \mathbf{b}, W\}$,
+\Require Parameters $\boldsymbol{\theta} = \{\mathbf{a}, \mathbf{b}, \mathbf{W}\}$,
          learning rate $\eta$, regularisation $\lambda$
 \For{$t = 1, 2, \ldots$}
     \State Sample $\mathbf{v}^{(s)} \sim |\Psi_{\boldsymbol{\theta}}|^2$
@@ -562,8 +572,8 @@ with learning rate $\eta$.
     \State $F_k \leftarrow
            \langle O_k E_\text{loc} \rangle -
            \langle O_k \rangle \langle E_\text{loc} \rangle$
-    \State $S \leftarrow \tfrac{1}{N_s}\bar{O}^\top \bar{O} + \lambda I$
-    \State Solve $S\,\delta\boldsymbol{\theta} = \mathbf{F}$
+    \State $\mathbf{S} \leftarrow \tfrac{1}{N_s}\bar{\mathbf{O}}^\top \bar{\mathbf{O}} + \lambda I$
+    \State Solve $\mathbf{S}\,\delta\boldsymbol{\theta} = \mathbf{F}$
            \Comment{conjugate gradient, matrix-free}
     \State $\boldsymbol{\theta} \leftarrow \boldsymbol{\theta} -
            \eta\,\delta\boldsymbol{\theta}$
@@ -572,10 +582,10 @@ with learning rate $\eta$.
 \end{algorithm}
 
 \subsubsection{Conjugate gradient}
-As $S \in \mathbb{R}^{N_\text{params} \times N_\text{params}}$ grows quadratically with the number of parameters $N_\text{params} = N + M + NM$, with $N$ and $M$ the number of visible and hidden units respectively, solving the \gls{sr} system in \autoref{eq:srsystem} is intractable for large system sizes. We therefore apply a technique called \gls{cg}, which requires only matrix vector products $S \cdot x$ 
+As $\mathbf{S} \in \mathbb{R}^{N_\text{params} \times N_\text{params}}$ grows quadratically with the number of parameters $N_\text{params} = N + M + NM$, with $N$ and $M$ the number of visible and hidden units respectively, solving the \gls{sr} system in \autoref{eq:srsystem} is intractable for large system sizes. We therefore apply a technique called \gls{cg}, which requires only matrix vector products $\mathbf{S} \cdot \mathbf{x}$
 and converges for any symmetric positive-definite matrix.Computing the matrix--vector product then costs only $\mathcal{O}(N_s \cdot N_\text{params})$:
 \begin{equation}
-    S \cdot x = \frac{1}{N_s}\bar{O}^\top(\bar{O}\,x) + \lambda x
+    \mathbf{S} \cdot \mathbf{x} = \frac{1}{N_s}\bar{\mathbf{O}}^\top(\bar{\mathbf{O}}\,\mathbf{x}) + \lambda \mathbf{x}
 \end{equation}
 \subsection{Exact Solving}
 Determining the exact value of the ground state up to numerical precision is crucial for evaluating the performance of the trained models. For \gls{tfim}, exact solving is possible for arbitrary system sizes, whereas solving the J1J2 Heisenberg model is computationally hard.
@@ -639,60 +649,60 @@ D-Wave experiments use the \texttt{Advantage\_system6} (Pegasus) and \texttt{Adv
 % -------------------- Appendix -------------------- *
 \clearpage
 \section{Appendix}
-\textbf{Claim.} Given the regularised quantum geometric tensor 
-$S = \frac{1}{N_s}\bar{O}^\top\bar{O} + \lambda I$, 
-its product with any vector $x \in \mathbb{R}^{N_\text{params}}$ satisfies
+\textbf{Claim.} Given the regularised quantum geometric tensor
+$\mathbf{S} = \frac{1}{N_s}\bar{\mathbf{O}}^\top\bar{\mathbf{O}} + \lambda I$,
+its product with any vector $\mathbf{x} \in \mathbb{R}^{N_\text{params}}$ satisfies
 \begin{equation}
-    S\,x = \frac{1}{N_s}\bar{O}^\top(\bar{O}\,x) + \lambda x.
+    \mathbf{S}\,\mathbf{x} = \frac{1}{N_s}\bar{\mathbf{O}}^\top(\bar{\mathbf{O}}\,\mathbf{x}) + \lambda \mathbf{x}.
 \end{equation}
 
 \textbf{Derivation.}
 
-\textit{Step 1: Write $S$ in sample form.}
+\textit{Step 1: Write $\mathbf{S}$ in sample form.}
 By definition, $S_{kl} = \langle O_k O_l \rangle - \langle O_k \rangle\langle O_l \rangle$.
-Introducing the matrix $O \in \mathbb{R}^{N_s \times N_\text{params}}$ with entries 
+Introducing the matrix $\mathbf{O} \in \mathbb{R}^{N_s \times N_\text{params}}$ with entries
 $O_{sk} = O_k(\mathbf{v}^{(s)})$, the sample estimates are
 \begin{equation}
-    \langle O_k O_l \rangle = \frac{1}{N_s}\sum_s O_{sk}\,O_{sl} 
-    = \frac{1}{N_s}(O^\top O)_{kl}, \qquad
+    \langle O_k O_l \rangle = \frac{1}{N_s}\sum_s O_{sk}\,O_{sl}
+    = \frac{1}{N_s}(\mathbf{O}^\top \mathbf{O})_{kl}, \qquad
     \langle O_k \rangle\langle O_l \rangle = \mu_k \mu_l,
 \end{equation}
 where $\mu_k = \frac{1}{N_s}\sum_s O_{sk}$ is the sample mean of the $k$-th observable.
 
-\textit{Step 2: Express $S$ via the mean-centred matrix.}
-Define $\bar{O} \in \mathbb{R}^{N_s \times N_\text{params}}$ by $\bar{O}_{sk} = O_{sk} - \mu_k$.
+\textit{Step 2: Express $\mathbf{S}$ via the mean-centred matrix.}
+Define $\bar{\mathbf{O}} \in \mathbb{R}^{N_s \times N_\text{params}}$ by $\bar{O}_{sk} = O_{sk} - \mu_k$.
 Then
 \begin{equation}
-    \frac{1}{N_s}(\bar{O}^\top\bar{O})_{kl} 
+    \frac{1}{N_s}(\bar{\mathbf{O}}^\top\bar{\mathbf{O}})_{kl}
     = \frac{1}{N_s}\sum_s (O_{sk}-\mu_k)(O_{sl}-\mu_l)
     = \langle O_k O_l \rangle - \mu_k\mu_l
     = S_{kl} - \lambda\delta_{kl},
 \end{equation}
 so, including regularisation,
 \begin{equation}
-    S = \frac{1}{N_s}\bar{O}^\top\bar{O} + \lambda I.
+    \mathbf{S} = \frac{1}{N_s}\bar{\mathbf{O}}^\top\bar{\mathbf{O}} + \lambda I.
 \end{equation}
 
-\textit{Step 3: Apply to $x$.}
+\textit{Step 3: Apply to $\mathbf{x}$.}
 Since matrix multiplication is associative,
 \begin{equation}
-    S\,x = \frac{1}{N_s}\bar{O}^\top\bar{O}\,x + \lambda I\,x
-         = \frac{1}{N_s}\bar{O}^\top\!\underbrace{(\bar{O}\,x)}_{z\,\in\,\mathbb{R}^{N_s}} + \lambda x. \qquad\square
+    \mathbf{S}\,\mathbf{x} = \frac{1}{N_s}\bar{\mathbf{O}}^\top\bar{\mathbf{O}}\,\mathbf{x} + \lambda I\,\mathbf{x}
+         = \frac{1}{N_s}\bar{\mathbf{O}}^\top\!\underbrace{(\bar{\mathbf{O}}\,\mathbf{x})}_{\mathbf{z}\,\in\,\mathbb{R}^{N_s}} + \lambda \mathbf{x}. \qquad\square
 \end{equation}
 
 \textit{Step 4: Two-pass interpretation.}
-The product $Sx$ therefore decomposes into two operations:
+The product $\mathbf{S}\mathbf{x}$ therefore decomposes into two operations:
 \begin{enumerate}
-    \item \textbf{Forward pass.} Compute $z = \bar{O}\,x \in \mathbb{R}^{N_s}$, 
-          where $z_s = \sum_k \bar{O}_{sk}\,x_k$ is the projection of $x$ 
-          onto the centred gradient of sample $s$. 
+    \item \textbf{Forward pass.} Compute $\mathbf{z} = \bar{\mathbf{O}}\,\mathbf{x} \in \mathbb{R}^{N_s}$,
+          where $z_s = \sum_k \bar{O}_{sk}\,x_k$ is the projection of $\mathbf{x}$
+          onto the centred gradient of sample $s$.
           Cost: $\mathcal{O}(N_s \cdot N_\text{params})$.
-    \item \textbf{Backward pass.} Compute $\bar{O}^\top z \in \mathbb{R}^{N_\text{params}}$, 
-          where $(\bar{O}^\top z)_k = \sum_s \bar{O}_{sk}\,z_s$ back-projects 
-          the per-sample scalars into parameter space. 
+    \item \textbf{Backward pass.} Compute $\bar{\mathbf{O}}^\top \mathbf{z} \in \mathbb{R}^{N_\text{params}}$,
+          where $(\bar{O}^\top z)_k = \sum_s \bar{O}_{sk}\,z_s$ back-projects
+          the per-sample scalars into parameter space.
           Cost: $\mathcal{O}(N_s \cdot N_\text{params})$.
 \end{enumerate}
-The matrix $S \in \mathbb{R}^{N_\text{params} \times N_\text{params}}$ is never formed. 
+The matrix $\mathbf{S} \in \mathbb{R}^{N_\text{params} \times N_\text{params}}$ is never formed.
 Total cost per matrix--vector product: $\mathcal{O}(N_s \cdot N_\text{params})$, 
 identical to evaluating the gradient once.
 \clearpage
