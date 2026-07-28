@@ -1,0 +1,54 @@
+# Revision history of `audyt_cld_bg.md`
+
+## Revision 3 — 2026-07-28, in response to `uwagi_do_audytu_cld_bg.md`
+
+The reviewer critique was adjudicated point by point, independently rather than by deference: **right on five points (1, 3, 4, 5, 7), partly right on two (2, 8), one out of scope (6, literature — accepted and acted on), and partly right on the last (9)**. It was also wrong once — and wrong by agreeing with the audit.
+
+### Accepted and applied
+
+| Critique point | Change |
+|---|---|
+| 1. "mismatch alone explains the entire RMSE" too strong | F1 restated as *can produce error of this magnitude*, with the measured instance-dependence (RMS 0.008–0.19 across weight draws) and the observation that the reported RMSE lying *inside* that span shows a random-weight proxy overstates the effect. Script shipped: `verify/cem_family.py` (fixed seed). |
+| 2. Eq. (20) "argmin is ill-posed" is wrong | Withdrawn. The critique's algebra is correct — the population risk is `Var(h_j) + (m_j(β₀) − m_j(β))²`, so the single-sample objective is a consistent M-estimator (verified: median β̂ → β₀ at N_h = 256). Replaced by M2: an inconsistent *description* across Eqs. (10)/(19)/(20) and Fig. 11a, plus a quantified boundary-saturation mechanism offered as plausible, not proven. |
+| 3. Parity criticism over-generalised | Split by regime in M3: for `h < J` the periodic sum equals the lowest odd-parity state exactly (10⁻¹⁴); only for `h > J` does it fall `2(h−J)` below it. |
+| 4. `auto_scale` fix oversimplified | F2's fix no longer claims β_eff reduces to the device's physical temperature; it now lists the programmed energy scale, `B(s)`/freeze-out, annealing dynamics, embedding and chains, analog error and non-Boltzmann deviations, and points at `freezeout_effective_temperature`. |
+| 5a. "dotted line" caption | Downgraded from "identifies the wrong one" to **ambiguous** (M13). |
+| 5b. "across the full sparsity range tested" | **Objection dropped.** The ablation caches contain only the four masks 0.5586–0.8789 and no dense point, so the phrase is accurate for that ablation. |
+| 6. Missing literature | Berns, Rodrigues, Finocchio & Mentink, PRApplied 25, 024085 (2026), arXiv:2504.18359 verified in every field and added to §4.1 as prior art for the *sampling-quality* section — closer to what the report already did than to its proposed future work. §4.2 reframed from "open frontier" to "narrow gap inside one group's active programme" (Mentink co-authors both Berns and Chowdhury; Berns' only citation is Chowdhury). Also added: an SB/CIM-class sampler already driving RBM/DBN learning in PRApplied (DOI 10.1103/6c63-cmgy, Mar 2026) and Goto & Ohzeki, JPSJ 94, 034002 (2025). |
+| 7. Seeding sentence credited too generously | Moved to §6 as a gap, and sharpened: every cache key ends in one of five **fixed** seeds `{42,123,456,789,1234}`, none of which appears in `report.tex`, so L647's `np.random.randint` claim contradicts the committed data. |
+| 8. Inconsistent severity levels | Unified: three critical findings F1–F3 named identically in the summary, the body and the recommendations; everything else is M1–M19 (major) or §2.4 (minor). The old C5 (broken Eq. 8) became M5; the old C2 (CEM sign) became M1 with an explicit "raise to critical if the code shares it". |
+| 9. Low-value minors | Dropped: missing `inputenc`, `\bibliography` before `\bibliographystyle`, "no `table` environment" as a reproducibility gap. "Needs 40–60 references" replaced by a list of missing literature *categories*. |
+| Style | Confidence labels (`confirmed` / `strong inference` / `requires code inspection`) on every finding; Finding–Evidence–Impact–Fix structure for F1–F3; §7 explicitly flagged as mixing audit findings with expert judgement; revision history moved out of the audit into this file. |
+
+### Where the critique was wrong
+
+**The Fig. 12b axis label is correct.** Both revision 2 of the audit and the critique (§5) asserted that "Energy error per spin |ε|/N" is erroneous. Decoding the plotted markers and dividing by `|E_exact|/N = 1.27529` reproduces the committed cache means to ratio 1.00000 on all nine points, so the axis is right and the *prose* is what does not match: L484 quotes plain relative errors, which differ from the plotted quantity by a factor 1.275 and therefore cannot be located on the figure. Deleting the "/N", as both documents proposed, would have made the figure wrong. Now M12.
+
+**Point 2 over-corrects.** The critique asked that the saturation attribution be dropped entirely. There is a rigorous degeneracy — `F(β)` is monotone whenever every observed `h_j` agrees in sign with `Θ_j`, so a bounded optimiser returns its bound, which at the report's own operating point (|Θ| up to ≈3, β_eff = 1.94) fires on ≈24.8 % of draws at `N_h = 16`. It is legitimate as a *plausible* mechanism. What is not legitimate is "almost certainly", because the same simulation refutes the literal single-sample reading: it predicts 120–200 saturated draws out of 480 against the 1 reported, consistent with ≈16–30 pooled draws and with Fig. 11a's "binned average" legend.
+
+### Findings neither document had
+
+1. **L484's floor numbers contradict the figure.** The plotted floor is 1.05/1.48/3.45/2.41 % per spin (0.82/1.16/2.70/1.89 % relative) — rising 3.3× and peaking at the third mask — not "roughly flat at 1.1–1.8 %"; and "five to fifteen times larger" is exceeded at sparsity 0.682 (16.9×). Now F3(d).
+2. **Fig. 12b's classical curve splices two experiments.** Its sparsity-0 point is a dense 288-parameter biclique RBM from `cache_full.json`, joined to four coupler-pruned Zephyr masks from a different cache across a 0.55-wide gap with no data and no QPU or floor counterpart — while a comparable classical native-Zephyr point at sparsity 0.426 (3.28 % relative error) sits unplotted in the same cache. Now F3(c).
+3. **The exact-ansatz floor has no committed cache, and no plotting script is committed at all** — so the one element of the sparsity study this audit rates genuinely new is the only arm a reader cannot reproduce. Now §6.
+4. **At matched budget the QPU arm wins.** Budget deficits are 2.03×, 1.09×, 1.93×, 11.28×; at the two levels where they are comparable the QPU beats classical (8.4 % vs 10.5 %, 9.6 % vs 19.6 %). The "extra hardware penalty" claim has no support anywhere budgets are comparable — stronger than revision 2's "indistinguishable from a deficit". Now F3(b).
+5. `min(energy_history)` beats the reported `E_final` in 110 of 120 cache records, making M6's point about downward-biased minima concrete.
+6. Trivial slip corrected: the 12.5 M-pair parity scan began at h = 10⁻⁶ and so never included h = 0 exactly, where the two sector sums coincide.
+
+---
+
+## Revision 2 — 2026-07-28
+
+Rewritten against the correct file after discovering that revision 1 described a stale revision. Introduced the CEM-family finding (F1), the `auto_scale` finding (F2), the budget-matching finding (F3), the six pre-empting prior-art items, and the withdrawal of revision 1's Jordan–Wigner criticisms.
+
+## Revision 1 — 2026-07-28 — **invalid**
+
+Described commit `9194802` ("jax part", 590 lines) rather than the working tree, because the file-reading tool returned the pre-`git pull` content. That revision was seven commits and 408 changed lines out of date.
+
+Triage of its 122 claims against the real file: **60 still valid, 47 already fixed in the manuscript, 6 never true of any revision, 5 needing renumbering, 0 unverifiable.** Equation numbers were wrong from Eq. (8) onward.
+
+Never true of any revision: "591 lines" (712), "16 pp." (21), "line numbers refer to `973f11b`", "no D-Wave data at all", "the CEM subsection is empty", "no error bars, seeds or repetition counts anywhere".
+
+Already fixed in the manuscript before revision 1 was written: the TFIM Hamiltonian (σᶻ → σˣ), the title spelling, the Φ/Ψ ansatz contradiction, the β_eff = 1/β_x derivation, the entire Jordan–Wigner section (rewritten, cited to Dziarmaga_2005, numerically verified — so revision 1's factor-2 and parity criticisms of the E₀ *value* were withdrawn), the Marshall-theorem overclaim, the caption/figure mismatch (resolved by deleting the figure), "best run" selection (now median with IQR), the empty CEM subsection, the Kubo & Goto attribution gap, the LSB subsection nesting, and 8 of 16 spelling items.
+
+**Process lesson, now built into the audit:** pin the commit hash, line count and page count in the header, and state the one-line check (`wc -l`, `sed -n '91p'`) that detects a stale read before any finding is written.
