@@ -28,6 +28,7 @@
 \newacronym{qubo}{QUBO}{quadratically binary unconstrained optimization}
 \newacronym{sa}{SA}{simulated annealing}
 \newacronym{tts}{TTS}{time to solution}
+\newacronym{tte}{TTE}{time to $\epsilon$}
 \newacronym{rbm}{RBM}{restricted Boltzmann machine}
 \newacronym{sr}{SR}{stochastic reconfiguration}
 \newacronym{cg}{CG}{conjugate gradient}
@@ -207,7 +208,7 @@ Each Ising spin is represented by continuous dynamical variables, position \(x_i
 
 \paragraph{Langevin Simulated Bifurcation}
 
-\gls{lsb} is a stochastic adaptation of SB designed to function as a Boltzmann sampler for training energy-based models such as Semi-Restricted Boltzmann Machines (SRBMs). While SB is a deterministic optimization method, LSB introduces stochasticity to approximate a Boltzmann distribution $B_{\beta_{\mathrm{eff}}}$ with an unknown effective inverse temperature \(\beta_{\mathrm{eff}}\). To handle the unknown \(\beta_{\mathrm{eff}}\) during learning, LSB is often combined with \gls{cem}. A detailed analysis of different temperature parameters is provided in \autoref{sec:exper:temp}.
+\gls{lsb} is a stochastic adaptation of SB designed to function as a Boltzmann sampler for training energy-based models such as \gls{srbm}, which allow connections between visible units.  While SB is a deterministic optimization method, LSB introduces stochasticity to approximate a Boltzmann distribution $B_{\beta_{\mathrm{eff}}}$ with an unknown effective inverse temperature \(\beta_{\mathrm{eff}}\). To handle the unknown \(\beta_{\mathrm{eff}}\) during learning, LSB is often combined with \gls{cem}. A detailed analysis of different temperature parameters is provided in \autoref{sec:exper:temp}.
 \paragraph{Conditional Expectation Matching}
 \gls{cem} accounts for the fact that, in order to produce samples using \gls{lsb}, a parameter $\beta_\text{eff}$, which is unknown and instance dependent, has to be found. This parameter is called the effective inverse temperature and it defines the distribution returned by the sampler. In \gls{srbm}, hidden variables are conditionally independent when the visible units are fixed to a condition vector $\mathbf{r}$. This allows the direct calculation of the expectation value of a hidden unit\cite{kubo2025unlockingpowerboltzmannmachines}:
 \begin{equation}
@@ -239,7 +240,7 @@ Variational algorithms are a class of hybrid quantum-classical optimization meth
 As we are interested in comparing current quantum annealing devices with their classical counterparts, we focus solely on the second case. The goal is to approximate the ground state, that is, the eigenstate corresponding to the lowest eigenvalue of a Hamiltonian $H$. 
 In the adiabatic case, the ansatz is defined via an energy function over visible and hidden units,
 \begin{equation}
-E_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})=\mathbf{a}\cdot \mathbf{v} +\mathbf{b}\cdot \mathbf{h} + \mathbf{h}\cdot \mathbf{W}\cdot \mathbf{v},
+E_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})=\mathbf{a}\cdot \mathbf{v} -\mathbf{b}\cdot \mathbf{h} - \mathbf{h}\cdot \mathbf{W}\cdot \mathbf{v},
 \end{equation}
 with weights $\boldsymbol\theta=\{\mathbf{a}, \mathbf{b}, \mathbf{W}\}$ respectively applied to the vector of visible units $\mathbf{v}=(v_1, \ldots, v_N)$ and hidden units $\mathbf{h}=(h_1, \ldots, h_M)$. The joint quantum state is
 \begin{equation}
@@ -315,6 +316,31 @@ The peaked distribution originates from the fact that the spins in the \gls{tfim
     \caption{Sampling quality for different samplers for a trained \gls{rbm} approximating the ground state of a \gls{tfim} with 8 spins, corresponding to a \gls{rbm} with 8 visible and 8 hidden units. The sampling floor is the best possible total variational distance reachable with the given number of samples. Effort is measured in sweeps for SA, metropolis and Gibbs, and in steps for LSB.}
     \label{fig:dtv_classical_N8_M8}
 \end{figure}
+\subsection{Time-to-solution across solvers}
+Sampling quality alone does not determine which solver is preferable in practice; wall-clock cost matters just as much. We therefore measure the \gls{tte}: the wall-clock time, accumulated over \gls{sr} training, until the rolling-average energy error per spin first drops below a target $\epsilon$ and stays there. All series share the same hyperparameters (learning rate, regularization, sample count, and iteration budget), so differences in \gls{tte} reflect the solvers themselves rather than a mismatched configuration; LSB is additionally reported with \gls{cem} enabled (LSB~+CEM) as a separate series, since it is not directly comparable to the CEM-free runs. Runs that never reach $\epsilon$ within their iteration budget are retained as censored (hollow markers, annotated with the fraction of seeds that reached threshold) rather than dropped, following the convention used elsewhere in this work. QPU results are limited to $N\in\{16,32,64\}$, since a dense biclique embedding of larger RBMs does not fit the Zephyr chip used here.
+
+\autoref{fig:tte_vs_n} contrasts a loose target ($\epsilon=0.5$) with a tight one ($\epsilon=0.01$). At the loose target, nearly every solver reaches threshold at every tested size, and the ranking is largely set by raw per-iteration speed: the FPGA and VeloxQ accelerators are fastest by roughly two orders of magnitude, while Metropolis, Gibbs, LSB, and the QPU form a middle cluster -- with Metropolis notably overtaking this cluster to become the slowest solver at $N=128$. At the tight target, the picture changes qualitatively: censoring becomes common well before $N=128$, first for Gibbs, then for Metropolis, LSB~+CEM, and the QPU results, while FPGA and VeloxQ continue to reach $\epsilon=0.01$ throughout the tested range. By $N=128$ no solver reaches the tight target within its iteration budget, so only censored (extrapolated) points are shown. Where the QPU results are not censored ($N\leq 64$), their \gls{tte} is comparable to the classical MCMC samplers at the same size -- the head-to-head timing comparison against classical solvers that was previously missing from this work.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}{0.48\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/tte_vs_n_eps_0p5.pdf}
+        \caption{Loose target, $\epsilon=0.5$.}
+        \label{fig:tte_vs_n_loose}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.48\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/tte_vs_n_eps_0p01.pdf}
+        \caption{Tight target, $\epsilon=0.01$.}
+        \label{fig:tte_vs_n_tight}
+    \end{subfigure}
+    \caption{%
+        Time-to-$\epsilon$ (\gls{tte}) versus system size $N$, all solvers, for the one-dimensional \gls{tfim} at $h=0.5$ with $N_h=N$. Every series uses matched hyperparameters (learning rate $0.08$, regularization $0.05$, $200$ samples per iteration, $100$ iterations); markers show the median over up to 20 seeds with the interquartile range, hollow markers mark sizes where at least one seed was censored (never reached $\epsilon$), annotated with the fraction of seeds that reached threshold. QPU (Pegasus, Zephyr) results are shown for $N\in\{16,32,64\}$ only. (a) Loose accuracy target. (b) Tight accuracy target.
+    }
+    \label{fig:tte_vs_n}
+\end{figure}
 \subsection{Sampling temperature \& CEM}
 In this section, we evaluate the influence of temperature on different models and solvers. We focus on two quantities: the rescaling factor $\beta_x$ and the effective temperature $\beta_\text{eff}$. Sampling from an ansatz, all weights in the \gls{rbm} are rescaled by $\beta_x$, that is, the sampler is programmed with $E_\text{in}=\alpha E_{\boldsymbol\theta}$, $\alpha=1/\beta_x$. If the device samples at hardware inverse temperature $\beta_\text{hw}$, it draws from $p(\mathbf{v},\mathbf{h})\propto e^{-\beta_\text{hw}E_\text{in}(\mathbf{v},\mathbf{h})}=e^{-(\alpha\beta_\text{hw})E_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})}$, i.e.\ relative to the unscaled model $\beta_\text{eff}=\alpha\beta_\text{hw}$. For an ideal Gibbs sampler held at $\beta_\text{hw}=1$, the following equation holds:
 \begin{equation}
@@ -352,18 +378,16 @@ As \gls{lsb} is a temperature dependent solver and not guaranteed to sample from
     \label{fig:dtv_beta_scale_N8}
 \end{figure}
 \subsubsection{CEM}
-We have seen that correctly choosing the sampling temperature is crucial in obtaining meaningful distributions. \gls{cem}\cite{kubo2025unlockingpowerboltzmannmachines} is a technique to dynamically estimate the temperature based on conditionally drawn samples. The hidden units' conditional expectation value
+We have seen that correctly choosing the sampling temperature is crucial in obtaining meaningful distributions. \gls{cem}'s original formulation~\cite{kubo2025unlockingpowerboltzmannmachines} exploits that the hidden units of a Boltzmann machine are conditionally independent given the visible units: for a visible configuration fixed to a condition vector $\mathbf{v}=\mathbf{r}$, the conditional expectation $\langle h_j\rangle = \tanh(\beta\Theta_j)$, $\Theta_j = b_j + \sum_i r_i W_{ij}$, is known in closed form for any $\beta$. To estimate the unknown $\beta_\text{eff}$, the sampler is queried repeatedly at the fixed condition $\mathbf{r}$ to obtain an empirical conditional average $\langle h_j\rangle_{\mathbf{r},C}$, which is then matched against $\tanh(\beta\Theta_j)$ by minimizing the squared residual over $\beta$.
+
+In this work we use a pooled variant of this matching step that avoids the dedicated conditional-sampling calls the original procedure requires. Rather than fixing $\mathbf{v}$ and drawing samples at that one condition, we reuse the ordinary joint samples $(\mathbf{v}_i,\mathbf{h}_i)_{i=1}^{N_s}$ the sampler already produces at each training iteration -- each with its own, generally distinct, visible configuration $\mathbf{v}_i$ -- and fit a single $\beta_\text{eff}$ across the whole batch,
 \begin{equation}
-\langle h_j \rangle = \tanh\left(\beta \cdot \Theta_j\right), \qquad \Theta_j = b_j + \sum_i v_i W_{ij}
+\beta_\text{eff} = \arg\min_\beta F(\beta), \quad F(\beta) = \sum_{i=1}^{N_s}\sum_{j=1}^{N_h}\left(h_{ij}-\tanh(\beta\cdot\Theta_j(\mathbf{v}_i))\right)^2,
 \end{equation}
-for some fixed visible units vector. $\beta_\text{eff}$ is then given by finding (\textit{matching}) the optimal $\beta$,
-\begin{equation}
-\beta_\text{eff} = \arg\min_\beta F(\beta), \text{ with } F(\beta)= \sum_j((h_{j, \text{observed}}-\tanh(\beta\cdot\Theta_j))^2
-\end{equation}
-, where $h_{j, \text{observed}}$ are actual samples of the hidden unit $j$ drawn from the sampler.
+where $h_{ij}$ is the observed hidden unit $j$ in sample $i$ and $\Theta_j(\mathbf{v}_i) = b_j + \sum_l v_{i,l}W_{lj}$. This adds no marginal sampler cost -- a decisive advantage when sampling is the scarce resource, as on the D-Wave QPU -- and, by pooling $N_s\times N_h$ residuals per estimate instead of $N_h$ residuals at a single condition, it is also lower-variance in practice.
 
 The matching step is visualized in \autoref{fig:cem_matching}, where the left subfigure shows multiple candidate functions $\tanh(\beta\Theta)$ dependent on $\beta$ that can be used to match the returned samples. The right subfigure describes the corresponding minimization, in which the squared loss function $F(\beta)$ is minized over $\beta$ (in practice using scipy's \texttt{minimize\_scalar} function).
-We validate this matching procedure against an independent, exact ground-truth estimate -- obtained by minimising the KL divergence between the empirical visible-marginal distribution and the true $|\Psi(v)|^{2\beta}$ distribution via exact enumeration -- across $N\in\{8,12\}$, $h\in\{0.5,1.0,1.5,2.0\}$, and $\beta_x\in\{0.5,1.0,1.5,2.0\}$, with 5 seeds per condition and three checkpoints during training (see \autoref{fig:cem_validation}). \gls{cem} is essentially unbiased near the training target $\beta_\mathrm{eff}=1$, with a bias below $0.05$ at every checkpoint that shrinks slightly from the start to the end of training; excluding one draw where the fit saturated its optimizer's search bound, its \gls{rmse} against the exact estimate is $0.148$ ($N=8$) and $0.153$ ($N=12$). \gls{cem} does show a larger, systematic overestimate in the high-temperature regime, but this is not the regime the training loop operates in near convergence.
+We validate this matching procedure against an independent, exact ground-truth estimate -- obtained by minimising the KL divergence between the empirical visible-marginal distribution and the true visible marginal of the $\beta$-rescaled joint distribution, $p_\beta(\mathbf v)\propto e^{-\beta\,\mathbf a\cdot\mathbf v}\prod_j 2\cosh(\beta\Theta_j)$, via exact enumeration -- across $N\in\{8,12\}$, $h\in\{0.5,1.0,1.5,2.0\}$, and $\beta_x\in\{0.5,1.0,1.5,2.0\}$, with 5 seeds per condition and three checkpoints during training (see \autoref{fig:cem_validation}). \gls{cem} shows a small, consistently negative bias at every checkpoint, of order $-0.07$ to $-0.08$, roughly flat across training rather than shrinking; excluding one draw where the fit saturated its optimizer's search bound, its \gls{rmse} against the exact estimate is $0.107$ ($N=8$) and $0.112$ ($N=12$). The bias is largest at low $\beta_x$ ($\beta_x=0.5$, mean bias $\approx-0.19$) and shrinks as $\beta_x$ grows ($\approx-0.02$ at $\beta_x=2.0$).
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}{0.48\linewidth}
@@ -378,7 +402,7 @@ We validate this matching procedure against an independent, exact ground-truth e
         \label{fig:cem_validation_bias}
     \end{subfigure}
     \caption{%
-        Validation of the \gls{cem} $\beta_\mathrm{eff}$ estimator against an independent exact estimate (KL-argmin against the true visible-marginal Boltzmann distribution), pooled over $N\in\{8,12\}$, $h\in\{0.5,1.0,1.5,2.0\}$, $\beta_x\in\{0.5,1.0,1.5,2.0\}$, and 5 seeds per condition (480 draws total). (a) CEM's estimate vs.\ the exact ground truth; the dashed line marks perfect agreement. One draw (marked $\times$) saturated CEM's optimizer search bound and is excluded from panel (b). (b) Bias of the CEM estimate relative to ground truth, averaged over $h$ and $\beta_x$, at three checkpoints during training ($10\%$/$50\%$/$100\%$ of iterations). Error bars show $95\%$ confidence intervals over seeds.
+        Validation of the \gls{cem} $\beta_\mathrm{eff}$ estimator against an independent exact estimate (KL-argmin against the true visible marginal of the $\beta$-rescaled joint Boltzmann distribution), pooled over $N\in\{8,12\}$, $h\in\{0.5,1.0,1.5,2.0\}$, $\beta_x\in\{0.5,1.0,1.5,2.0\}$, and 5 seeds per condition (480 draws total). (a) CEM's estimate vs.\ the exact ground truth; the dashed line marks perfect agreement. One draw (marked $\times$) saturated CEM's optimizer search bound and is excluded from panel (b). (b) Bias of the CEM estimate relative to ground truth, averaged over $h$ and $\beta_x$, at three checkpoints during training ($10\%$/$50\%$/$100\%$ of iterations). Error bars show $95\%$ confidence intervals over seeds.
     }
     \label{fig:cem_validation}
 \end{figure}
