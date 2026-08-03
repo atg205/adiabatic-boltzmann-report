@@ -25,7 +25,7 @@
 \newacronym{cem}{CEM}{Conditional Expectation Matching}
 \newacronym{srbm}{SRBM}{Semi-Restricted Boltzmann Machine}
 \newacronym{tfim}{TFIM}{Transverse Field Ising Model}
-\newacronym{qubo}{QUBO}{quadratically binary unconstrained optimization}
+\newacronym{qubo}{QUBO}{quadratic unconstrained binary optimization}
 \newacronym{sa}{SA}{simulated annealing}
 \newacronym{tts}{TTS}{time to solution}
 \newacronym{tte}{TTE}{time to $\epsilon$}
@@ -53,7 +53,7 @@ Since the development of programmable quantum processors, many claims regarding 
 We give an overview of the current research on quantum computing devices and present our motivation for using variational algorithms to simulate quantum systems.
 \subsubsection{Quantum Annealing Performance}
 The D-Wave's Quantum Annealers performance scaling for finding the ground state (corresponding to the minimum of the quadratic binary cost function) has been extensively studied, in the area of cryptography and physical simulation. In general, classical methods exhibit faster solving times and better scaling.
-We briefly report on previous work in the field of simulating physical systems using quantum annealing hardware. In \cite{rrf3-jm5m}, we used a method presented in \cite{jalowiecki2020parallel} to encode the solution to the wave function of different Hamiltonians into a \gls{qubo} problem. These instances were then solved on different physical und physics-inspired solvers. We evaluate the scaling of the samplers using the \gls{tts} metric, which corresponds to the computational time needed to solve the optimisation problem with a success probability of at least $P_\text{target}$. The TTS is defined as
+We briefly report on previous work in the field of simulating physical systems using quantum annealing hardware. In \cite{rrf3-jm5m}, we used a method presented in \cite{jalowiecki2020parallel} to encode the solution to the wave function of different Hamiltonians into a \gls{qubo} problem. These instances were then solved on different physical and physics-inspired solvers. We evaluate the scaling of the samplers using the \gls{tts} metric, which corresponds to the computational time needed to solve the optimisation problem with a success probability of at least $P_\text{target}$. The TTS is defined as
 \begin{equation}
 \text{TTS} = \frac{\ln(1-P_\text{target})}{\ln(1-P_\text{success})} T_r,
 \end{equation}
@@ -73,16 +73,16 @@ where $P_\text{success}$ is the probability of obtaining the ground state in a s
 \begin{subfigure}{0.48\textwidth}
     \centering
     \includegraphics[width=\textwidth]{figures/tta_overview_3.pdf}
-    \caption{Non-native formulation. This corresponds a single-qubit Rabi oscillations driven along $y$, described by $H_3 = \pi\left(\frac{3}{4}\mathbb{1} - \frac{1}{4}\sigma_y\right)$.}
+    \caption{Non-native formulation. This corresponds to a single-qubit Rabi oscillation driven along $y$, described by $H_3 = \pi\left(\frac{3}{4}\mathbb{1} - \frac{1}{4}\sigma_y\right)$.}
 \end{subfigure}
 
-\caption{Previous work on sampling the exact ground state to simulate quantum systems. TTS99 vs.\ $N$: exponential scaling $\propto \exp(N/\beta)$. GPU solvers dominate for $N \gtrsim 100$; missing points indicate zero success probability.}
+\caption{Previous work on sampling the exact ground state to simulate quantum systems. TTS99 vs.\ $N$: exponential scaling $\propto \exp(N/\beta)$. Classical solvers dominate for $N \gtrsim 100$; missing points indicate zero success probability.}
 
     \label{fig:tta_overview}
 \end{figure}
 
 \subsubsection{Motivation}
-As previously shown, results return by the quantum annealer are inherently noisy. This makes it difficult to sample the \textit{exact} ground state of the submitted Hamiltonian. In this work, we therefore assess the device's ability to act as a Gibbs sampler and sample from the Boltzmann distribution. It has been shown earlier that the D-Wave device can in fact be used as a Gibbs sampler\cite{Mehta_2025}\cite{Nelson_2022}. Here, we systematically evaluate the quality and time of these samples on computationally hard problems, which allows us to rigorously compare the quantum annealer to classical physics inspired algorithms.
+As previously shown, results returned by the quantum annealer are inherently noisy. This makes it difficult to sample the \textit{exact} ground state of the submitted Hamiltonian. In this work, we therefore assess the device's ability to act as a Gibbs sampler and sample from the Boltzmann distribution. It has been shown earlier that the D-Wave device can in fact be used as a Gibbs sampler\cite{Mehta_2025,Nelson_2022}. Here, we systematically evaluate the quality and time of these samples on computationally hard problems, which allows us to rigorously compare the quantum annealer to classical physics inspired algorithms.
 \section{Methods}
 In this section we briefly outline the simulated physical systems as well as the main computational and algorithmic methods used in this work.
 \subsection{Quantum Ising Models}
@@ -93,7 +93,7 @@ The Hamiltonian for the one-dimensional \gls{tfim} is given by
 H=-J\sum_i\sigma_i^z\sigma_{i+1}^z-h\sum_i\sigma_i^x
 \label{eq:tfim}
 \end{equation}
-where $J$ is the coupling strength and $h$ is the transverse magnetic field strength. The 1D \gls{tfim} serves as a benchmark for our models, as it is exactly solvable via the Jordan–Wigner transformation. Despite its simplicity, it displays non-trivial quantum behavior, including a quantum phase transition and quantum fluctuations. 
+where $J>0$ is the ferromagnetic coupling strength, $h\geq0$ is the transverse magnetic field strength, and periodic boundary conditions are imposed on the chain. The 1D \gls{tfim} serves as a benchmark for our models, as it is exactly solvable via the Jordan–Wigner transformation. Despite its simplicity, it displays non-trivial quantum behavior, including a quantum phase transition and quantum fluctuations. 
 \subsubsection{Long-range Transverse Field Ising Model}
 The Hamiltonian for the one-dimensional long-range transverse-field Ising model (LRTFIM) is given by
 \begin{equation}
@@ -143,7 +143,7 @@ H_D=-\sum_{i=1}^N \sigma_x^{(i)} \text{ with ground state } \ket{+}^{\otimes N}
 \end{equation}
 where $\sigma_x$, $\sigma_y$, and $\sigma_z$ are the Pauli matrices acting on qubit $i$. The problem Hamiltonian is defined as 
 \begin{equation}
-H_P=\sum_{i=1}^N=h_i\sigma_z^{(i)}+\sum_{i,j=1}^N J_{ij}\sigma_z^{i}\otimes\sigma_z^{j}.
+H_P=\sum_{i=1}^N h_i\sigma_z^{(i)}+\sum_{i=1}^N\sum_{j=1}^{i-1} J_{ij}\sigma_z^{(i)}\otimes\sigma_z^{(j)}.
 \end{equation}
 During the annealing process, the system is slowly brought from $H_D$ to $H_P$
 according to the so-called annealing schedules $A(s)$ and $B(s)$:
@@ -193,9 +193,9 @@ There exist three different types of couplers, connecting physical qubits:
 \item \textbf{Odd Couplers} which connect similarly aligned pairs of qubits
 \end{itemize}
 \begin{figure*}[ht]
-\subfloat[\label{anneal_schedule}]{\includegraphics[width=0.33\linewidth]{figures/anneal_schedule_plot.pdf}}%
-    \subfloat[\label{pegasus}]{\includegraphics[width=0.33\linewidth]{figures/pegasus.pdf}}%
-    \subfloat[\label{zephyr}]{\includegraphics[width=0.33\linewidth]{figures/zephyr.pdf}}
+\subfloat[\label{fig:anneal-schedule}]{\includegraphics[width=0.33\linewidth]{figures/anneal_schedule_plot.pdf}}%
+    \subfloat[\label{fig:anneal-pegasus}]{\includegraphics[width=0.33\linewidth]{figures/pegasus.pdf}}%
+    \subfloat[\label{fig:anneal-zephyr}]{\includegraphics[width=0.33\linewidth]{figures/zephyr.pdf}}
 \caption{(a) Time-dependent energy scales executed by the D-Wave quantum annealer. The coefficient $A(s)$ (red) multiplies the transverse-field term that enables quantum tunnelling and therefore falls rapidly as the run progresses. The coefficient $B(s)$ (blue) multiplies the problem Hamiltonian and rises smoothly, so that the device moves from a tunnelling-dominated regime at $s=0$ to a problem-dominated regime at $s=1$. (b) Native connectivity map for the Pegasus architecture (D-Wave Advantage). Circles mark individual superconducting qubits; blue lines are internal couplers and orange lines mark external couplers (c) Connectivity map for the newer Zephyr architecture (D-Wave Advantage2), which increases the number of couplers per qubit and introduces longer-range links.}
 \label{fig:anneal:overview}
 \end{figure*}
@@ -259,7 +259,7 @@ Tracing out the hidden variables in \autoref{eq:rawansatz}, the ansatz becomes:
 \end{equation}
 Two sampling regimes are used in this work. Classical Metropolis-Hastings sampling operates directly on the closed-form marginal $\Psi(\mathbf{v})$ of \autoref{eq:ansatz}: only the visible units are instantiated, and $\mathbf{h}$ never appears as an explicit random variable. Gibbs sampling on the D-Wave annealer instead targets the joint distribution $p_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})$: both $\mathbf{v}$ and $\mathbf{h}$ are encoded as physical qubits (\autoref{fig:rbm-embedding}), the annealer returns samples of the pair $(\mathbf{v},\mathbf{h})$, and $\mathbf{h}$ is subsequently discarded (marginalized) to obtain samples of $\mathbf{v}$ distributed as $\rho(\mathbf{v})$. Since D-Wave qubit biases and coupler strengths are restricted to a fixed hardware range, $\mathbf{a}, \mathbf{b}, \mathbf{W}$ are rescaled by a common factor $\beta_x$ before being programmed onto the device; this rescaling is the origin of the effective inverse temperature $\beta_\text{eff}$ discussed in \autoref{sec:exper:temp}.
 \subsection{Boltzmann machine}
-A \gls{rbm} is an artificial neural network consisting of visible and hidden units that form a bipartite graph. That is, no inter-layer connections are allowed. During training, the \gls{rbm} learns to approximate a probability distribution.
+A \gls{rbm} is an artificial neural network consisting of visible and hidden units that form a bipartite graph. That is, no intra-layer connections are allowed. During training, the \gls{rbm} learns to approximate a probability distribution.
 The main idea is that expectation values with respect to the quantum state can be estimated using samples drawn from the probability distribution $|\Psi(\mathbf{v})|^2$. Since the wavefunction ansatz is represented by a Restricted Boltzmann Machine, which corresponds to a classical stochastic Ising model, configurations $\mathbf{v}$ can be sampled approximately using a D-Wave quantum annealer.
 
 \begin{figure}[htbp]
@@ -274,14 +274,14 @@ The main idea is that expectation values with respect to the quantum state can b
     \begin{subfigure}{0.3\linewidth}
         \centering
         \includegraphics[width=\linewidth]{figures/embedding_full_zephyr.pdf}
-        \label{fig:embedding-zephyr}
         \caption{}
+        \label{fig:embedding-zephyr}
     \end{subfigure}
     \caption{(a) RBM with $24$ visible and $24$ hidden units. (b) Embedding of the corresponding bipartite graph onto the Zephyr hardware topology. Blue nodes are visible units, red nodes are hidden units, orange nodes are auxiliary chain qubits. Each physical node is connected to one auxiliary qubit.}
     \label{fig:rbm-embedding}
 \end{figure}
 \section{Experimental Analysis}
-We conduct experiments analyzing sampler quality and physical properties or samplers and models.
+We conduct experiments analyzing sampler quality and physical properties of samplers and models.
 \subsection{Sampling Quality}
 While some of the samplers are guaranteed to sample from the Boltzmann distribution, others are not. In this section, we analyze the quality of samplers with regard to various parameters.
 One measure for sampling quality is the \textit{total variation distance} $D_{TV}$. It is defined as 
@@ -293,9 +293,15 @@ As every sampler has a range of parameters, we are interested in how well the sa
 
 We use the following workflow to determine $D_{TV}$: First, we use a \gls{sa} pretrained \gls{rbm} and compute its exact distribution $|\Psi|^2$ numerically by enumerating all possible spin configurations. We then collect samples from different samplers and compare the resulting empirical histogram to the exact distribution.
 
-The results are presented in \autoref{anneal_schedule}. As a sanity check, it can be seen that Metropolis and Gibbs sampling perform theoretically near-optimal, as is expected. We observe that \gls{lsb} significantly underperforms the other solvers for this small-scale example. The performance of both \gls{lsb} and \gls{sa} improves as the transverse field bias $h$ increases. In \autoref{fig:dtv_classical_N8_M8}\textbf{(b)} the exact histogram of configurations $|\Psi(\mathbf{v})|^2$ is plotted. For $h=0.5$ the distribution is peaked around a handful of highly probable sample configuration, whereas the distribution becomes more uniform for stronger values of $h$. This explains the performance increase for \gls{lsb} and \gls{sa} samplers.
+The results are presented in \autoref{fig:dtv_classical_N8_M8}. As a sanity check, it can be seen that Metropolis and Gibbs sampling perform theoretically near-optimal, as is expected. We observe that \gls{lsb} significantly underperforms the other solvers for this small-scale example. The performance of both \gls{lsb} and \gls{sa} improves as the transverse field bias $h$ increases. In \autoref{fig:dtv_classical_N8_M8}\textbf{(b)} the exact histogram of configurations $|\Psi(\mathbf{v})|^2$ is plotted. For $h=0.5$ the distribution is peaked around a handful of highly probable sample configuration, whereas the distribution becomes more uniform for stronger values of $h$. This explains the performance increase for \gls{lsb} and \gls{sa} samplers.
 
-The peaked distribution originates from the fact that the spins in the \gls{tfim} description given by \autoref{eq:tfim} are aligned for low $h$ values (\textit{ferromagnetic} phase). For $h\rightarrow\infty$ the transverse field dominates and the ground state becomes a product of single-spin $\sigma_x$ eigenstates. Measured in the z-basis, this leads to a uniform distribution in the thermodynamic limit.
+The peaked distribution originates from the fact that the spins in the \gls{tfim} description given by \autoref{eq:tfim} are aligned for low $h$ values (\textit{ferromagnetic} phase). For $h\rightarrow\infty$ the transverse field dominates and the ground state becomes a product of single-spin $\sigma_x$ eigenstates. Measured in the z-basis, this leads to a uniform distribution in the thermodynamic limit. \autoref{fig:tfim_ordering} illustrates this directly: sampled spin configurations and correlation functions at three values of $h$, spanning the ferromagnetic and paramagnetic regimes.
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{figures/spin_ordering_across_qpt}
+  \caption{Spin configurations sampled from a trained RBM-VMC model for the one-dimensional Transverse-Field Ising Model (TFIM) at three values of the transverse field $h$. \textbf{Top row:} each column shows 2\,000 spin configurations $\boldsymbol{\sigma} \in \{-1,+1\}^N$ sampled from the learned wave function $|\Psi_{\boldsymbol\theta}|^2$, sorted by total magnetisation. \textbf{Bottom row:} spin-spin correlation $C(r) = \langle \sigma^z_0 \sigma^z_r \rangle$ as a function of distance $r$, computed from VMC samples (solid line) and exact diagonalisation (dashed line). The relative energy error $\varepsilon = |E_\mathrm{VMC} - E_\mathrm{exact}|/|E_\mathrm{exact}|$ is shown in each panel. The model is a fully-connected RBM ($N = N_h = 16$) trained for 300 iterations of Stochastic Reconfiguration with 500 Metropolis-Hastings samples per step.}
+  \label{fig:tfim_ordering}
+\end{figure}
 \begin{figure}[htbp]
     \centering
 
@@ -313,7 +319,7 @@ The peaked distribution originates from the fact that the spins in the \gls{tfim
         \caption{Exact histogram of configurations.}
     \end{subfigure}
 
-    \caption{Sampling quality for different samplers for a trained \gls{rbm} approximating the ground state of a \gls{tfim} with 8 spins, corresponding to a \gls{rbm} with 8 visible and 8 hidden units. The sampling floor is the best possible total variational distance reachable with the given number of samples. Effort is measured in sweeps for SA, metropolis and Gibbs, and in steps for LSB.}
+    \caption{Sampling quality for different samplers for a trained \gls{rbm} approximating the ground state of a \gls{tfim} with 8 spins, corresponding to a \gls{rbm} with 8 visible and 8 hidden units. The sampling floor is the best possible total variation distance reachable with the given number of samples. Effort is measured in sweeps for SA, metropolis and Gibbs, and in steps for LSB.}
     \label{fig:dtv_classical_N8_M8}
 \end{figure}
 \subsection{Time-to-solution across solvers}
@@ -342,13 +348,13 @@ Sampling quality alone does not determine which solver is preferable in practice
     \label{fig:tte_vs_n}
 \end{figure}
 \subsection{Sampling temperature \& CEM}
+\label{sec:exper:temp}
 In this section, we evaluate the influence of temperature on different models and solvers. We focus on two quantities: the rescaling factor $\beta_x$ and the effective temperature $\beta_\text{eff}$. Sampling from an ansatz, all weights in the \gls{rbm} are rescaled by $\beta_x$, that is, the sampler is programmed with $E_\text{in}=\alpha E_{\boldsymbol\theta}$, $\alpha=1/\beta_x$. If the device samples at hardware inverse temperature $\beta_\text{hw}$, it draws from $p(\mathbf{v},\mathbf{h})\propto e^{-\beta_\text{hw}E_\text{in}(\mathbf{v},\mathbf{h})}=e^{-(\alpha\beta_\text{hw})E_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})}$, i.e.\ relative to the unscaled model $\beta_\text{eff}=\alpha\beta_\text{hw}$. For an ideal Gibbs sampler held at $\beta_\text{hw}=1$, the following equation holds:
 \begin{equation}
 \beta_\text{eff}=\frac{1}{\beta_x}.
 \end{equation}
 \subsubsection{Langevin Simulated Bifurcation}
-As \gls{lsb} is a temperature dependent solver and not guaranteed to sample from the Boltzmann distribution, it can be used to illustrate the influence of the input temperature $\beta_x$ on the solution quality. Contrary to the quantum annealer, sampling using \gls{lsb} does not involve additional costs. To evaluate the inpact of the scaling parameter $\beta_x$, we calculate the total variational distance $D_\text{TV}$ between the samples and the precise Boltzmann distribution by numerical enumeration. \autoref{fig:dtv_beta_scale_N8} clearly illustrates that the sampler temperature is problem dependent. $D_\text{TV}$ is minimal at the point where the effective temperature $\beta_\text{eff}$ is 1.
-\label{sec:exper:temp}
+As \gls{lsb} is a temperature dependent solver and not guaranteed to sample from the Boltzmann distribution, it can be used to illustrate the influence of the input temperature $\beta_x$ on the solution quality. Contrary to the quantum annealer, sampling using \gls{lsb} does not involve additional costs. To evaluate the impact of the scaling parameter $\beta_x$, we calculate the total variation distance $D_\text{TV}$ between the samples and the precise Boltzmann distribution by numerical enumeration. \autoref{fig:dtv_beta_scale_N8} clearly illustrates that the sampler temperature is problem dependent. $D_\text{TV}$ is minimal at the point where the effective temperature $\beta_\text{eff}$ is 1.
 
 \begin{figure}[htbp]
     \centering
@@ -367,7 +373,7 @@ As \gls{lsb} is a temperature dependent solver and not guaranteed to sample from
         \centering
         \includegraphics[width=\textwidth]{figures/dtv_beta_scale_beta_N8}
         \subcaption{Effective inverse temperature $\beta_\mathrm{eff}$ of the LSB samples,
-        estimated by minimizing the total variational distance between the samples and the actual distribution. The dashed curve shows the ideal $1/\beta_x$ prediction for a perfect Gibbs sampler, the horizontal dotted line marks the VMC target $\beta_\mathrm{eff}=1$.}
+        estimated by minimizing the total variation distance between the samples and the actual distribution. The dashed curve shows the ideal $1/\beta_x$ prediction for a perfect Gibbs sampler, the horizontal dotted line marks the VMC target $\beta_\mathrm{eff}=1$.}
         \label{fig:dtv_beta_beta_N8}
     \end{subfigure}
 
@@ -386,7 +392,7 @@ In this work we use a pooled variant of this matching step that avoids the dedic
 \end{equation}
 where $h_{ij}$ is the observed hidden unit $j$ in sample $i$ and $\Theta_j(\mathbf{v}_i) = b_j + \sum_l v_{i,l}W_{lj}$. This adds no marginal sampler cost -- a decisive advantage when sampling is the scarce resource, as on the D-Wave QPU -- and, by pooling $N_s\times N_h$ residuals per estimate instead of $N_h$ residuals at a single condition, it is also lower-variance in practice.
 
-The matching step is visualized in \autoref{fig:cem_matching}, where the left subfigure shows multiple candidate functions $\tanh(\beta\Theta)$ dependent on $\beta$ that can be used to match the returned samples. The right subfigure describes the corresponding minimization, in which the squared loss function $F(\beta)$ is minized over $\beta$ (in practice using scipy's \texttt{minimize\_scalar} function).
+The matching step is visualized in \autoref{fig:cem_matching}, where the left subfigure shows multiple candidate functions $\tanh(\beta\Theta)$ dependent on $\beta$ that can be used to match the returned samples. The right subfigure describes the corresponding minimization, in which the squared loss function $F(\beta)$ is minimized over $\beta$ (in practice using scipy's \texttt{minimize\_scalar} function).
 We validate this matching procedure against an independent, exact ground-truth estimate -- obtained by minimising the KL divergence between the empirical visible-marginal distribution and the true visible marginal of the $\beta$-rescaled joint distribution, $p_\beta(\mathbf v)\propto e^{-\beta\,\mathbf a\cdot\mathbf v}\prod_j 2\cosh(\beta\Theta_j)$, via exact enumeration -- across $N\in\{8,12\}$, $h\in\{0.5,1.0,1.5,2.0\}$, and $\beta_x\in\{0.5,1.0,1.5,2.0\}$, with 5 seeds per condition and three checkpoints during training (see \autoref{fig:cem_validation}). \gls{cem} shows a small, consistently negative bias at every checkpoint, of order $-0.07$ to $-0.08$, roughly flat across training rather than shrinking; excluding one draw where the fit saturated its optimizer's search bound, its \gls{rmse} against the exact estimate is $0.107$ ($N=8$) and $0.112$ ($N=12$). The bias is largest at low $\beta_x$ ($\beta_x=0.5$, mean bias $\approx-0.19$) and shrinks as $\beta_x$ grows ($\approx-0.02$ at $\beta_x=2.0$).
 \begin{figure}[htbp]
     \centering
@@ -428,7 +434,7 @@ We validate this matching procedure against an independent, exact ground-truth e
 \subsection{Limitations of variational methods}
 In this section we describe computational and theoretical limitations to using variational methods in a hybrid quantum-classical setup.
 \subsubsection{The Sign Problem}
-It is well known that capturing quantum dynamics with non-trivial sign structure using a real-valued variational ansatz is computationally hard (\textit{sign problem}). This does not pose a problem for the \gls{tfim} models, as its ground state has only positive amplitudes. More complex models, such as some J1J2-Heisenberg models on the other hand cannot be simulated using our methods. The reason for this is that the factors  $e^{-\mathbf{a}\cdot\mathbf{v}/2}$ and $\cosh(\cdot)$ of the ansatz defined in \autoref{eq:ansatz} are strictly positive for real parameters and therefore the ansatz does not allow for the representation of negative amplitudes. 
+It is well known that capturing quantum dynamics with non-trivial sign structure using a real-valued variational ansatz is computationally hard (\textit{sign problem}). This does not pose a problem for the \gls{tfim} models, as its ground state has only positive amplitudes. More complex models, such as some $J_1$-$J_2$ Heisenberg models, on the other hand cannot be simulated using our methods. The reason for this is that the factors  $e^{-\mathbf{a}\cdot\mathbf{v}/2}$ and $\cosh(\cdot)$ of the ansatz defined in \autoref{eq:ansatz} are strictly positive for real parameters and therefore the ansatz does not allow for the representation of negative amplitudes. 
 
 \paragraph{The Marshall sign rule}
 For certain Heisenberg models with bipartite lattice structure, the Marshall sign rule can be used to remove the non-trivial sign structure of the ground state wavefunction by basis transformation. Considering the following unitary transformation on bipartite lattices $A \cup B$:
@@ -444,13 +450,6 @@ with only positive amplitudes. This transformation is exact only for the unfrust
       \langle s \rangle = \frac{\sum_{\mathbf{v}} \Psi(\mathbf{v})}{\sum_{\mathbf{v}} |\Psi(\mathbf{v})|}
   \end{equation}
 Interestingly, we empirically observe that even for frustrated Heisenberg models with $0\leq\frac{J_2}{J_1}\leq0.5$ the \gls{rbm} with the Marshall sign correction can accurately approach the ground state energy, whereas without the correction the variational energy degrades significantly — consistent with \cite{Richter_1994}, who found that the sign rule can empirically survive frustration over part of the parameter range even though the proof no longer strictly applies beyond $J_2=0$. Empirically, we observe that the median relative error over independent seeds rises sharply once $J_2/J_1$ exceeds $0.5$ (\autoref{fig:convergence_median}), in line with expectations that stronger frustration increasingly violates the positive-amplitude assumption underlying the ansatz. We did not test a phase-capable ansatz (e.g.\ a complex-valued \gls{rbm} or a separate amplitude-and-phase network); such a comparison is left as future work.
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=\linewidth]{figures/spin_ordering_across_qpt}
-  \caption{Spin configurations sampled from a trained RBM-VMC model for the one-dimensional Transverse-Field Ising Model (TFIM) at three values of the transverse field $h$. \textbf{Top row:} each column shows 2\,000 spin configurations $\boldsymbol{\sigma} \in \{-1,+1\}^N$ sampled from the learned wave function $|\Psi_{\boldsymbol\theta}|^2$, sorted by total magnetisation. \textbf{Bottom row:} spin-spin correlation $C(r) = \langle \sigma^z_0 \sigma^z_r \rangle$ as a function of distance $r$, computed from VMC samples (solid line) and exact diagonalisation (dashed line). The relative energy error $\varepsilon = |E_\mathrm{VMC} - E_\mathrm{exact}|/|E_\mathrm{exact}|$ is shown in each panel. The model is a fully-connected RBM ($N = N_h = 16$) trained for 300 iterations of Stochastic Reconfiguration with 500 Metropolis-Hastings samples per step.}
-  \label{fig:tfim_ordering}
-\end{figure}
-
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\linewidth]{figures/fig_convergence_median.pdf}
@@ -472,9 +471,9 @@ Interestingly, we empirically observe that even for frustrated Heisenberg models
     \label{fig:convergence_median}
 \end{figure}
 \subsection{Improving D-Wave Topology performance}
-A crucial factor in the success of an annealing progress is the \textit{problem embedding} on the chip. Here, we assess two aspects related to embedding: First, introducing sparsity to fit the \gls{rbm} natively on the chip, and, second, embedding the problem multiple times to save computing time.
+A crucial factor in the success of an annealing process is the \textit{problem embedding} on the chip. Here, we assess two aspects related to embedding: First, introducing sparsity to fit the \gls{rbm} natively on the chip, and, second, embedding the problem multiple times to save computing time.
 \subsubsection{Sparse embedding}
-As described in \autoref{sec:solvers:quantum:adiab}, problems implementable on quantum annealer often need to be fit to the QPU in an additional embedding step. We are interested in whether a sparse, but native \gls{rbm}, that is, one that fits natively on the QPU, performers reasonably. The sparse \gls{rbm} is creating according to the following algorithm: First, constructe a bipartite graph by keeping only edges that correspond to internal couplers on the D-Wave QPU. One set of the graph corresponds to visible \gls{rbm} units, the other one to hidden units. Then, greedily pick qubits for the visible units, by maximizing the overlap between neighbor sets of visible units. After all visible units are chosen, create a minimum set-cover by picking the fewest hidden qubits such that every visible qubit has at least one hidden neighbor. The remaining hidden units are filled by best connected qubits. See also \autoref{fig:sparse-graph-construction} for a visual overview of the algorithm.
+As described in \autoref{sec:solvers:quantum:adiab}, problems implementable on a quantum annealer often need to be fit to the QPU in an additional embedding step. We are interested in whether a sparse, but native \gls{rbm}, that is, one that fits natively on the QPU, performs reasonably. The sparse \gls{rbm} is created according to the following algorithm: First, construct a bipartite graph by keeping only edges that correspond to internal couplers on the D-Wave QPU. One set of the graph corresponds to visible \gls{rbm} units, the other one to hidden units. Then, greedily pick qubits for the visible units, by maximizing the overlap between neighbor sets of visible units. After all visible units are chosen, create a minimum set-cover by picking the fewest hidden qubits such that every visible qubit has at least one hidden neighbor. The remaining hidden units are filled by best connected qubits. See also \autoref{fig:sparse-graph-construction} for a visual overview of the algorithm.
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}[b]{0.31\linewidth}
@@ -506,7 +505,7 @@ As described in \autoref{sec:solvers:quantum:adiab}, problems implementable on q
 \end{figure}
 We also looked directly at the effect of sparsity on its own, keeping the number of hidden units equal to the number of visible units and only changing how many of the real couplers are removed from the connectivity mask. When removing couplers, we always removed one from the hidden unit with the highest remaining degree, so that no visible or hidden unit was ever left with zero connections. \autoref{fig:sparsity-simple} shows the resulting energy error as a function of sparsity, for three classical samplers (Metropolis-Hastings, simulated annealing, and persistent-chain Gibbs). In all three cases, error increases sharply as sparsity increases.
 
-To disentangle how much of this degradation is a fundamental limit of the sparse ansatz itself versus an artefact of MCMC training, we additionally trained the same four masks ($N=16$, $h=1$, zephyr, $\alpha=1$) via exact enumeration of all $2^{16}$ visible configurations weighted by the exact $|\Psi(v)|^2$ probability, removing all sampling noise and MCMC bias from the optimization. This exact-ansatz floor's mean relative error is $0.82\%$, $1.16\%$, $2.70\%$, and $1.89\%$ across the four masks (sparsity $0.557$ to $0.877$) — it roughly triples before falling back, rather than staying flat, and peaks at the third mask — in contrast to the classical-MCMC curve, whose mean relative error rises from $10.5\%$ to $22.3\%$ over the same range, i.e.\ $8$ to $17$ times larger than the floor depending on the mask. The spread across seeds also grows sharply with sparsity, while the floor's own seed-to-seed spread stays comparatively small at low sparsity. This indicates that most of the degradation visible in \autoref{fig:sparsity-simple} is driven by optimization/sampling difficulty rather than by the sparse ansatz running out of representational power. This ablation was run at a single system size ($N=16$) and one specific hardware subgraph per sparsity level, so it should be read as an indicator, and not as a general claim about all sparsity regimes.
+To disentangle how much of this degradation is a fundamental limit of the sparse ansatz itself versus an artefact of MCMC training, we additionally trained the same four masks ($N=16$, $h=1$, zephyr, $\alpha=1$) via exact enumeration of all $2^{16}$ visible configurations weighted by the exact $|\Psi(v)|^2$ probability, removing all sampling noise and MCMC bias from the optimization. This exact-ansatz floor's mean energy error per spin, $|\varepsilon|/N$ (the quantity plotted in \autoref{fig:sparsity-line}), is $1.05\%$, $1.48\%$, $3.45\%$, and $2.41\%$ across the four masks (sparsity $0.557$ to $0.877$) — it roughly triples before falling back, rather than staying flat, and peaks at the third mask — in contrast to the classical-MCMC curve, whose mean per-spin error rises from $13.4\%$ to $28.5\%$ over the same range, i.e.\ $8$ to $17$ times larger than the floor depending on the mask. The spread across seeds also grows sharply with sparsity, while the floor's own seed-to-seed spread stays comparatively small at low sparsity. This indicates that most of the degradation visible in \autoref{fig:sparsity-simple} is driven by optimization/sampling difficulty rather than by the sparse ansatz running out of representational power. This ablation was run at a single system size ($N=16$) and one specific hardware subgraph per sparsity level, so it should be read as an indicator, and not as a general claim about all sparsity regimes.
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}[b]{0.48\linewidth}
@@ -522,12 +521,12 @@ To disentangle how much of this degradation is a fundamental limit of the sparse
         \caption{}
         \label{fig:sparsity-line}
     \end{subfigure}
-    \caption{Error as a function of sparsity, with the number of hidden units kept equal to the number of visible units in both plots. \textbf{(a)} Error for different values of $h$, trained classically via Metropolis sampling. \textbf{(b)} Error at $h=1$ across three classical samplers (Metropolis, simulated annealing, and persistent Gibbs), all using identical hyperparameters (300 SR iterations, learning rate $0.05$), against the exact-ansatz floor, which uses noise-free gradients for up to 3000 iterations to escape optimization plateaus. The dotted line marks the exact-ansatz floor at this size. The vertical dashed grey line marks the native hardware floor: the sparsity of the unpruned chain-free embedding for this system size, i.e.\ the fraction of visible-hidden pairs with no real coupler between them before any edges are deliberately removed. All tested sparsity levels lie to its right, since pruning can only remove couplers, never add ones the chip does not have.}
+    \caption{Error as a function of sparsity, with the number of hidden units kept equal to the number of visible units in both plots. \textbf{(a)} Relative error $|\varepsilon|/|E_\mathrm{exact}|$ for different values of $h$, trained classically via Metropolis sampling. \textbf{(b)} Energy error per spin, $|\varepsilon|/N$, at $h=1$ across three classical samplers (Metropolis, simulated annealing, and persistent Gibbs), all using identical hyperparameters (300 SR iterations, learning rate $0.05$), against the exact-ansatz floor, which uses noise-free gradients for up to 3000 iterations to escape optimization plateaus. The dotted line marks the exact-ansatz floor at this size. The vertical dashed grey line marks the native hardware floor: the sparsity of the unpruned chain-free embedding for this system size, i.e.\ the fraction of visible-hidden pairs with no real coupler between them before any edges are deliberately removed. All tested sparsity levels lie to its right, since pruning can only remove couplers, never add ones the chip does not have.}
     \label{fig:sparsity-simple}
 \end{figure}
-We conclude that a native Pegasus/Zephyr embedding is not suitable for efficient \gls{rbm} sampling, for the following reasons. Even in the optimal case, representability of the sparse ansatz is limited: the noise-free, exact-enumeration floor more than triples as native couplers are pruned away ($0.82\%$ to $2.70\%$ relative error), showing that sparsification costs real representational capacity independent of how the model is trained. In actual training, effects such as finite-sample estimator noise and MCMC/annealing mixing behavior further degrade performance substantially: across three independent classical samplers (Metropolis-Hastings, simulated annealing, and persistent-chain Gibbs), trained under identical hyperparameters and iteration budgets, relative error at every tested sparsity level sits $7$-$27\times$ above this floor, with no sampler avoiding the gap. For budget constraints, we tested the sparse models only on classical hardware.
+We conclude that a native Pegasus/Zephyr embedding is not suitable for efficient \gls{rbm} sampling, for the following reasons. Even in the optimal case, representability of the sparse ansatz is limited: the noise-free, exact-enumeration floor more than triples as native couplers are pruned away ($1.05\%$ to $3.45\%$ per-spin error), showing that sparsification costs real representational capacity independent of how the model is trained. In actual training, effects such as finite-sample estimator noise and MCMC/annealing mixing behavior further degrade performance substantially: across three independent classical samplers (Metropolis-Hastings, simulated annealing, and persistent-chain Gibbs), trained under identical hyperparameters and iteration budgets, the per-spin error at every tested sparsity level sits $7$-$27\times$ above this floor, with no sampler avoiding the gap. For budget constraints, we tested the sparse models only on classical hardware.
 \subsubsection{Parallel Embeddings}
-To speed up calculation and save computing time, it is possible to embed multiple smaller, independent problems on the QPU. For example, it is possible to gather 1000 independent samples using only 250 annealing runs, by embedding the \gls{rbm} four times on the QPU. We experimentacally validate that this approach produces meaningful results, as can be seen in \autoref{fig:parallel-embedding}. The left subfigure visualizes a possible parallel embedding. In the right subfigure, it can be seen that parallel approaches convergence faster to the ground state, using less QPU time. 
+To speed up calculation and save computing time, it is possible to embed multiple smaller, independent problems on the QPU. For example, it is possible to gather 1000 independent samples using only 250 annealing runs, by embedding the \gls{rbm} four times on the QPU. We experimentally validate this approach with 3 seeds per $n_\mathrm{parallel} \in \{1,3,5\}$, shown individually rather than aggregated to a single "best" run per level, as \autoref{fig:parallel-embedding} makes visible that training at this iteration budget is not reliable: 4 of the 9 runs diverge (crossed-off markers), including 2 of 3 seeds at $n_\mathrm{parallel}=5$. Among the runs that do converge, higher $n_\mathrm{parallel}$ still reaches the same energy plateau using markedly less cumulative QPU time (e.g.\ $13.6\,\mathrm{s}$ at $n_\mathrm{parallel}=1$ versus $5.7\,\mathrm{s}$ at $n_\mathrm{parallel}=5$), so the core speedup claim holds -- but with only 3 seeds per level, the divergence rate itself should be read as suggestive, not a precise reliability estimate.
 \begin{figure}[h]
     \centering
     \begin{subfigure}[b]{0.48\textwidth}
@@ -539,8 +538,8 @@ To speed up calculation and save computing time, it is possible to embed multipl
     \hfill
     \begin{subfigure}[b]{0.48\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{figures/parallel_embedding/parallel_embedding_np_best_qpu_time.pdf}
-        \caption{Energy vs.\ cumulative QPU access time for $n_\mathrm{parallel} \in \{1,3,5\}$ (best of 3 seeds each). Higher $n_\mathrm{parallel}$ reaches the converged energy plateau using less real QPU time.}
+        \includegraphics[width=\textwidth]{figures/parallel_embedding/parallel_embedding_np_seeds_qpu_time.pdf}
+        \caption{Energy vs.\ cumulative QPU access time for $n_\mathrm{parallel} \in \{1,3,5\}$, all 3 seeds shown individually. $\times$ markers indicate a run diverged before reaching the plateau; among the seeds that converge, higher $n_\mathrm{parallel}$ reaches the plateau using less real QPU time.}
         \label{fig:parallel-embedding-qpu-time}
     \end{subfigure}
     \caption{Parallel embedding on a D-Wave QPU: (a) physical embedding layout, (b) resulting training speedup.}
@@ -609,32 +608,29 @@ with learning rate $\eta$.
 
 \subsubsection{Conjugate gradient}
 As $\mathbf{S} \in \mathbb{R}^{N_\text{params} \times N_\text{params}}$ grows quadratically with the number of parameters $N_\text{params} = N + M + NM$, with $N$ and $M$ the number of visible and hidden units respectively, solving the \gls{sr} system in \autoref{eq:srsystem} is intractable for large system sizes. We therefore apply a technique called \gls{cg}, which requires only matrix vector products $\mathbf{S} \cdot \mathbf{x}$
-and converges for any symmetric positive-definite matrix.Computing the matrix--vector product then costs only $\mathcal{O}(N_s \cdot N_\text{params})$:
+and converges for any symmetric positive-definite matrix. Computing the matrix--vector product then costs only $\mathcal{O}(N_s \cdot N_\text{params})$:
 \begin{equation}
     \mathbf{S} \cdot \mathbf{x} = \frac{1}{N_s}\bar{\mathbf{O}}^\top(\bar{\mathbf{O}}\,\mathbf{x}) + \lambda \mathbf{x}
 \end{equation}
 \subsection{Exact Solving}
-Determining the exact value of the ground state up to numerical precision is crucial for evaluating the performance of the trained models. For \gls{tfim}, exact solving is possible for arbitrary system sizes, whereas solving the J1J2 Heisenberg model is computationally hard.
+Determining the exact value of the ground state up to numerical precision is crucial for evaluating the performance of the trained models. For \gls{tfim}, exact solving is possible for arbitrary system sizes, whereas solving the $J_1$-$J_2$ Heisenberg model is computationally hard.
 \subsubsection{\gls{tfim} ground state solving in $O(N)$}
-The 1D \gls{tfim} defined in \autoref{eq:tfim} can be solved exactly in $O(N)$ time. Dziarmaga~\cite{Dziarmaga_2005} solves the identical Hamiltonian by mapping it to a system of free fermions via the Jordan--Wigner transformation, followed by a Fourier and Bogoliubov transformation. Directly applying the quasiparticle dispersion of Eq.~(16) and the ground-state (vacuum) energy of Eq.~(18) in \cite{Dziarmaga_2005} (with $g=h/J$; see also \cite{He_2017} for the parity-sector momenta) gives the closed-form ground-state energy:
+The 1D \gls{tfim} defined in \autoref{eq:tfim} can be solved exactly in $O(N)$ time, for $J>0$, $h\geq0$, and periodic boundary conditions on the spin chain -- the regime used throughout this work. Dziarmaga~\cite{Dziarmaga_2005} solves the identical Hamiltonian by mapping it to a system of free fermions via the Jordan--Wigner transformation, followed by a Fourier and Bogoliubov transformation. The periodic boundary conditions split the fermionic Hilbert space into two parity sectors, each restricted to its own set of allowed momenta; for $J>0$, $h\geq0$ the ground state always sits in the antiperiodic sector. Directly applying the quasiparticle dispersion of Eq.~(16) and the ground-state (vacuum) energy of Eq.~(18) in \cite{Dziarmaga_2005} (with $g=h/J$; see also \cite{He_2017} for the parity-sector momenta) gives the closed-form ground-state energy:
 \begin{equation}
-E_0 = \min\!\left(
-    -\sum_{m=0}^{N-1} \epsilon\!\left(\frac{\pi(2m+1)}{N}\right),\;
-    -\sum_{m=0}^{N-1} \epsilon\!\left(\frac{2\pi m}{N}\right)
-\right),
+E_0 = -\sum_{m=0}^{N-1} \epsilon\!\left(\frac{\pi(2m+1)}{N}\right),
 \qquad
 \epsilon(k) = \sqrt{J^2+h^2-2Jh\cos(k)}.
 \end{equation}
-The two sums correspond to the two fermion-parity sectors arising from the periodic boundary conditions on the spin chain; the true ground-state energy is the lower of the two, and which sector wins depends on $N$ and $h$. We verified this closed-form result numerically against exact diagonalization (\texttt{netket}, using \texttt{scipy}'s sparse \texttt{eigsh}) for $N \in \{4,6,8,10\}$ and $h \in \{0.5, 1.0, 1.5\}$, finding agreement to machine precision ($<10^{-13}$).
+We verified this closed-form result numerically against exact diagonalization (\texttt{netket}, using \texttt{scipy}'s sparse \texttt{eigsh}) for $N \in \{4,6,8,10\}$ and $h \in \{0.5, 1.0, 1.5\}$, finding agreement to machine precision ($<10^{-13}$).
 \subsubsection{Exact Diagonalization}
 In cases where mapping to a quadratic fermion Hamiltonian is not possible, e.g. in the case of long range interactions, exact diagonalization is used for small system sizes $N$. 
 Exact diagonalization works by enumerating all $2^N$ basis states of the Hilbert space, constructing the Hamiltonian as a $2^N \times 2^N$ matrix in that basis, and finding its lowest eigenvalue via the Lanczos algorithm. Lanczos algorithm avoids diagonalizing the entire matrix and only returns the matrix' lowest eigenvalue. We use \texttt{scipy}'s \texttt{eigsh} implementation of this algorithm.
 \subsubsection{Other methods}
-The lowest energy returned by variational models using Gibb's sampling can be regarded as an upper bound to the ground state, as it can never be lower than the ground state due to the variational principle.
+The variational principle bounds the exact expectation value $\langle H\rangle_\Psi = \langle\Psi_{\boldsymbol\theta}|H|\Psi_{\boldsymbol\theta}\rangle / \langle\Psi_{\boldsymbol\theta}|\Psi_{\boldsymbol\theta}\rangle$ for a fixed parameter vector $\boldsymbol\theta$: it can never fall below the true ground-state energy.
 \subsection{JAX}
 (Quantum) variational algorithms do not only strain \textit{quantum} resources, but also push \textit{classical} computers to their limits. Notably, at each iteration, the stochastic reconfiguration process described in \autoref{sec:stochsticreconfig} adapts all parameters of the weights and biases. We use several techniques in this project to speed up this process. JAX, implementing the \textit{functional programming} paradigm, allows for the speed up of function calls and linear algebra calculation by offering features such as \gls{jit} compilation and XLA (accelerated linear algebra). We will describe the features of JAX in detail and give examples from our codebase.
 \subsubsection{Just-in-time compilation}
-JAX transformation require function to be \textit{functionally pure}. To summarize, a function is considered functionally pure, if its output depends only on the function's input parameters, and all output is passed through the return variable. As an example, a function that involves \texttt{print()} statements or writes to global variables is not considered to be functionally pure, as its output does not exclusively pass through the \texttt{return} statement. JAX does not guarantee the proper behavior of impure functions. During \gls{jit} compilation, the function is transformed to primitives, which in JAX are defined to be "fundamental units of computation"\cite{jaxGlossaryTerms}. As an example, the following function header is used to calculate the local energy (\autoref{eq:localenergy}):
+JAX transformations require functions to be \textit{functionally pure}. To summarize, a function is considered functionally pure, if its output depends only on the function's input parameters, and all output is passed through the return variable. As an example, a function that involves \texttt{print()} statements or writes to global variables is not considered to be functionally pure, as its output does not exclusively pass through the \texttt{return} statement. JAX does not guarantee the proper behavior of impure functions. During \gls{jit} compilation, the function is transformed to primitives, which in JAX are defined to be "fundamental units of computation"\cite{jaxGlossaryTerms}. As an example, the following function header is used to calculate the local energy (\autoref{eq:localenergy}):
 
 \begin{lstlisting}[language=Python]
   @functools.partial(jax.jit, static_argnums=(4, 5))
@@ -648,7 +644,7 @@ JAX transformation require function to be \textit{functionally pure}. To summari
   ) -> jax.Array:    # (ns,)   local energies
       ...
   \end{lstlisting}
-$h$ and $N$ are passed as static parameters, meaning that they will be hard-coded in the compiled function after \gls{jit}. Jax compiles a kernel for each combination of static variables; as $h$ and $N$ never change during a training run, this means that the function is only compiled once. 
+$h$ and $N$ are passed as static parameters, meaning that they will be hard-coded in the compiled function after \gls{jit}. JAX compiles a kernel for each combination of static variables; as $h$ and $N$ never change during a training run, this means that the function is only compiled once. 
 
 \subsubsection{Vectorized Map}
 
@@ -667,7 +663,7 @@ batched_f = jax.jit(jax.vmap(log_psi_fn))
 \end{lstlisting}
 
 \subsubsection{Autograd}
-Jax offers automatic differentiation to compute function gradients. However, we do not make use of this feature as gradients are calculated analytically (see \cite{Gardas_2018}).
+JAX offers automatic differentiation to compute function gradients. However, we do not make use of this feature as gradients are calculated analytically (see \cite{Gardas_2018}).
 
 \subsection{Hardware and Software Configuration}
 D-Wave experiments use the \texttt{Advantage\_system6} (Pegasus) and \texttt{Advantage2\_system1} (Zephyr) solvers. Forward-anneal runs use a $20\,\mu s$ anneal time and \texttt{num\_reads} equal to the requested sample count, with \texttt{auto\_scale} enabled and D-Wave's default chain strength unless stated otherwise; embeddings are cached per \texttt{(n\_visible, solver)} using \texttt{minorminer}'s biclique embedder. Classical simulated-annealing baselines use \texttt{dwave-neal} with 1000 sweeps and a geometric $\beta$ schedule over $[0.01,10]$. FPGA/VeloxQ runs use \texttt{Float32} precision, a 100\,MHz core clock, 1024 parallel replicas, and 1000 update steps per run. All stochastic components (JAX/NumPy) are seeded per run via \texttt{np.random.randint} feeding \texttt{jax.random.PRNGKey}. 
