@@ -102,13 +102,13 @@ H = - \sum_{i<j} \frac{J}{|i-j|^\alpha}\sigma_i^z \sigma_j^z - h \sum_i \sigma_i
 where $J$ sets the interaction strength, $\alpha$ controls the power-law decay of the interactions, and $h$ is the transverse magnetic field strength. The model serves as an extension of the 1D-\gls{tfim} and allows us to assess the ability of our models to capture long-range interactions.
 \subsection{Heisenberg Models}
 
-The Heisenberg model describes spins on lattice sites interacting via exchange coupling:
+The Heisenberg model describes spins on lattice sites interacting via exchange coupling~\cite{mpg}:
 
 \begin{equation}
     H = \sum_{\langle i,j \rangle} J_{ij}\,\boldsymbol{\sigma}_i \cdot \boldsymbol{\sigma}_j
 \end{equation}
 
-where $\boldsymbol{\sigma}_i = (\sigma_i^x, \sigma_i^y, \sigma_i^z)$ are the Pauli spin operators, $J_{ij}$ is the exchange coupling between sites $i$ and $j$, and $\langle i,j \rangle$ denotes nearest-neighbour pairs. In contrast to the \gls{tfim}, the Heisenberg model couples all three spin components.
+where $\boldsymbol{\sigma}_i = (\sigma_i^x, \sigma_i^y, \sigma_i^z)$ are the Pauli spin operators, $J_{ij}$ is the exchange coupling between sites $i$ and $j$, and $\langle i,j \rangle$ denotes nearest-neighbour pairs. Spin operators are represented by Pauli matrices (eigenvalues $\pm1$) rather than spin-$\tfrac12$ operators (eigenvalues $\pm\tfrac12$) throughout this work. In contrast to the \gls{tfim}, the Heisenberg model couples all three spin components.
 
 \subsubsection{XXZ Heisenberg Chain}
 
@@ -120,7 +120,7 @@ We study the one-dimensional XXZ Heisenberg chain with periodic boundary conditi
 
 where $J$ is the exchange coupling and $\Delta$ is the anisotropy parameter. Setting $\Delta = 1$ gives the isotropic Heisenberg model, while $\Delta = 0$ reduces to the XY chain. Unlike the \gls{tfim}, the model couples all three spin components, making it a more general and challenging benchmark.
 
-\subsubsection{Frustrated $J_1$-$J_2$ Heisenberg Chain}
+\subsubsection{Frustrated \texorpdfstring{$J_1$-$J_2$}{J1-J2} Heisenberg Chain}
 
 The frustrated $J_1$-$J_2$ Heisenberg chain extends the XXZ model with a next-nearest-neighbour exchange term:
 
@@ -232,7 +232,7 @@ For the evaluation of $\frac{f(x^*)}{f(x^n)}$, knowledge of the normalization co
 \subsubsection{Gibbs sampling}
 Gibbs sampling can be considered a special case of the Metropolis-Hastings algorithm. It is used when sampling directly from a joint distribution is difficult, but sampling from the full conditional distributions is tractable. The algorithm constructs a Markov chain by iteratively sampling each variable (or block of variables) from its distribution conditioned on the current values of all other variables. This procedure generates a chain whose stationary distribution is the target joint distribution. 
 \section{Variational Algorithms}
-Variational algorithms are a class of hybrid quantum-classical optimization methods. We focus on the \acrfull{vqe} which is designed to find the ground state of a given Hamiltonian. It consists of three parts: the \textit{cost function} to be minimized, the \textit{ansatz}, which in our case is a Boltzmann machine, and an \textit{expectation value estimation}. Additionally, a classical optimizer is needed to improve the ansatz at each iteration. Depending on the quantum architecture, two approaches for estimating the expectation value are possible:
+Variational algorithms are a class of hybrid quantum-classical optimization methods designed to find the ground state of a given Hamiltonian. Unlike the \acrfull{vqe}, which prepares and measures a parametrised circuit on a gate-based quantum computer, this work uses quantum-assisted Variational Monte Carlo: a classical neural-network ansatz is optimised via Stochastic Reconfiguration, and a quantum device is used only to generate samples of that ansatz. Variational Monte Carlo consists of three parts: the \textit{cost function} to be minimized, the \textit{ansatz}, which in our case is a Boltzmann machine, and an \textit{expectation value estimation}. Additionally, a classical optimizer is needed to improve the ansatz at each iteration. Depending on how the ansatz is realised on quantum hardware, two approaches for estimating the expectation value are possible:
 \begin{itemize}
 	\item On gate-based quantum computers, measuring can be used to gather expectation values of the modified ansatz and improve it further
 	\item In adiabatic quantum computing, the quantum device is used to generate representative samples of the modified ansatz. These samples are then used to approximate the expectation value. 
@@ -242,7 +242,7 @@ In the adiabatic case, the ansatz is defined via an energy function over visible
 \begin{equation}
 E_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})=\mathbf{a}\cdot \mathbf{v} -\mathbf{b}\cdot \mathbf{h} - \mathbf{h}\cdot \mathbf{W}\cdot \mathbf{v},
 \end{equation}
-with weights $\boldsymbol\theta=\{\mathbf{a}, \mathbf{b}, \mathbf{W}\}$ respectively applied to the vector of visible units $\mathbf{v}=(v_1, \ldots, v_N)$ and hidden units $\mathbf{h}=(h_1, \ldots, h_M)$. The joint quantum state is
+with weights $\boldsymbol\theta=\{\mathbf{a}, \mathbf{b}, \mathbf{W}\}$ respectively applied to the vector of visible units $\mathbf{v}=(v_1, \ldots, v_N)\in\{-1,+1\}^N$ and hidden units $\mathbf{h}=(h_1, \ldots, h_M)\in\{-1,+1\}^M$ -- both Ising-valued rather than the more common $\{0,1\}$ Bernoulli convention, which is what gives \autoref{eq:ansatz}'s $2\cosh(\cdot)$ factor and the conditional expectation $\langle h_j\rangle=\tanh(\beta\Theta_j)$ used in \autoref{sec:exper:temp} their specific form. The joint quantum state is
 \begin{equation}
 \label{eq:rawansatz}
 \ket\Psi =\sum_{\mathbf{v}}\Psi(\mathbf{v})\ket{\mathbf{v}}, \qquad \Psi(\mathbf{v})=\sqrt{\sum_{\mathbf{h}} e^{-E_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})}},
@@ -354,7 +354,7 @@ In this section, we evaluate the influence of temperature on different models an
 \beta_\text{eff}=\frac{1}{\beta_x}.
 \end{equation}
 \subsubsection{Langevin Simulated Bifurcation}
-As \gls{lsb} is a temperature dependent solver and not guaranteed to sample from the Boltzmann distribution, it can be used to illustrate the influence of the input temperature $\beta_x$ on the solution quality. Contrary to the quantum annealer, sampling using \gls{lsb} does not involve additional costs. To evaluate the impact of the scaling parameter $\beta_x$, we calculate the total variation distance $D_\text{TV}$ between the samples and the precise Boltzmann distribution by numerical enumeration. \autoref{fig:dtv_beta_scale_N8} clearly illustrates that the sampler temperature is problem dependent. $D_\text{TV}$ is minimal at the point where the effective temperature $\beta_\text{eff}$ is 1.
+As \gls{lsb} is a temperature dependent solver and not guaranteed to sample from the Boltzmann distribution, it can be used to illustrate the influence of the input temperature $\beta_x$ on the solution quality. Contrary to the quantum annealer, sampling using \gls{lsb} does not involve additional costs. To evaluate the impact of the scaling parameter $\beta_x$, we calculate the total variation distance $D_\text{TV}$ between the samples and the precise Boltzmann distribution by numerical enumeration. \autoref{fig:dtv_beta_scale_N8} shows that the value of $\beta_x$ minimizing $D_\text{TV}$ shifts modestly with the transverse field $h$: the optimum sits at $\beta_x\approx0.580$, $0.560$, $0.480$ for $h=0.5,1.0,2.0$ respectively -- a spread of about $20\%$ over a $4\times$ change in $h$, with $D_\text{TV}$ rising clearly on both sides of each optimum. $D_\text{TV}$ is minimal near the point where the effective temperature $\beta_\text{eff}$ is 1.
 
 \begin{figure}[htbp]
     \centering
@@ -437,17 +437,17 @@ In this section we describe computational and theoretical limitations to using v
 It is well known that capturing quantum dynamics with non-trivial sign structure using a real-valued variational ansatz is computationally hard (\textit{sign problem}). This does not pose a problem for the \gls{tfim} models, as its ground state has only positive amplitudes. More complex models, such as some $J_1$-$J_2$ Heisenberg models, on the other hand cannot be simulated using our methods. The reason for this is that the factors  $e^{-\mathbf{a}\cdot\mathbf{v}/2}$ and $\cosh(\cdot)$ of the ansatz defined in \autoref{eq:ansatz} are strictly positive for real parameters and therefore the ansatz does not allow for the representation of negative amplitudes. 
 
 \paragraph{The Marshall sign rule}
-For certain Heisenberg models with bipartite lattice structure, the Marshall sign rule can be used to remove the non-trivial sign structure of the ground state wavefunction by basis transformation. Considering the following unitary transformation on bipartite lattices $A \cup B$:
+For certain Heisenberg models with bipartite lattice structure, the Marshall sign rule can be used to remove the non-trivial sign structure of the ground state wavefunction by basis transformation. Considering the following unitary transformation on bipartite lattices $A \cup B$, written in the Pauli convention used throughout this work:
 \[
-U = \prod_{i \in A} e^{i\pi S_i^z},
+U = \prod_{i \in A} \sigma_i^z,
 \]
 the ground state wavefunction can be written as
 \[
 U |\psi_0\rangle = \sum_{\sigma} |c_\sigma| \, |\sigma\rangle,
 \]
-with only positive amplitudes. This transformation is exact only for the unfrustrated case $J_2=0$, where the lattice is bipartite; for $J_2>0$ the next-nearest-neighbour bonds connect sites within the same sublattice, breaking bipartiteness, so applying the same sign pattern is a heuristic gauge choice rather than a proven sign-removal\cite{Richter_1994}. We measure the impact of the sign problem on a given probability distribution by the average sign\cite{He_2017}. It is given by:
+with only positive amplitudes. This transformation is exact only for the unfrustrated case $J_2=0$, where the lattice is bipartite; for $J_2>0$ the next-nearest-neighbour bonds connect sites within the same sublattice, breaking bipartiteness, so applying the same sign pattern is a heuristic gauge choice rather than a proven sign-removal\cite{Richter_1994}. We measure the impact of the sign problem on a given probability distribution by the average sign\cite{Troyer_2005}, evaluated on the exact ground-state wavefunction $\Psi_0$ obtained by exact diagonalisation -- not on the RBM ansatz $\Psi_\theta$, which is strictly positive by construction and would give $\langle s\rangle \equiv 1$ trivially. It is given by:
   \begin{equation}
-      \langle s \rangle = \frac{\sum_{\mathbf{v}} \Psi(\mathbf{v})}{\sum_{\mathbf{v}} |\Psi(\mathbf{v})|}
+      \langle s \rangle = \frac{\sum_{\mathbf{v}} \Psi_0(\mathbf{v})}{\sum_{\mathbf{v}} |\Psi_0(\mathbf{v})|}
   \end{equation}
 Interestingly, we empirically observe that even for frustrated Heisenberg models with $0\leq\frac{J_2}{J_1}\leq0.5$ the \gls{rbm} with the Marshall sign correction can accurately approach the ground state energy, whereas without the correction the variational energy degrades significantly — consistent with \cite{Richter_1994}, who found that the sign rule can empirically survive frustration over part of the parameter range even though the proof no longer strictly applies beyond $J_2=0$. Empirically, we observe that the median relative error over independent seeds rises sharply once $J_2/J_1$ exceeds $0.5$ (\autoref{fig:convergence_median}), in line with expectations that stronger frustration increasingly violates the positive-amplitude assumption underlying the ansatz. We did not test a phase-capable ansatz (e.g.\ a complex-valued \gls{rbm} or a separate amplitude-and-phase network); such a comparison is left as future work.
 \begin{figure}[htbp]
@@ -570,7 +570,7 @@ which is the covariance of the gradient observable and the local energy. The loc
 
 
 
-The next step then is to define the quantum geometric tensor $\mathbf{S}$, the sample covariance of the $O_k$ vectors, which measures how sensitive the Born distribution $|\Psi|^2$ is to each parameter direction. In matrix form, if $\bar{\mathbf{O}}$ is the matrix of mean-centred gradients, then $\mathbf{S} = \frac{1}{N_s}\bar{\mathbf{O}}^\top \bar{\mathbf{O}}$. After solving the \gls{sr} system
+The next step then is to define the quantum geometric tensor $\mathbf{S}$, the regularised sample covariance of the $O_k$ vectors, which measures how sensitive the Born distribution $|\Psi|^2$ is to each parameter direction. In matrix form, if $\bar{\mathbf{O}}$ is the matrix of mean-centred gradients, then $\mathbf{S} = \frac{1}{N_s}\bar{\mathbf{O}}^\top \bar{\mathbf{O}} + \lambda I$, with a small regularisation $\lambda$ added for numerical stability. After solving the \gls{sr} system
 \begin{equation}
 \label{eq:srsystem}
 \mathbf{S} \cdot \delta\boldsymbol{\theta} = \mathbf{F}
@@ -614,7 +614,7 @@ and converges for any symmetric positive-definite matrix. Computing the matrix--
 \end{equation}
 \subsection{Exact Solving}
 Determining the exact value of the ground state up to numerical precision is crucial for evaluating the performance of the trained models. For \gls{tfim}, exact solving is possible for arbitrary system sizes, whereas solving the $J_1$-$J_2$ Heisenberg model is computationally hard.
-\subsubsection{\gls{tfim} ground state solving in $O(N)$}
+\subsubsection{\texorpdfstring{\gls{tfim}}{TFIM} ground state solving in \texorpdfstring{$O(N)$}{O(N)}}
 The 1D \gls{tfim} defined in \autoref{eq:tfim} can be solved exactly in $O(N)$ time, for $J>0$, $h\geq0$, and periodic boundary conditions on the spin chain -- the regime used throughout this work. Dziarmaga~\cite{Dziarmaga_2005} solves the identical Hamiltonian by mapping it to a system of free fermions via the Jordan--Wigner transformation, followed by a Fourier and Bogoliubov transformation. The periodic boundary conditions split the fermionic Hilbert space into two parity sectors, each restricted to its own set of allowed momenta; for $J>0$, $h\geq0$ the ground state always sits in the antiperiodic sector. Directly applying the quasiparticle dispersion of Eq.~(16) and the ground-state (vacuum) energy of Eq.~(18) in \cite{Dziarmaga_2005} (with $g=h/J$; see also \cite{He_2017} for the parity-sector momenta) gives the closed-form ground-state energy:
 \begin{equation}
 E_0 = -\sum_{m=0}^{N-1} \epsilon\!\left(\frac{\pi(2m+1)}{N}\right),
@@ -666,7 +666,7 @@ batched_f = jax.jit(jax.vmap(log_psi_fn))
 JAX offers automatic differentiation to compute function gradients. However, we do not make use of this feature as gradients are calculated analytically (see \cite{Gardas_2018}).
 
 \subsection{Hardware and Software Configuration}
-D-Wave experiments use the \texttt{Advantage\_system6} (Pegasus) and \texttt{Advantage2\_system1} (Zephyr) solvers. Forward-anneal runs use a $20\,\mu s$ anneal time and \texttt{num\_reads} equal to the requested sample count, with \texttt{auto\_scale} enabled and D-Wave's default chain strength unless stated otherwise; embeddings are cached per \texttt{(n\_visible, solver)} using \texttt{minorminer}'s biclique embedder. Classical simulated-annealing baselines use \texttt{dwave-neal} with 1000 sweeps and a geometric $\beta$ schedule over $[0.01,10]$. FPGA/VeloxQ runs use \texttt{Float32} precision, a 100\,MHz core clock, 1024 parallel replicas, and 1000 update steps per run. All stochastic components (JAX/NumPy) are seeded per run via \texttt{np.random.randint} feeding \texttt{jax.random.PRNGKey}. 
+D-Wave experiments use the \texttt{Advantage\_system6} (Pegasus) and \texttt{Advantage2\_system1} (Zephyr) solvers. Forward-anneal runs use a $20\,\mu s$ anneal time and \texttt{num\_reads} equal to the requested sample count, with \texttt{auto\_scale} enabled and D-Wave's default chain strength unless stated otherwise; embeddings are cached per \texttt{(n\_visible, solver)} using \texttt{minorminer}'s biclique embedder. Classical simulated-annealing baselines use \texttt{dwave-neal} with 1000 sweeps and a geometric $\beta$ schedule over $[0.01,10]$. FPGA/VeloxQ~\cite{veloxq} runs use \texttt{Float32} precision, a 100\,MHz core clock, 1024 parallel replicas, and 1000 update steps per run. All stochastic components (JAX/NumPy) are seeded per run via \texttt{np.random.randint} feeding \texttt{jax.random.PRNGKey}. 
 
 % -------------------- Appendix -------------------- *
 \clearpage
@@ -680,8 +680,8 @@ its product with any vector $\mathbf{x} \in \mathbb{R}^{N_\text{params}}$ satisf
 
 \textbf{Derivation.}
 
-\textit{Step 1: Write $\mathbf{S}$ in sample form.}
-By definition, $S_{kl} = \langle O_k O_l \rangle - \langle O_k \rangle\langle O_l \rangle$.
+\textit{Step 1: Write the unregularised covariance in sample form.}
+Define $\Sigma_{kl} = \langle O_k O_l \rangle - \langle O_k \rangle\langle O_l \rangle$, the unregularised sample covariance of the gradient observables, so that $\mathbf{S} = \boldsymbol\Sigma + \lambda I$.
 Introducing the matrix $\mathbf{O} \in \mathbb{R}^{N_s \times N_\text{params}}$ with entries
 $O_{sk} = O_k(\mathbf{v}^{(s)})$, the sample estimates are
 \begin{equation}
@@ -691,19 +691,20 @@ $O_{sk} = O_k(\mathbf{v}^{(s)})$, the sample estimates are
 \end{equation}
 where $\mu_k = \frac{1}{N_s}\sum_s O_{sk}$ is the sample mean of the $k$-th observable.
 
-\textit{Step 2: Express $\mathbf{S}$ via the mean-centred matrix.}
+\textit{Step 2: Express $\boldsymbol\Sigma$ via the mean-centred matrix.}
 Define $\bar{\mathbf{O}} \in \mathbb{R}^{N_s \times N_\text{params}}$ by $\bar{O}_{sk} = O_{sk} - \mu_k$.
 Then
 \begin{equation}
     \frac{1}{N_s}(\bar{\mathbf{O}}^\top\bar{\mathbf{O}})_{kl}
     = \frac{1}{N_s}\sum_s (O_{sk}-\mu_k)(O_{sl}-\mu_l)
     = \langle O_k O_l \rangle - \mu_k\mu_l
-    = S_{kl} - \lambda\delta_{kl},
+    = \Sigma_{kl},
 \end{equation}
 so, including regularisation,
 \begin{equation}
-    \mathbf{S} = \frac{1}{N_s}\bar{\mathbf{O}}^\top\bar{\mathbf{O}} + \lambda I.
+    \mathbf{S} = \boldsymbol\Sigma + \lambda I = \frac{1}{N_s}\bar{\mathbf{O}}^\top\bar{\mathbf{O}} + \lambda I,
 \end{equation}
+matching the Claim.
 
 \textit{Step 3: Apply to $\mathbf{x}$.}
 Since matrix multiplication is associative,
