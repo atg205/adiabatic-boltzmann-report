@@ -400,24 +400,22 @@ beta_eff = estimate_beta_eff(energies, p_emp)  # argmin_beta KL(p_emp || p_beta)
 
 \begin{figure}[htbp]
     \centering
-    \begin{subfigure}{\textwidth}
+    \begin{subfigure}{0.48\linewidth}
         \centering
-        \includegraphics[width=\textwidth]{figures/dtv_autoscale_dtv_N8}
+        \includegraphics[width=\linewidth]{figures/dtv_autoscale_dtv_N8}
         \subcaption{Total variation distance $D_\mathrm{TV}$ between the QPU samples and $|\Psi(v)|^2$.}
         \label{fig:dtv_autoscale_dtv_N8}
     \end{subfigure}
-
-    \vspace{0.5em}
-
-    \begin{subfigure}{\textwidth}
+    \hfill
+    \begin{subfigure}{0.48\linewidth}
         \centering
-        \includegraphics[width=\textwidth]{figures/dtv_autoscale_beta_N8}
+        \includegraphics[width=\linewidth]{figures/dtv_autoscale_beta_N8}
         \subcaption{Effective inverse temperature $\beta_\mathrm{eff}$, with the ideal $1/\beta_x$ line and the $\beta_\mathrm{eff}=1$ target.}
         \label{fig:dtv_autoscale_beta_N8}
     \end{subfigure}
 
     \caption{%
-      Impact of \texttt{auto\_scale} on $\beta_x$ for a chain-free Pegasus-embedded \gls{tfim} \gls{rbm} ($N=8$, $h=1$). \texttt{auto\_scale=True} (red) makes $\beta_\text{eff}$ independent of $\beta_x$; \texttt{auto\_scale=False} (blue) restores the intended $1/\beta_x$ control. Shaded bands show $\pm1$ s.d.\ over 3 repeats per point (one repeat where the $\beta_\text{eff}$ fit saturated the optimizer's search bound, the same failure mode as \autoref{fig:cem_validation}, is excluded).
+      Impact of \texttt{auto\_scale} on $\beta_x$ for a chain-free Pegasus-embedded \gls{tfim} \gls{rbm} ($N=8$, $h=1$). \texttt{auto\_scale=True} (red) makes $\beta_\text{eff}$ independent of $\beta_x$; \texttt{auto\_scale=False} (blue) restores the intended $1/\beta_x$ control.
     }
     \label{fig:dtv_autoscale_N8}
 \end{figure}
