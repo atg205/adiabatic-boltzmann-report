@@ -1,5 +1,21 @@
 # Revision history of `audyt_cld_bg.md`
 
+## Revision 6 — 2026-08-07, final consistency pass
+
+Revision 6 resolves the remaining issues identified after revision 5:
+
+- F1 now separates the confirmed reference-family correction from RMSE/bias values that are only internally consistent with the committed figure and cannot be reproduced from the available artefacts.
+- M2 no longer presents unavailable code inspection as current evidence; the pooled implementation is marked `cannot verify here` unless an exact commit and path are supplied.
+- F2 now says that β_eff for other QPU experiments is not established or reported, and no longer applies the temperature caveat to the classical-only sparsity ablation.
+- The `W_{ij}`/`W_{ji}` transpose inconsistency was elevated from a minor to substantive finding N14 and added to P0.
+- N-B1 now distinguishes confirmed missing disclosures from methodological judgement; common VMC settings are no longer described as a requirement for "matched effort" in a wall-clock benchmark.
+- The unsupported claim that most related work leaves `auto_scale` at its default was removed.
+- Temperature calibration and CEM-on-QPU are now separate recommended experiments.
+- Fragile finding totals and the `table`-environment complaint were removed; Appendix A was pruned of low-value style counts.
+- The audit header no longer embeds a repository HEAD that becomes stale whenever the audit itself is committed.
+
+---
+
 ## Revision 5 — 2026-08-07, correcting revision 4 after a reviewer critique
 
 The critique in `uwagi_do_audytu_cld_bg.md` was adjudicated point by point against the files. **It is right on all seven of its correction points**, two of which were real errors of mine and two internal contradictions. Applied:
