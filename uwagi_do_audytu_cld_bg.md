@@ -1,283 +1,192 @@
-# Uwagi do `audyt_cld_bg.md`
+# Ponowna ocena `audyt_cld_bg.md`
 
-## Ocena ogólna
+Ocena dotyczy **Revision 4** audytu z 7 sierpnia 2026 r. i bieżącego `report.tex`. Źródło raportu nie zmieniło się od commitu `5bc5a64`, natomiast HEAD całego repozytorium to obecnie `e2705c2`.
 
-Audyt jest w dużej mierze trafny i bardzo pomocny, ale nie powinien być przyjęty bez korekt jako ostateczna recenzja naukowa.
+## Werdykt
 
-| Kryterium | Ocena |
-|---|---:|
-| Trafność merytoryczna | **8/10** |
-| Jakość redakcyjna | **6,5/10** |
-| Praktyczna użyteczność | **8,5/10** |
+Audyt jest teraz **w dużej mierze trafny, dobrze udokumentowany i bardzo użyteczny jako wewnętrzna kontrola jakości**. Jest znacznie lepszy od poprzedniej wersji: uczciwie wycofuje wcześniejszy nietrafiony zarzut wobec funkcji celu CEM, rozróżnia poprawki pełne i częściowe oraz wykrywa poważne sprzeczności w nowym eksperymencie czasu-do-progu.
 
-Największą wartością dokumentu są: przypięcie ustaleń do konkretnego commitu, sprawdzalne odwołania do linii i artefaktów kompilacji, wykrycie problemu z walidacją CEM, analiza budżetów eksperymentu QPU oraz uporządkowane rekomendacje P0/P1. Jednocześnie kilka wniosków jest sformułowanych zbyt kategorycznie, część propozycji napraw jest nieprecyzyjna, a przegląd literatury nie jest kompletny.
+Nie jest jednak jeszcze całkowicie wiarygodną recenzją końcową. Najważniejsze zastrzeżenia dotyczą nadmiernego uogólnienia wyniku `auto_scale`, niepoprawnej oceny reprodukowalności i zbyt pozytywnej oceny języka raportu.
 
-## Ustalenia, które są dobrze uzasadnione
+| Kryterium | Ocena | Komentarz |
+|---|---:|---|
+| Trafność merytoryczna | **8/10** | Większość głównych ustaleń jest poprawna; jeden centralny wniosek o `beta_eff ≈ 2.8` jest uogólniony poza dane. |
+| Jakość redakcyjna | **7,5/10** | Bardzo dobra identyfikowalność uwag, ale dokument jest gęsty, miejscami kategoryczny i miesza defekty naukowe z kosmetyką. |
+| Praktyczna użyteczność | **9/10** | Lista napraw jest konkretna i prawie od razu wykonalna; wymaga zmiany kolejności priorytetów. |
+| Gotowość jako formalna recenzja | **7/10** | Po korektach opisanych niżej może być solidną podstawą decyzji redakcyjnych. |
 
-### 1. Pochodzenie i metryka dokumentu
+## Ustalenia audytu, które się potwierdzają
 
-Dane w nagłówku audytu są poprawne dla commitu `973f11b`: `report.tex` ma 712 linii, skompilowany raport 21 stron, źródło zawiera 33 środowiska `equation`, 13 figur i 15 pozycji bibliograficznych, z których 12 jest cytowanych.
+### 1. Poprawka rodziny referencyjnej CEM
 
-### 2. Niewłaściwa rodzina referencyjna w walidacji CEM
-
-Sedno zarzutu C1 jest poprawne. Skalowanie pełnej energii RBM prowadzi do marginalnego rozkładu
-
-```text
-p_β(v) ∝ exp(−β a·v) ∏_j 2 cosh(β Θ_j),
-```
-
-a nie do rodziny
+Ocena F1 jest trafna. W linii 432 raport używa teraz właściwego widocznego rozkładu marginalnego rodziny z przeskalowaną pełną energią wspólną wartością `beta`:
 
 ```text
-|Ψ(v)|^(2β) ∝ exp(−β a·v) ∏_j [2 cosh(Θ_j)]^β.
+p_beta(v) ∝ exp(-beta a·v) Π_j 2 cosh(beta Theta_j).
 ```
 
-Rodziny te są identyczne dla `β=1`, ale na ogół różnią się poza tym punktem. Oryginalna praca Kubo i Goto definiuje temperaturę względem pełnego rozkładu Boltzmanna `B_β(s)`, a CEM porównuje z warunkowymi wartościami oczekiwanymi:
+To jest zgodne z energią RBM zapisaną w równaniu (13). Audyt prawidłowo odnotowuje również, że obecnych wartości RMSE nie można odtworzyć bez właściwego cache, checkpointów i skryptu eksperymentalnego.
 
-- https://arxiv.org/html/2512.02323v1
+### 2. Korekta wcześniejszego zarzutu wobec funkcji celu CEM
 
-Oznacza to, że liczby RMSE w raporcie nie mogą być interpretowane jako czysty błąd estymatora CEM, dopóki walidacja nie zostanie powtórzona względem właściwej rodziny.
+Sekcja M2 jest teraz merytorycznie znacznie lepsza. Audyt słusznie wycofuje twierdzenie, że funkcja celu oparta na zwykłych próbkach wspólnych jest z definicji źle określona. Pooled least squares może być zgodnym estymatorem; problemem pozostają wariancja, możliwa saturacja oraz brak porównania z wariantem warunkowym.
 
-### 3. Niespójność znaku CEM
+### 3. Mechanizm `auto_scale`
 
-Przy energii zapisanej w raporcie jako
+Sedno F2 jest poprawne: jeżeli `beta_x` jednolicie skaluje wszystkie współczynniki `h` i `J`, domyślne `auto_scale=True` usuwa ten wspólny mnożnik podczas dopasowania problemu do zakresu QPU. Potwierdza to [dokumentacja parametru `auto_scale`](https://docs.dwavequantum.com/en/latest/quantum_research/solver_parameters.html).
 
-```text
-E(v,h) = a·v + b·h + h·W·v
-```
+Odczyt Figure 9 przez audyt jest zgodny z wykresem: dla badanego przypadku `auto_scale=True` daje prawie płaskie `beta_eff ≈ 2.7–3.0`, a przy `False` wynik jest w przybliżeniu proporcjonalny do `1/beta_x` z mnożnikiem około 4,1.
 
-i rozkładzie `p ∝ exp(−βE)` zachodzi
+### 4. Sprzeczność w wynikach sparsity
 
-```text
-E[h_j | v] = −tanh(β Θ_j),
-```
+N1 jest prawdziwy. Linia 544 podaje zakres 8–17 razy, a linia 563 zakres 7–27 razy dla tego samego porównania. Cache wspiera pierwsze podsumowanie. To łatwy do naprawienia, jednoznaczny błąd.
 
-a nie `+tanh(β Θ_j)`. Audyt trafnie identyfikuje wewnętrzną niespójność konwencji. Nie dowodzi to jednak automatycznie, że kod ma ten sam błąd — w repozytorium nie ma implementacji pozwalającej to sprawdzić.
+Audyt trafnie rozpoznaje też, że wcześniejszy problem niematchowanych budżetów QPU przestał być błędem bieżącego tekstu nie dlatego, że wykonano poprawny eksperyment kontrolny, ale dlatego, że wycofano z raportu porównanie QPU–classical.
 
-### 4. `auto_scale`
+### 5. Problemy nowej Figure 7
 
-Podstawowy zarzut jest zasadny. D-Wave skaluje współczynniki problemu tak, aby wykorzystać dostępny zakres sprzętowy. Jednorodne przemnożenie wszystkich wag jest zatem zasadniczo kompensowane przez `auto_scale`, co podważa opis kontroli temperatury poprzez wspólny współczynnik `β_x`.
+Ustalenia N2, N3, N5 i N6 są zasadniczo poprawne:
 
-Dokumentacja:
+- tekst mówi, że FPGA i VeloxQ osiągają ciasny próg w całym zakresie, choć przy `N=128` mają `0/20`;
+- tekst mówi, że przy `N=128` żaden solver nie osiąga progu, choć LSB ma `4/20`;
+- podpis definiuje pusty marker jako co najmniej jeden ocenzurowany seed, ale częściowo ocenzurowane punkty `19/20` i `12/20` są wypełnione;
+- twierdzenie o przewadze około dwóch rzędów wielkości nie zachodzi przy największym `N`;
+- tytuł mówi o TTS, podczas gdy mierzona jest inna metryka — TTE.
 
-- https://docs.dwavequantum.com/en/latest/quantum_research/solver_parameters.html
+Audyt dobrze uznaje tę sekcję za najpoważniejszy problem nowego materiału.
 
-### 5. Niematchowane budżety eksperymentu sparsity
+### 6. Braki strukturalne raportu
 
-Zawartość cache potwierdza ustalenie C4:
+Potwierdzają się brak abstraktu, Discussion/Conclusions, deklaracji dostępności danych i kodu, stabilnej daty oraz pełnego protokołu eksperymentalnego. Trafne są także uwagi o nieużytych w wynikach modelach LRTFIM i XXZ oraz o braku bezpośredniego testu dense-with-chains versus native-sparse.
 
-- klasyczna część eksperymentu ma po 300 iteracji SR dla każdego poziomu i seeda;
-- część QPU ma od 14 do 300 iteracji;
-- dla największej rzadkości liczby iteracji wynoszą `44, 25, 18, 14, 32`, czyli średnio 26,6.
+### 7. Pozycjonowanie literaturowe
 
-W tej sytuacji nie można oddzielić wpływu sprzętu od około dziesięciokrotnie mniejszego budżetu treningowego. To jeden z najważniejszych i najlepiej udokumentowanych punktów audytu.
+Audyt słusznie zawęża nowość projektu w świetle prac Kubo–Goto, Berns et al. i Chowdhury et al. Najbardziej obronnym wyróżnikiem pozostaje konkretny mechanizm integracji samplera i korekcji temperatury, a nie samo użycie maszyny Isinga, FPGA, rzadkiego RBM lub równoległych embeddingów.
 
-### 6. Błędy redakcyjne i LaTeX
+## Najważniejsze korekty potrzebne w samym audycie
 
-Potwierdzone są m.in.:
+### 1. Nie wolno przenosić `beta_eff ≈ 2.8` na wszystkie wyniki QPU
 
-- błędne równanie problemowego Hamiltonianu w linii 144;
-- błędne odwołanie do `anneal_schedule` zamiast figury z `D_TV`;
-- źle umieszczone etykiety sekcji i podfigury;
-- błędna definicja RBM mówiąca o braku połączeń między warstwami zamiast wewnątrz warstw;
-- niezbilansowany nawias w równaniu (20);
-- błędy makr miesięcy w BibTeX;
-- błąd nazwiska `Pawłłowski`;
-- brak abstraktu i sekcji Conclusions/Discussion;
-- brak warunków brzegowych przy TFIM;
-- niespójne użycie `S` i `S+λI` w dodatku;
-- niepoprawna etykieta osi Fig. 12.
+To najważniejszy błąd audytu. Eksperyment z Figure 9 mierzy `beta_eff` dla jednego małego przypadku: `N=8`, jednego modelu, jednego solvera Pegasus i chain-free odwzorowania. Z tego wynika ogólna obserwacja, że przy jednolitym skalowaniu `beta_x` i włączonym `auto_scale` **`beta_x` nie steruje fizyczną skalą problemu**.
 
-### 7. Niekompletność wyników
+Nie wynika natomiast, że:
 
-Audyt słusznie wskazuje brak:
+> every other QPU result sampled at beta_eff ≈ 2.8
 
-- pomiaru `D_TV` dla próbek z QPU;
-- porównania czasu QPU z metodami klasycznymi;
-- pełnego zestawu hiperparametrów;
-- jasnej liczby dokładności treningu prowadzonego próbkami z QPU;
-- testu hipotezy „native sparse RBM vs dense embedded RBM”;
-- sekcji podsumowującej wyniki;
-- deklaracji dostępności kodu i danych.
+Wartość efektywnej temperatury może zależeć od instancji, skali współczynników, solvera, embeddingu, łańcuchów, harmonogramu i freeze-out. Dokumentacja D-Wave wprost zastrzega, że złożone i osadzone problemy mogą zamarzać w innych punktach lub fragmentami: [freeze-out effective temperature](https://docs.dwavequantum.com/en/latest/ocean/api_ref_system/generated/dwave.system.temperatures.freezeout_effective_temperature.html). Wcześniejsza literatura również traktuje temperaturę jako zależną od instancji, np. [Benedetti et al.](https://arxiv.org/abs/1510.07611).
 
-### 8. Pozycjonowanie parallel embeddings i sparse Boltzmann machines
+Audyt powinien napisać:
 
-Stwierdzenie, że parallel embeddings nie są nowym wkładem, jest dobrze uzasadnione. Bezpośrednim wcześniejszym przykładem jest:
+> Figure 9 pokazuje, że `beta_x` nie kontroluje temperatury przy `auto_scale=True` w badanej konfiguracji. Dla pozostałych eksperymentów QPU rzeczywiste `beta_eff` nie jest znane i wymaga osobnej kalibracji.
 
-- E. Pelofske, G. Hahn, H. N. Djidjev, *Parallel quantum annealing*, Scientific Reports 12, 4499 (2022): https://www.nature.com/articles/s41598-022-08394-8
+Z tego samego powodu rekomendacja „uruchomić wszystkie eksperymenty z `auto_scale=False` i `beta_x ≈ 4.1`” jest za mocna. Wartość około 4,1 nie musi przenosić się między solverami i instancjami; potrzebna jest kalibracja per klasa problemu albo jawne ograniczenie interpretacji.
 
-Istnieje także wcześniejsza praca o natywnie rzadkiej maszynie Boltzmanna na D-Wave:
+### 2. Nowość wyniku `auto_scale` jest przeceniona
 
-- J. Park et al., *Benchmarking the D-Wave Quantum Annealer as a Sparse Boltzmann Machine: Recognition and Timing Performances*, UCNC 2024.
+Stwierdzenie, że wynik jest samodzielnym, „genuine, citable calibration contribution” odpowiednim dla *Physical Review Applied*, jest opinią wydawniczą, a nie wynikiem audytu. Mechanizm usuwania wspólnego skalowania jest bezpośrednią konsekwencją udokumentowanej definicji `auto_scale`. Empiryczne pokazanie efektu na jednym RBM jest użyteczne, ale obecnie wygląda raczej jak ważna kontrola metodologiczna lub case study niż wykazana nowość naukowa.
 
-## Punkty wymagające korekty w audycie
+Bez szerszego przeglądu literatury i testów na wielu instancjach, solverach oraz embeddingach bezpieczniejsze sformułowanie brzmi:
 
-### 1. C1: „mismatch alone explains the entire RMSE”
+> Wynik autoskalowania jest praktycznie użyteczną kontrolą i może stanowić element wkładu pracy, lecz jego samodzielna nowość i generalność nie zostały jeszcze wykazane.
 
-To sformułowanie jest zbyt mocne. Matematyczna niezgodność rodzin jest pewna, ale testy opisane jako „run A/B” wykorzystują inne losowe wagi niż właściwe eksperymenty raportu. Pokazują więc, że błąd wynikający z niewłaściwej rodziny może mieć skalę porównywalną z raportowanym RMSE, a nie że na pewno wyjaśnia całe RMSE 0,148/0,153.
+### 3. Sekcja o reprodukowalności zawiera fałszywie pozytywne stwierdzenie
 
-Lepsze sformułowanie:
+Audyt twierdzi, że cache exact floor i „both of Figure 14's plotting scripts are now committed”. W bieżącym repozytorium są cache i gotowe PDF/PNG, ale **nie ma skryptów generujących wykres sparsity**. Nazwane później pliki `plot_sparsity_ablation_floor.py` i `exact_ansatz_floor.py` nie występują również w lokalnym checkoutcie repozytorium implementacyjnego.
 
-> Niewłaściwie zdefiniowana rodzina referencyjna może sama generować błąd tej samej skali co raportowany RMSE. Z tego powodu obecnego RMSE nie można interpretować jako miary dokładności CEM bez ponownego obliczenia walidacji na właściwych instancjach.
+Dodatkowo:
 
-Do audytu powinny zostać dołączone seedy, wagi oraz skrypt generujący podane wartości.
+- dla Figure 7 są wyłącznie dwa pliki PDF; brak surowych danych, cache i skryptu;
+- dla walidacji CEM nadal brakuje właściwego eksperymentu, checkpointów i cache;
+- dla Figure 9 istnieje `scripts/dtv_autoscale.py`, ale w obecnym położeniu nie jest samodzielnie uruchamialnym artefaktem: zachował ścieżkę użycia `scripts/dtv/dtv_autoscale.py`, wylicza `_ROOT` o jeden poziom za wysoko i importuje kod z repozytorium, którego nie ma w tym projekcie; brak też wynikowego JSON i checkpointu;
+- nie ma opisu środowiska ani kompletnego protokołu odtworzenia nowych eksperymentów.
 
-### 2. Równanie (20): „argmin is ill-posed”
+Wobec tego ocena `C−` jest optymistyczna. Bardziej adekwatne byłoby **D+ lub C− z wyraźnym zaznaczeniem, że żadnego z trzech nowych headline experiments nie da się obecnie odtworzyć end-to-end**.
 
-Audyt słusznie zauważa, że oryginalny CEM używa empirycznych warunkowych wartości oczekiwanych, a raport w późniejszej części mówi o pojedynczych próbkach. Nie jest jednak prawdą, że funkcja celu z próbkami `h_j ∈ {−1,+1}` jest z konieczności źle określona albo musi wypychać optimum na granicę.
+### 4. „Language is genuinely clean” jest nieprawdziwe
 
-Jeżeli `m_j(β)=tanh(βΘ_j)` oraz prawdziwa wartość parametru wynosi `β₀`, to
+Audyt utożsamia brak literówek ze zdrowym językiem. Raport nadal zawiera widoczne błędy gramatyczne i niezręczności, m.in.:
 
-```text
-E[(h_j − m_j(β))²]
-  = Var(h_j) + [m_j(β₀) − m_j(β)]²,
-```
+- `the D-Wave's ability` i `The D-Wave's Quantum Annealers performance`;
+- `a initial driver Hamiltonian`;
+- `a handful of highly probable sample configuration`;
+- `In this chapter, we are going to describe...` w artykule;
+- `Lanczos algorithm ... only returns the matrix' lowest eigenvalue`;
+- `For budget constraints`;
+- niepoprawną składnię zdania celu pracy w linii 51.
 
-więc oczekiwana strata może mieć minimum w prawdziwym `β₀`. Taki estymator byłby po prostu bardziej zaszumiony.
+Werdykt powinien brzmieć raczej: **„spelling substantially improved; a professional English-language edit is still required.”**
 
-Dodatkowo wcześniejsze równanie raportu, w liniach 215–217, poprawnie używa `⟨h_j⟩`. Audyt powinien zatem mówić o niespójnym lub niejednoznacznym opisie i konieczności sprawdzenia kodu, a nie o udowodnionym błędzie implementacji. Nie ma też wystarczających podstaw, aby przypisać saturację optymalizatora właśnie temu zapisowi.
+### 5. Priorytety P0 są źle ustawione
 
-### 3. Opis sektorów parzystości TFIM
+N1 nie jest „Highest-priority fix in the document”. To prosta sprzeczność w jednym zakresie liczbowym. Znacznie ważniejsze są:
 
-Audyt trafnie wskazuje, że dla ferromagnetycznego `J>0`, `h≥0` energia sektora NS jest energią stanu podstawowego, więc `min()` w podanej formule jest zbędne. Zbyt ogólne jest jednak stwierdzenie, że drugi składnik zawsze odpowiada niedozwolonej próżni sektora R o parzystej parzystości.
+1. brak danych i metodologia Figure 7;
+2. fałszywe zdania opisujące Figure 7 oraz błędny podpis markerów;
+3. nieznana podstawa pomiaru wall-clock i obsługa cenzorowania;
+4. nadinterpretacja pozostałych wyników QPU po wykryciu działania `auto_scale`;
+5. dopiero potem zakres 8–17× versus 7–27×.
 
-Opis należy rozdzielić na reżimy `h<J` i `h>J`. Podany w audycie defekt równy `2(h−J)` dotyczy paramagnetycznego przypadku `h>J`. W obecnym brzmieniu poprawna uwaga została nadmiernie uogólniona.
+Audyt sam w Summary nazywa Figure 7 blokadą, ale jego kolejność P0 temu przeczy.
 
-### 4. Proponowana naprawa `auto_scale`
+### 6. Audyt za słabo kwestionuje metodologię porównania TTE
 
-Zdanie, że po włączeniu `auto_scale` efektywna temperatura jest ustalana „purely by the device's physical temperature”, jest niepoprawnym uproszczeniem. Rozkład próbek zależy również od:
+Stwierdzenie, że siedem solverów porównano przy „matched hyperparameters”, nie wystarcza do uczciwego benchmarku. Identyczna liczba próbek i iteracji nie oznacza porównywalnego wysiłku dla MCMC, SA, LSB, FPGA i QPU; część metod może być nastrojona, a VeloxQ jest jawnie opisany jako `untuned`.
 
-- współczynnika przeskalowania Hamiltonianu;
-- funkcji `B(s)` i punktu freeze-out;
-- dynamiki wyżarzania;
-- osadzania i łańcuchów;
-- błędów analogowych;
-- odstępstw próbek od klasycznego rozkładu Boltzmanna.
+Brakuje co najmniej:
 
-Lepsza rekomendacja:
+- surowych czasów i trajektorii dla wszystkich seedów;
+- definicji długości rolling average;
+- dokładnego kryterium „drops below and stays there”;
+- informacji, czy czas QPU obejmuje programming, embedding, queueing, network, readout i postprocessing;
+- definicji timeoutu i sposobu wyznaczania punktu `censored (extrapolated)`;
+- statystycznej procedury dla median przy cenzorowaniu;
+- strojenia solver-specific lub uzasadnienia wspólnego protokołu.
 
-> Wyłączyć `auto_scale` w eksperymentach badających jednolite skalowanie energii albo jawnie uwzględnić wyznaczony współczynnik autoskalowania i estymować efektywną temperaturę bezpośrednio z próbek.
+Audyt zauważa część tych problemów, lecz powinien jasno stwierdzić, że obecny wykres nie uzasadnia porównania wydajności solverów, nawet po poprawieniu dwóch zdań i markerów.
 
-Zależności freeze-out opisuje dokumentacja D-Wave:
+### 7. Drobne nieścisłości audytu
 
-- https://docs.dwavequantum.com/en/latest/ocean/api_ref_system/generated/dwave.system.temperatures.freezeout_effective_temperature.html
-
-### 5. Nadinterpretacja Fig. 12
-
-Dwie uwagi są zbyt ostre:
-
-- podpis „The dotted line marks the exact-ansatz floor” nie wskazuje złej linii; jest jedynie niejednoznaczny, ponieważ na wykresie istnieje także pionowa kropkowana linia hardware floor;
-- „across the full sparsity range tested” może poprawnie odnosić się do czterech masek wyszczególnionych w tym samym akapicie, a nie do dodatkowego punktu dense przy sparsity 0.
-
-Błędna etykieta osi `Energy error per spin |ε|/N` pozostaje natomiast prawdziwym problemem.
-
-### 6. Niekompletny przegląd literatury
-
-Audyt pomija bardzo bliską tematycznie pracę:
-
-- R. J. L. F. Berns et al., *Predicting sampling advantage of stochastic Ising Machines for Quantum Simulations*, Phys. Rev. Applied 25, 024085 (2026): https://arxiv.org/abs/2504.18359
-
-Praca dotyczy stochastic Ising machines jako samplerów dla NQS oraz jakości estymacji energii wariacyjnej. Nie odbiera automatycznie nowości dokładnemu połączeniu LSB+CEM z pętlą SR, ale znacząco zawęża pole do twierdzenia o „jedynym otwartym headline”.
-
-Bliskim wcześniejszym wynikiem jest również:
-
-- S. Chowdhury et al., *Probabilistic Computers for Neural Quantum States*: https://arxiv.org/abs/2512.24558
-
-Autorzy wykorzystują probabilistyczny sprzęt FPGA jako sampler w treningu energetycznych NQS i raportują TFIM do 6400 spinów. Proponowany przez audyt tytuł „NQS-VMC trained by a simulated-bifurcation-class sampler” zbyt słabo odróżniałby nowy projekt od istniejącej literatury. Głównym wyróżnikiem musiałoby być CEM, kontrolowany bias samplera albo formalna analiza tolerancji SR.
-
-### 7. Przeoczony problem z reprodukowalnością seedów
-
-Audyt zbyt pozytywnie ocenia zdanie:
-
-```text
-All stochastic components (...) are seeded per run via np.random.randint
-feeding jax.random.PRNGKey.
-```
-
-`np.random.randint` nie zapewnia odtwarzalności, jeżeli nie podano i nie zapisano nadrzędnego seeda NumPy oraz mapowania seedów na eksperymenty. Cache zawiera część jawnych seedów, ale raport nie opisuje kompletnego protokołu.
-
-Do listy braków reprodukowalności należy dodać:
-
-- nadrzędny seed generatora;
-- jawne seedy każdego eksperymentu;
-- sposób generowania i przechowywania kluczy JAX;
-- wersje kodu powiązane z cache;
-- kryteria wcześniejszego zatrzymania QPU.
-
-### 8. Niespójna klasyfikacja ważności
-
-Executive summary mówi o trzech defektach krytycznych w mechanizmie CEM/temperatury, tabela zawiera pięć pozycji C1–C5, a sekcja „Bottom line” podaje jeszcze inny zestaw trzech blokad.
-
-Należy zastosować spójną klasyfikację. Przykładowo:
-
-- **Critical:** C1, C3 i C4 — podważają interpretację głównych wyników;
-- **Major:** C2, jeśli błąd dotyczy tylko zapisu, oraz problemy sektorów TFIM i zasady wariacyjnej;
-- **P0 editorial:** błędne równanie (8), odwołania, etykiety i widoczne błędy językowe.
-
-Jeżeli kod potwierdzi niewłaściwy znak CEM, C2 powinno zostać podniesione do Critical.
-
-### 9. Drobne uwagi o małej wartości
-
-Niektóre elementy listy minor są przestarzałe albo nie wpływają na jakość naukową:
-
-- brak `inputenc` nie jest problemem w aktualnych dystrybucjach LaTeX, które domyślnie obsługują UTF-8;
-- kolejność `\bibliography` i `\bibliographystyle` jest nietypowa, ale kompilacja działa;
-- brak środowiska `table` sam w sobie nie jest brakiem reprodukowalności;
-- stwierdzenie, że artykuł „potrzebuje 40–60 referencji”, nie jest uniwersalną normą i powinno zostać zastąpione listą brakujących kategorii literatury.
+- Nagłówek każe potwierdzić target komendą `git log --oneline -1`, lecz ta zwraca obecnie `e2705c2`, nie `5bc5a64`. Poprawna kontrola to `git log -1 -- report.tex` albo porównanie hasha pliku.
+- W N2 zapis „LSB is drawn solid with 4/20” jest mylący: linia LSB jest przerywana, a **marker** jest wypełniony. Sedno zarzutu pozostaje prawdziwe.
+- „Figure 7 cannot be decoded” jest retorycznie zbyt absolutne. Lepsze: „caption and markers are inconsistent, so censoring cannot be interpreted unambiguously”.
+- Lokalny checkout implementacji rzeczywiście jest 69 commitów za `origin/main`, ale jest to stan względem lokalnego refa śledzącego; bez `git fetch` nie wiadomo, czy zdalny stan nadal jest dokładnie taki sam.
+- N14 łączy w jednym akapicie błędy istotne, styl, LaTeX i czysto kosmetyczne różnice. Utrudnia to ustalenie priorytetów.
 
 ## Ocena stylu audytu
 
 ### Mocne strony
 
-- bardzo dobra identyfikowalność uwag przez linie, równania i pliki;
-- dobre rozdzielenie correctness, completeness, novelty, writing i reproducibility;
-- konkretne rekomendacje napraw;
-- priorytety P0/P1/P2;
-- wskazywanie również elementów wykonanych poprawnie;
-- uczciwe opisanie błędów poprzedniej wersji audytu.
+- bardzo dobra identyfikowalność przez linie, równania, pliki i artefakty;
+- jawne etykiety poziomu pewności;
+- wyraźne rozróżnienie: fixed, partially fixed, obsolete i not fixed;
+- uczciwa autokorekta wcześniejszego błędu M2;
+- konkretne minimalne naprawy;
+- dobre uchwycenie sprzeczności między tekstem a wykresami;
+- rozdzielenie correctness, completeness, novelty, readability i reproducibility.
 
 ### Słabe strony
 
-- dokument jest zbyt długi jak na liczbę najważniejszych ustaleń;
-- kluczowe akapity, szczególnie C1, są trudne do szybkiego przeskanowania;
-- fakty, wnioskowania i rekomendacje bywają mieszane w jednym zdaniu;
-- występują kategoryczne sformułowania bez wystarczającego dowodu;
-- liczne bardzo precyzyjne liczby nie mają dołączonych skryptów, seedów ani danych wejściowych;
-- sekcja o historii poprzedniego audytu odciąga uwagę od bieżących ustaleń;
-- deklaracje typu „5–8 weeks”, „low-to-medium risk” i przewidywanie reakcji recenzentów są ocenami eksperckimi, a nie wynikiem audytu.
+- zbyt wiele szczegółów niskiego priorytetu w głównym toku;
+- kilka opinii o szansach publikacyjnych jest przedstawionych niemal jak fakt;
+- pojedyncze kalibracje bywają uogólniane na cały raport;
+- Summary jest miejscami bardziej kategoryczne niż późniejsze zastrzeżenia;
+- istotne braki reprodukowalności nowej Figure 7 zostały przeoczone;
+- „24 new defects” brzmi efektownie, ale zlicza razem problemy naukowe i kosmetyczne.
 
-## Zalecana redakcja audytu
+Lepsza konstrukcja audytu to krótka lista 5–7 blokad w tekście głównym, a pełna lista kosmetyki, logów i mikrospójności w dodatku.
 
-Każde istotne ustalenie powinno mieć jednolity format:
+## Zalecana kolejność poprawek audytu
 
-1. **Finding** — co dokładnie jest niepoprawne.
-2. **Evidence** — równanie, fragment cache, wynik kompilacji albo źródło.
-3. **Impact** — jaki wniosek raportu przestaje być uzasadniony.
-4. **Fix** — minimalna poprawka.
-5. **Confidence** — `confirmed`, `strong inference` albo `requires code inspection`.
+1. Usunąć wszystkie uogólnienia, że pozostałe eksperymenty QPU miały `beta_eff ≈ 2.8`; pozostawić jedynie wniosek o nieskuteczności `beta_x` przy `auto_scale=True`.
+2. Przepisać sekcję Reproducibility: dodać brak danych/skryptu Figure 7, brak skryptów sparsity oraz niesamodzielność `dtv_autoscale.py`.
+3. Zmienić ocenę języka z „genuinely clean” na „bez wykrytych literówek, lecz nadal wymagający redakcji językowej”.
+4. Ustawić Figure 7 i metodologię TTE przed N1 w P0.
+5. Osłabić twierdzenie o nowości i potencjale publikacyjnym wyniku autoskalowania.
+6. Dodać krytykę porównywalności solverów oraz pełną listę braków definicji TTE.
+7. Poprawić komendę identyfikującą target, sformułowanie o markerze LSB i kilka zdań absolutnych.
 
-W szczególności warto:
+## Konkluzja
 
-- skrócić C1 i przenieść liczby pomocnicze do dodatku;
-- zmienić stwierdzenie o pojedynczych próbkach CEM na uwagę o niespójnym opisie;
-- skorygować opis sektora R;
-- poprawić rekomendację dotyczącą `auto_scale`;
-- dodać Berns et al. i dokładniej pozycjonować wkład LSB+CEM;
-- dodać problem z seedem nadrzędnym;
-- ujednolicić poziomy Critical/Major/Minor;
-- przenieść §9 do osobnego changelogu;
-- dołączyć skrypty weryfikujące CEM, TFIM i statystyki cache.
+`audyt_cld_bg.md` jest **bardzo dobrym audytem roboczym** i trafnie wykrywa większość najważniejszych problemów obecnej wersji raportu. Najcenniejsze są ustalenia o Figure 7, rodzajach CEM, `auto_scale`, sprzeczności w sparsity oraz brakach strukturalnych.
 
-## Werdykt
-
-`audyt_cld_bg.md` jest bardzo dobrym wewnętrznym materiałem roboczym i wychwytuje kilka problemów, które rzeczywiście podważają obecne wnioski raportu. Najważniejsze z nich — zła rodzina referencyjna CEM, `auto_scale`, niematchowane budżety QPU oraz brak QPU `D_TV` i porównania kosztów — powinny zostać potraktowane poważnie.
-
-Przed przekazaniem audytu autorowi jako formalnej recenzji należy jednak:
-
-- osłabić nieudowodnione twierdzenia przyczynowe;
-- poprawić kilka własnych błędów merytorycznych audytu;
-- oddzielić fakty od spekulacji wydawniczych;
-- uzupełnić przegląd literatury;
-- dołączyć materiały pozwalające odtworzyć jego obliczenia.
-
-Po tych zmianach audyt może być bardzo wartościową i wiarygodną podstawą planu napraw raportu.
+Przed potraktowaniem go jako formalnej recenzji trzeba jednak skorygować jego własny centralny skrót myślowy: **z jednego pomiaru `beta_eff ≈ 2.8` nie wynika taka sama temperatura we wszystkich eksperymentach QPU**. Trzeba też uczciwie obniżyć ocenę reprodukowalności i jakości językowej. Po tych zmianach audyt będzie trafny, dobrze napisany i merytorycznie bardzo pomocny.
