@@ -1,5 +1,23 @@
 # Revision history of `audyt_cld_bg.md`
 
+## Revision 4 — 2026-08-07, re-verification against commit `5bc5a64`
+
+Revision 3 audited `973f11b` (712 lines). Over the following ten days the author fixed most of it, annotated this audit inline with `(FIXED)` notes, and added two subsections the audit had never seen. Revision 4 **re-verified every claimed fix independently** — none was taken on trust — using `sed`/`grep` on the live file, `build/report.aux`/`.log`/`.blg`/`.out`, the committed JSON caches, dense exact diagonalisation, and pixel-level decoding of the rendered PDFs.
+
+**Scoreboard on revision 3's 26 in-scope findings: 20 verified fixed, 2 legitimately obsolete (F3 a/b), 2 partially fixed (F2, F3d), 1 not fixed, 1 fixed in a way that introduced a new contradiction.** No `(FIXED)` annotation was false — an unusually good record. The ~136 inserted lines carry **24 new defects**, 14 of them in the newest subsection.
+
+### What changed in this revision
+
+- **F1 → verified fixed.** The corrected ground truth is exactly the marginal of the β-tempered joint; the wrong family is gone everywhere (zero grep hits for `|\Psi|^{2\beta}`, "unbiased", "overestimate", "high-temperature"); the new RMSE 0.107/0.112 is accompanied by a qualitatively different, internally consistent bias description, corroborated by the regenerated figure.
+- **F2 → partially fixed, and reclassified.** The author turned the finding into an experiment (new §4.3.2) that measures β_eff on hardware with `auto_scale` on and off; I verified both branches by calibrating the figure's log axes. The residual is no longer the diagnosis but its *propagation*: the report establishes that every other QPU result sampled at β_eff ≈ 2.8 rather than the target 1, and then never carries that anywhere. Two smaller residuals: L260 still states the refuted claim unqualified, and L390 makes exactly the physical-temperature attribution revision 3 warned against.
+- **F3 → (a)/(b) obsolete by scope cut, (c) fixed, (d) fixed but superseded by new finding N1** (8–17× at L544 versus 7–27× at L563 for the same figure).
+- **Twenty-four new findings (N1–N14)**, the serious cluster in §4.2 "Time-to-solution across solvers": its prose contradicts its own figure twice and both versions are false, its caption specifies a marker convention the plot does not follow, its headline speed claim rests on an undisclosed "(SA, untuned)" configuration visible only inside the figure image, and its title collides with the TTS metric Eq. (1) formally defines.
+- **Three completeness gaps closed** by the new material: QPU β_eff measured, a QPU `D_TV` now exists, and a cross-solver wall-clock comparison to N=128 now exists. Grades moved: correctness B− → B, completeness C → C+.
+- **New reproducibility finding:** the implementation repository on this machine (`/Users/bartek/Desktop/adiabatic-boltzmann`, HEAD `2383dacf`, 2026-06-16) is 69 commits behind its remote and contains none of the scripts the fix annotations cite, so every code-side claim is `cannot verify here`. Also, F1's corrected headline numbers cannot be recomputed from anything on disk.
+- **Corrections to this audit's own earlier claims:** `verify/cem_objective.py`'s 24.8 %-saturation figure models a single-condition estimator the code never implemented (M2 was resolved by code inspection showing the estimator pools over a whole batch with no clamping), so it is now labelled a general note rather than a measurement of this implementation. Revision 3's line and equation numbers were superseded wholesale; a translation table is now in the audit header.
+
+---
+
 ## Revision 3 — 2026-07-28, in response to `uwagi_do_audytu_cld_bg.md`
 
 The reviewer critique was adjudicated point by point, independently rather than by deference: **right on five points (1, 3, 4, 5, 7), partly right on two (2, 8), one out of scope (6, literature — accepted and acted on), and partly right on the last (9)**. It was also wrong once — and wrong by agreeing with the audit.
