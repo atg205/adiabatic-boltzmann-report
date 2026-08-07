@@ -1,5 +1,11 @@
 # Revision history of `audyt_cld_bg.md`
 
+## Revision 7 — 2026-08-07, bibliography finding added
+
+Added **N15**, a substantive finding on bibliography consistency, verified against `bib.bib` and `build/report.bbl`: nine `doi` and ten `url` fields are present but `unsrt` prints neither, so with `hyperref` loaded the only three links in the reference list belong to the blog post, the lecture notes and the JAX documentation while every peer-reviewed source is unlinked; `eprint`/`archiveprefix` are dropped too, leaving Kubo & Goto without any locator; the same journal is spelled "Phys. Rev. Appl." in one entry and "Physical Review Applied" in another; four articles print volume and issue with no page or article number; date granularity varies three ways; `unsrt`'s case folding is pervasive rather than limited to the two entries M19 patched; and entry types, author-name conventions and one brace-protected URL are inconsistent. M19's paragraph now points at N15 as the systemic version of its symptoms, and P1 gained item 13 — rebuild on a DOI/arXiv-aware style before adding the missing citations, so new entries are written once in the final convention.
+
+---
+
 ## Revision 6 — 2026-08-07, final consistency pass
 
 Revision 6 resolves the remaining issues identified after revision 5:
