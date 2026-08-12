@@ -141,7 +141,7 @@ In the beginning of the annealing process, the device is initiated in the ground
 \begin{equation}
 H_D=-\sum_{i=1}^N \sigma_x^{(i)} \text{ with ground state } \ket{+}^{\otimes N}
 \end{equation}
-where $\sigma_x$, $\sigma_y$, and $\sigma_z$ are the Pauli matrices acting on qubit $i$. The problem Hamiltonian is defined as 
+where $\sigma_x$ and $\sigma_z$ are the Pauli matrices acting on qubit $i$. The problem Hamiltonian is defined as
 \begin{equation}
 H_P=\sum_{i=1}^N h_i\sigma_z^{(i)}+\sum_{i=1}^N\sum_{j=1}^{i-1} J_{ij}\sigma_z^{(i)}\otimes\sigma_z^{(j)}.
 \end{equation}
@@ -216,9 +216,9 @@ We use several \gls{mcmc} methods to generate samples from probability distribut
 \subsubsection{Metropolis-Hastings Algorithm}
 The Metropolis-Hastings Algorithm is a \gls{mcmc} method used to obtain samples from a (multivariate) probability distribution $P(x)$ from which sampling is difficult. The goal of the algorithm is to define a Markov chain whose stationary distribution is $P(x)$. Suppose we can evaluate an unnormalized target density $f(x)$, where $f(x) \propto P(x)$, and the normalization constant is unknown. In the \textbf{proposal} step, a \textit{candidate} $x^*$ from a proposal distribution $q(x^*| x_n)$ is generated, $x_n$ being the current state of the Markov chain. In the \textbf{accept-reject} step, the acceptance probability $A(x_n\rightarrow x^*)$ is calculated\cite{djnavarroMetropolisHastingsAlgorithm}:
 \begin{equation}
-A(x_n\rightarrow x^*) =\min\left(1, \frac{f(x^*)}{f(x^n)}\times\frac{q(x_n|x*)}{q(x^*|x_n)}\right).
+A(x_n\rightarrow x^*) =\min\left(1, \frac{f(x^*)}{f(x_n)}\times\frac{q(x_n|x^*)}{q(x^*|x_n)}\right).
 \end{equation}
-For the evaluation of $\frac{f(x^*)}{f(x^n)}$, knowledge of the normalization constant is not necessary. The candidate $x^*$ is accepted with probability $A(x_n\rightarrow x^*)$.
+For the evaluation of $\frac{f(x^*)}{f(x_n)}$, knowledge of the normalization constant is not necessary. The candidate $x^*$ is accepted with probability $A(x_n\rightarrow x^*)$.
 \subsubsection{Simulated Annealing}
 \gls{sa} is the classical analogue and predecessor of quantum annealing. It works by exploring the neighborhood of a given configuration, accepting the proposed solution with a temperature dependent probability, or if the new configuration has a lower energy than the current one. 
 \subsubsection{Gibbs sampling}
@@ -287,7 +287,7 @@ We use the following workflow to determine $D_\mathrm{TV}$: First, we use a \gls
 
 The results are presented in \autoref{fig:dtv_classical_N8_M8}. As a sanity check, it can be seen that Metropolis and Gibbs sampling perform theoretically near-optimal, as is expected. We observe that \gls{lsb} significantly underperforms the other solvers for this small-scale example. The performance of both \gls{lsb} and \gls{sa} improves as the transverse field bias $h$ increases. In \autoref{fig:dtv_classical_N8_M8}\textbf{(b)} the exact histogram of configurations $|\Psi(\mathbf{v})|^2$ is plotted. For $h=0.5$ the distribution is peaked around a handful of highly probable sample configurations, whereas the distribution becomes more uniform for stronger values of $h$. This explains the performance increase for \gls{lsb} and \gls{sa} samplers.
 
-The peaked distribution originates from the fact that the spins in the \gls{tfim} description given by \autoref{eq:tfim} are aligned for low $h$ values (\textit{ferromagnetic} phase). For $h\rightarrow\infty$ the transverse field dominates and the ground state becomes a product of single-spin $\sigma_x$ eigenstates. Measured in the z-basis, this leads to a uniform distribution in the thermodynamic limit. \autoref{fig:tfim_ordering} illustrates this directly: sampled spin configurations and correlation functions at three values of $h$, spanning the ferromagnetic and paramagnetic regimes.
+The peaked distribution originates from the fact that the spins in the \gls{tfim} description given by \autoref{eq:tfim} are aligned for low $h$ values (\textit{ferromagnetic} phase). For $h\rightarrow\infty$ the transverse field dominates and the ground state becomes a product of single-spin $\sigma_x$ eigenstates. Measured in the z-basis, this leads to an exactly uniform distribution over spin configurations for any $N$. \autoref{fig:tfim_ordering} illustrates this directly: sampled spin configurations and correlation functions at three values of $h$, spanning the ferromagnetic and paramagnetic regimes.
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\linewidth]{figures/spin_ordering_across_qpt}
@@ -394,7 +394,7 @@ cfg = {"beta_x": beta_x, "auto_scale": auto_scale,
        "annealing_time": annealing_time}
 v = dwave_sampler.sample(rbm, num_reads, config=cfg)
 p_emp = empirical_dist_jax(v, N)
-beta_eff = estimate_beta_eff(energies, p_emp)  # argmin_beta KL(p_emp || p_beta)
+beta_eff = estimate_beta_eff(v, p_emp)  # argmin_beta KL(p_emp || p_beta)
 \end{lstlisting}
 
 \begin{figure}[htbp]
@@ -702,7 +702,7 @@ JAX offers automatic differentiation to compute function gradients. However, we 
 
 \subsection{Hardware and Software Configuration}
 \label{sec:hw_config}
-D-Wave experiments use the \texttt{Advantage\_system6} (Pegasus) and \texttt{Advantage2\_system1} (Zephyr) solvers. Forward-anneal runs use a $20\,\mu s$ anneal time and \texttt{num\_reads} equal to the requested sample count, with \texttt{auto\_scale} enabled (see \autoref{sec:autoscale} for why this matters for $\beta_x$) and D-Wave's default chain strength unless stated otherwise; embeddings are cached per \texttt{(n\_visible, solver)} using \texttt{minorminer}'s biclique embedder. Classical simulated-annealing baselines use \texttt{dwave-neal} with 1000 sweeps and a geometric $\beta$ schedule over $[0.01,10]$. FPGA/VeloxQ~\cite{veloxq} runs use \texttt{Float32} precision, a 100\,MHz core clock, 1024 parallel replicas, and 1000 update steps per run. All stochastic components (JAX/NumPy) are seeded per run via \texttt{np.random.randint} feeding \texttt{jax.random.PRNGKey}.
+D-Wave experiments use the \texttt{Advantage\_system6} (Pegasus) and \texttt{Advantage2\_system1} (Zephyr) solvers. Forward-anneal runs use a $20\,\mu\mathrm{s}$ anneal time and \texttt{num\_reads} equal to the requested sample count, with \texttt{auto\_scale} enabled (see \autoref{sec:autoscale} for why this matters for $\beta_x$) and D-Wave's default chain strength unless stated otherwise; embeddings are cached per \texttt{(n\_visible, solver)} using \texttt{minorminer}'s biclique embedder. Classical simulated-annealing baselines use \texttt{dwave-neal} with 1000 sweeps and a geometric $\beta$ schedule over $[0.01,10]$. FPGA/VeloxQ~\cite{veloxq} runs use \texttt{Float32} precision, a 100\,MHz core clock, 1024 parallel replicas, and 1000 update steps per run. All stochastic components (JAX/NumPy) are seeded per run via \texttt{np.random.randint} feeding \texttt{jax.random.PRNGKey}.
 
 % -------------------- Appendix -------------------- *
 \clearpage
