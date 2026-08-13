@@ -93,13 +93,7 @@ The Hamiltonian for the one-dimensional \gls{tfim} is given by
 H=-J\sum_i\sigma_i^z\sigma_{i+1}^z-h\sum_i\sigma_i^x
 \label{eq:tfim}
 \end{equation}
-where $J>0$ is the ferromagnetic coupling strength, $h\geq0$ is the transverse magnetic field strength, and periodic boundary conditions are imposed on the chain. The 1D \gls{tfim} serves as a benchmark for our models, as it is exactly solvable via the Jordan–Wigner transformation. Despite its simplicity, it displays non-trivial quantum behavior, including a quantum phase transition and quantum fluctuations. 
-\subsubsection{Long-range Transverse Field Ising Model}
-The Hamiltonian for the one-dimensional long-range transverse-field Ising model (LRTFIM) is given by
-\begin{equation}
-H = - \sum_{i<j} \frac{J}{|i-j|^\alpha}\sigma_i^z \sigma_j^z - h \sum_i \sigma_i^x
-\end{equation}
-where $J$ sets the interaction strength, $\alpha$ controls the power-law decay of the interactions, and $h$ is the transverse magnetic field strength. The model serves as an extension of the 1D-\gls{tfim} and allows us to assess the ability of our models to capture long-range interactions.
+where $J>0$ is the ferromagnetic coupling strength, $h\geq0$ is the transverse magnetic field strength, and periodic boundary conditions are imposed on the chain. The 1D \gls{tfim} serves as a benchmark for our models, as it is exactly solvable via the Jordan–Wigner transformation. Despite its simplicity, it displays non-trivial quantum behavior, including a quantum phase transition and quantum fluctuations.
 \subsection{Heisenberg Models}
 
 The Heisenberg model describes spins on lattice sites interacting via exchange coupling~\cite{mpg}:
@@ -110,19 +104,9 @@ The Heisenberg model describes spins on lattice sites interacting via exchange c
 
 where $\boldsymbol{\sigma}_i = (\sigma_i^x, \sigma_i^y, \sigma_i^z)$ are the Pauli spin operators, $J_{ij}$ is the exchange coupling between sites $i$ and $j$, and $\langle i,j \rangle$ denotes nearest-neighbour pairs. Spin operators are represented by Pauli matrices (eigenvalues $\pm1$) rather than spin-$\tfrac12$ operators (eigenvalues $\pm\tfrac12$) throughout this work. In contrast to the \gls{tfim}, the Heisenberg model couples all three spin components.
 
-\subsubsection{XXZ Heisenberg Chain}
-
-We study the one-dimensional XXZ Heisenberg chain with periodic boundary conditions:
-
-\begin{equation}
-    H = J \sum_{i=1}^{N} \left[ \sigma_i^x \sigma_{i+1}^x + \sigma_i^y \sigma_{i+1}^y + \Delta\, \sigma_i^z \sigma_{i+1}^z \right],
-\end{equation}
-
-where $J$ is the exchange coupling and $\Delta$ is the anisotropy parameter. Setting $\Delta = 1$ gives the isotropic Heisenberg model, while $\Delta = 0$ reduces to the XY chain. Unlike the \gls{tfim}, the model couples all three spin components, making it a more general and challenging benchmark.
-
 \subsubsection{Frustrated \texorpdfstring{$J_1$-$J_2$}{J1-J2} Heisenberg Chain}
 
-The frustrated $J_1$-$J_2$ Heisenberg chain extends the XXZ model with a next-nearest-neighbour exchange term:
+The frustrated $J_1$-$J_2$ Heisenberg chain extends the Heisenberg model with a next-nearest-neighbour exchange term:
 
 \begin{equation}
 \label{eq:j1j2heisenberg}
@@ -317,33 +301,18 @@ The peaked distribution originates from the fact that the spins in the \gls{tfim
 \subsection{Time-to-$\epsilon$ across solvers}
 \label{sec:exper:tte}
 
-\textbf{TODO --- write this subsection from the notes below.}
-\begin{itemize}
-    \item \gls{tte}: wall-clock time to \emph{validated} convergence, $\epsilon=0.1$ energy-error-per-spin.
-    \item Convergence rule: coefficient of variation $\mathrm{CV}=\mathrm{std}(E_\mathrm{loc})/|\mathrm{mean}(E_\mathrm{loc})|$ below $0.05$ for $10$ consecutive iterations (oracle-free stopping rule) \emph{and} the windowed mean energy must land within $\epsilon$ of the true answer -- self-detection at the wrong plateau is censored, not counted.
-    \item Common protocol across all series: lr$=0.08$, reg$=0.05$, $200$ samples/iteration, $100$-iteration budget, $20$ seeds; note this is matched hyperparameters, not matched tuning effort.
-    \item QPU time = D-Wave's \texttt{qpu\_access\_time} only (on-chip programming + anneal + readout); no network/queueing; embedding is a one-time cost outside the loop.
-    \item Marker convention: filled = median/IQR over validated seeds; hollow = 0 validated seeds, plotted at the run's actual elapsed time at the iteration budget (not extrapolated); every point annotated validated/total.
-    \item QPU size coverage: Zephyr and Pegasus both $N\in\{8,16,32,64\}$ -- Zephyr's biclique embedding does not reach $N=128$ on the current chip, and $N=128$ is now excluded for every series (see below), so this is no longer an asymmetry between the two QPU topologies.
-    \item Figure is capped at $N=64$: at $N=128$ the fixed $100$-iteration training budget does not reach $\epsilon$ for \emph{any} solver, verified against the oracle exact-energy check independent of the self-detector -- every series censors there for the same training-budget reason, not a sampler-speed reason, so plotting $N=128$ would invite a solver-vs-solver reading the data cannot support. State this explicitly so a reader doesn't mistake the cutoff for a coverage gap.
-    \item Pattern up to $N=64$ (all series have a validated fraction, mostly $10$--$20/20$, at every plotted $N$): FPGA fastest, then Simulated Annealing, then Pegasus/Zephyr QPU, then Metropolis/Gibbs/LSB, roughly in that order across the whole range -- no series is fully censored inside the plotted range.
-    \item Caveat: $\beta_\mathrm{eff}$ for the QPU runs is not independently calibrated here -- don't call QPU/classical TTE directly "comparable" without that caveat.
-    \item Pick one of $\epsilon$/$\varepsilon$ and use it consistently.
-    \item Implementation note: the validated-convergence check originally averaged the energy window \emph{before} the self-detected plateau instead of the plateau itself, which made it censor runs that had actually converged correctly (validated fraction was near $0/20$ almost everywhere). Fixed in \texttt{compute\_validated\_convergence\_iter} (paper\_figures.py) -- the numbers/figure above are post-fix.
-\end{itemize}
+We next compare solvers by \gls{tte}, the wall-clock time until training reaches a \emph{validated} convergence, defined as an energy error per spin below $\epsilon=0.1$. A practitioner deploying one of these solvers on a new problem has no access to the exact ground-state energy, so a useful stopping rule must be oracle-free: we monitor the coefficient of variation $\mathrm{CV}=\mathrm{std}(E_\mathrm{loc})/|\mathrm{mean}(E_\mathrm{loc})|$ of the local energy and mark a run as self-converged once $\mathrm{CV}$ has stayed below $0.05$ for $10$ consecutive iterations. A run only counts as validated, however, if the energy averaged over that self-detected plateau is, in fact, within $\epsilon$ of the true ground-state energy; a run that self-detects convergence at the wrong plateau -- which we find does happen for some D-Wave cells at small $N$ -- is censored rather than counted, so that \gls{tte} reports time to a genuinely good answer rather than merely time to training appearing to stop.
 
-\textbf{TODO --- caption notes (keep bullet lists out of \texttt{\textbackslash caption\{\}} itself, breaks the build; write full caption as prose below the figure instead):}
-\begin{itemize}
-    \item Median TTE (IQR) vs.\ $N$, $\epsilon=0.1$, all solvers, matched protocol, 20 seeds/cell, $N\in\{8,12,16,24,32,64\}$.
-    \item Filled = validated median; every point annotated validated/total; no series is fully censored within this $N$ range (unlike the earlier version of this figure).
-    \item Pegasus/Zephyr both include $N=8$ through $N=64$.
-    \item State explicitly that $N=128$ is omitted because the training budget, not any sampler, is the bottleneck there (see notes above) -- do not let a reader infer the cutoff is a QPU coverage limitation.
-\end{itemize}
+Every series shares the same training protocol: learning rate $0.08$, regularization $0.05$, $200$ samples per iteration, a $100$-iteration budget, and $20$ seeds per cell. This is a matched-hyperparameter comparison, not a matched-tuning-effort one, and should be read as such. For the D-Wave runs, the reported time is the QPU's own \texttt{qpu\_access\_time} (on-chip programming, anneal, and readout), with network latency and queueing excluded and embedding treated as a one-time cost paid outside the training loop. The comparison should also not be over-read as temperature-comparable: the effective inverse temperature $\beta_\mathrm{eff}$ of the QPU runs is not independently calibrated here (see \autoref{sec:exper:temp} for how $\beta_\mathrm{eff}$ is estimated elsewhere in this work).
+
+\autoref{fig:tte_self_convergence} plots the median \gls{tte} (with interquartile range) against system size $N\in\{8,12,16,24,32,64\}$, split across three panels sharing a $y$-axis so that absolute scale stays directly comparable: \textbf{(a)} classical MCMC samplers with an asymptotic-correctness guarantee (Metropolis, Gibbs); \textbf{(b)} classical, physics-inspired heuristics with no such guarantee (\gls{lsb} with \gls{cem}, \gls{sa} on VeloxQ~\cite{veloxq} left untuned, and FPGA); and \textbf{(c)} the Pegasus and Zephyr QPUs, each with and without \gls{cem}. Splitting the nine series this way, rather than plotting them on one shared axis, is what keeps the classical-versus-quantum comparison in panel (c) legible. We omit $N=128$ from the figure: at that size the fixed $100$-iteration training budget does not bring any solver within $\epsilon$ of the exact ground-state energy, which we confirmed directly rather than relying on the self-detector, so every series would censor there for the same training-budget reason rather than any real difference in sampler speed. Plotting $N=128$ would therefore invite a solver-versus-solver reading that the data cannot support, and the omission should not be mistaken for a QPU coverage gap -- Pegasus and Zephyr are both represented at every other size, $N\in\{8,16,32,64\}$.
+
+Across the plotted range, panel (b)'s FPGA is consistently fastest, followed by \gls{sa}, then panel (c)'s two QPUs, with panel (a)'s Metropolis and Gibbs and panel (b)'s \gls{lsb} the slowest; this ordering is a trend rather than a strict rule, since \gls{sa} and FPGA become heavily censored at $N=64$ (only $10/20$ and $6/20$ seeds validate there, respectively) and both QPUs overtake them at that size. Most cells validate on most or all of their $20$ seeds, but two are fully censored, both in panel (c): the Zephyr QPU without \gls{cem} validates $0/20$ seeds at $N=8$, and the Pegasus QPU without \gls{cem} validates $0/20$ seeds at $N=16$. Both are plotted as hollow markers at the run's actual elapsed time at the $100$-iteration budget, not an extrapolated value. The \gls{cem}-corrected Pegasus and Zephyr series validate far more consistently at these same sizes, consistent with \gls{cem} correcting the effective-temperature miscalibration discussed in \autoref{sec:exper:temp}.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.85\linewidth]{figures/fig10c_tte_vs_n_self_convergence.pdf}
-    \caption{\textbf{TODO} -- write full caption from the notes above.}
+    \includegraphics[width=\linewidth]{figures/fig10c_tte_vs_n_self_convergence.pdf}
+    \caption{Median time-to-$\epsilon$ (interquartile range) for $\epsilon=0.1$ energy error per spin, against system size $N$, under the shared protocol described in the text (lr$=0.08$, reg$=0.05$, $200$ samples/iteration, $100$-iteration budget, $20$ seeds/cell). Solvers are grouped into three panels on a shared $y$-axis: \textbf{(a)} classical samplers, \textbf{(b)} classical physics-inspired heuristics, \textbf{(c)} quantum annealers (QPU). Filled markers give the median over seeds whose self-detected convergence is validated against the true ground-state energy; a marker is annotated with the validated-over-total seed count whenever that fraction is below $20/20$. Hollow markers mark a cell where no seed validates and are placed at the run's actual elapsed time at the iteration budget rather than an extrapolated value. Pegasus and Zephyr times in panel (c) are D-Wave's \texttt{qpu\_access\_time} only, excluding network/queueing time and the one-time embedding cost. $N=128$ is omitted for every solver because the training budget, not any solver's sampling speed, is the bottleneck at that size.}
     \label{fig:tte_self_convergence}
 \end{figure}
 \subsection{Sampling temperature \& CEM}
@@ -425,7 +394,7 @@ In this work we use a pooled variant of this matching step that avoids the dedic
 \begin{equation}
 \beta_\text{eff} = \arg\min_\beta F(\beta), \quad F(\beta) = \sum_{i=1}^{N_s}\sum_{j=1}^{N_h}\left(h_{ij}-\tanh(\beta\cdot\Theta_j(\mathbf{v}_i))\right)^2,
 \end{equation}
-where $i$ is now repurposed as the sample index (rather than the visible-unit index it denoted above), $h_{ij}$ is the observed hidden unit $j$ in sample $i$, and $\Theta_j(\mathbf{v}_i) = b_j + \sum_l v_{i,l}W_{lj}$ with $l$ the visible-unit index. This adds no marginal sampler cost -- a decisive advantage when sampling is the scarce resource, as on the D-Wave QPU -- while pooling $N_s\times N_h$ residuals per estimate instead of $N_h$ residuals at a single condition.
+where $i$ is now repurposed as the sample index (rather than the visible-unit index it denoted above), $h_{ij}$ is the observed hidden unit $j$ in sample $i$, and $\Theta_j(\mathbf{v}_i) = b_j + \sum_l v_{i,l}W_{lj}$ with $l$ the visible-unit index. This adds no marginal sampler cost while pooling $N_s\times N_h$ residuals per estimate instead of $N_h$ residuals at a single condition.
 
 The matching step is visualized in \autoref{fig:cem_matching}, where the left subfigure shows multiple candidate functions $\tanh(\beta\Theta)$ dependent on $\beta$ that can be used to match the returned samples. The right subfigure describes the corresponding minimization, in which the squared loss function $F(\beta)$ is minimized over $\beta$ (in practice using scipy's \texttt{minimize\_scalar} function).
 We validate this matching procedure against an independent, exact ground-truth estimate -- obtained by minimising the KL divergence between the empirical visible-marginal distribution and the true visible marginal of the $\beta$-rescaled joint distribution, $p_\beta(\mathbf v)\propto e^{-\beta\,\mathbf a\cdot\mathbf v}\prod_j 2\cosh(\beta\Theta_j)$, via exact enumeration -- across $N\in\{8,12\}$, $h\in\{0.5,1.0,1.5,2.0\}$, and $\beta_x\in\{0.5,1.0,1.5,2.0\}$, with 5 seeds per condition and three checkpoints during training (see \autoref{fig:cem_validation}). \gls{cem} shows a small, consistently negative bias at every checkpoint, of order $-0.07$ to $-0.08$ when averaged over $\beta_x$ and $h$, roughly flat across training rather than shrinking; excluding one draw where the fit saturated its optimizer's search bound (marked $\times$ in \autoref{fig:cem_validation}(a), and excluded from both the \gls{rmse} below and panel (b)'s bias averages), its \gls{rmse} against the exact estimate is $0.107$ ($N=8$) and $0.112$ ($N=12$). Conditioned on $\beta_x$ instead, the bias is largest at low $\beta_x$ ($\beta_x=0.5$, mean bias $\approx-0.19$) and shrinks as $\beta_x$ grows ($\approx-0.02$ at $\beta_x=2.0$).
@@ -461,7 +430,7 @@ We validate this matching procedure against an independent, exact ground-truth e
         \label{fig:cem_matching_objective}
     \end{subfigure}
     \caption{%
-        The CEM matching step for $N=16$ spins with $h=1.0$. (a) Several candidate $\tanh(\beta\Theta)$ curves against the empirically observed hidden-unit samples. The curve at $\beta_\text{eff}=1.94$ hugs the data most closely and represents the best estimate of the sampler's temperature. (b) The squared loss function to be minimized.
+        The CEM matching step for $N=16$ spins with $h=1.0$. (a) Several candidate $\tanh(\beta\Theta)$ curves against the empirically observed hidden-unit samples. The curve at $\beta_\text{eff}=1.94$ approximates the data most closely and represents the best estimate of the sampler's temperature. (b) The squared loss function to be minimized.
     }
     \label{fig:cem_matching}
 \end{figure}
