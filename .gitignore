@@ -329,3 +329,10 @@ TSWLatexianTemp*
 # option is specified. Footnotes are the stored in a file with suffix Notes.bib.
 # Uncomment the next line to have this generated file ignored.
 #*Notes.bib
+
+## Build outputs — compiled PDFs must not be committed (they were the only merge conflicts)
+/report.pdf
+/build/
+
+## Not a figure: private document accidentally committed; purge from history separately
+figures/2_5316856890368498963.pdf
