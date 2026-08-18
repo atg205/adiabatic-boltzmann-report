@@ -1,5 +1,25 @@
 # Revision history of `audyt_cld_bg.md`
 
+## Revision 10 — 2026-08-18, after the second review round
+
+`ocena_audytu_cld_bg_runda_2.md` is **right on five of its eight points, wrong on the one it calls a new blocker**. Everything was checked against the pinned implementation `a4b0f2006`, which was fetched before the network went down and inspected offline.
+
+| Round-2 point | Verdict | Change |
+|---|---|---|
+| 1. B2 misdescribes the classical clock | **Correct — my error** | The pinned `Trainer` starts its timer immediately before `sampler.sample(...)` and stops immediately after; the energy meter is active only around that call, and the code comment says SR/CG/gradient work "isn't solver cost, so it's excluded". Both sides exclude SR/CG. **B2 rewritten**: the surviving defects are that the axis is labelled wall-clock *training* time while plotting *sampler* time (same for the energy panel versus "energy consumed to reach it"), and that device-reported `qpu_access_time` and host wall-clock around a classical call are different system boundaries presented as "directly comparable". |
+| 2. B1 shows confounding, not proven artefact | **Correct** | Renamed to "confounded by a size-dependent stopping rule"; causal status marked `inference`; the decisive test is now named explicitly — recompute the committed histories under CV·√N < const or a direct oracle criterion and see whether the ordering and exponents survive. |
+| 3. Forward-looking `plateau` window is a new blocker | **WRONG — refuted** | `compute_convergence_iter` returns `conv_iter = t − window + 2`, i.e. the 1-indexed **first** iteration of the plateau; `conv_iter − 1` is that same iteration 0-indexed, so the slice spans `t−window+1 … t` — exactly the triggering window. Verified for detection at t = 9, 15, 42. Recorded as **§3.9, examined and rejected**, with the arithmetic. |
+| — consequence of 3 | **My error, withdrawn** | The same arithmetic kills revision 9's sub-finding that "the QPU medians correspond to 4–9 iterations, fewer than the 10 the rule requires": since `conv_iter` is the plateau's start, a TTE under ten iterations is expected. A legitimate residual is kept as one sentence — TTE is time-to-plateau-start, excluding the ten confirmation iterations, which flatters every series equally. |
+| 4. B8 does not prove post-selection | **Correct** | The post-selection claim is dropped; B8 renamed "undisclosed threshold sensitivity" and now asks for a sensitivity table over all four (CV, ε) pairs. |
+| 5. The pinned generator does not reproduce the shipped figure | **Correct — and escalated** | Verified: SHA-256 `4a56be72…` (report) vs `ded0bc94…` (upstream `_cv0.05_eps0.1`); the report's figure carries **9** fitted `∝ N^p` labels against **0** upstream; the pinned `fig10c` function contains no exponent fitting; and `__main__` calls eleven figure functions but neither fig10c nor fig10d. The artefact carrying the exponents that B1's claim rests on cannot be produced by any committed state. Folded into B8 as the decisive half. |
+| 6. "69 commits during this audit" is wrong | **Correct — my error** | Verified: 13 commits between the two states this audit pinned; 82 since the stale local checkout it was first judged from. The 69 was the stale-checkout lag, and it was not "during this audit". M12 corrected. |
+| 7. M9's language is too strong | **Correct** | Reframed: no logical contradiction between a TTS benchmark for rotation/factoring encodings and a TTE benchmark for RBM-VMC; the defect is that the two sit three pages apart with nothing separating their scopes and metrics. |
+| 8. Wording | **Correct** | B5 "withheld experiment" → "unreported QPU arm"; M14 "print on every page" → "visible in the rendered PDF"; the history-purge procedure now warns to back up first, to expect `git filter-repo` to drop `origin`, and to rewrite every ref and tag. |
+
+Net effect: one blocker rewritten on verified code, one causal claim downgraded, one sub-finding withdrawn, one proposed blocker refuted with arithmetic, one finding escalated with hashes, and four wording or numeric corrections.
+
+---
+
 ## Revision 9 — 2026-08-18, corrections after `ocena_audytu_cld_bg.md`
 
 The critique was adjudicated point by point against the files. **It is right on every factual point it raises**, and three of its findings are errors of mine that had reached a published revision.
