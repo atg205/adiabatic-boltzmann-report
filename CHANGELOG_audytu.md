@@ -1,5 +1,26 @@
 # Revision history of `audyt_cld_bg.md`
 
+## Revision 9 — 2026-08-18, corrections after `ocena_audytu_cld_bg.md`
+
+The critique was adjudicated point by point against the files. **It is right on every factual point it raises**, and three of its findings are errors of mine that had reached a published revision.
+
+| Critique point | Verdict | Change |
+|---|---|---|
+| 1. B1 (`auto_scale` contradiction) is already false | **Correct — my error** | Verified: L676 now reads `auto_scale` **disabled**, agreeing with L349. The contradiction was real in `6793638`, the snapshot the lenses audited, and was fixed by the merge that landed mid-audit. The blocker is **withdrawn**; §2 records the fix, and only the causal-claim criticism survives, as M16. |
+| 2. Reproducibility assessed on too narrow a repository scope | **Correct — my error** | Fetched `iitis/adiabatic-boltzmann` and verified at `a4b0f2006`: `scripts/viz/paper_figures.py` contains `compute_validated_convergence_iter(...)` — the paper's own criterion — plus the fig10c/fig10d generators; **11 842 result files** (5 580 TFIM), each with `history`, `exact_energy`, `config` and timing; `plots/dtv_autoscale/dtv_autoscale_N8_h1.0.json`; and a `requirements.txt` (unpinned). Grade raised **D+ → B−**. What survives is narrower: no commit hash in the availability statement, unpinned versions, no QPU access dates. |
+| 3. Material from `final changes` overlooked | **Correct — my error** | Verified: affiliation at L41–44; protocol (TFIM, h=0.5, lr, reg, samples, iterations, **seeds 0–19**) at L678; LSB's δ/γ/σ⁻² and every classical sampler's mixing parameters in `tab:classical_sampler_params`. Completeness raised **B− → B**. M4 narrowed to "stated 130 lines from the figure, hidden-unit count still missing"; M13 narrowed to an internal inconsistency. |
+| 4. The energy finding assumed a QPU comparison | **Correct** | L544 states plainly that the QPUs are omitted "because no API exposes per-job energy draw". Reframed: the defect is that the **abstract claims superiority over quantum samplers on a metric with no quantum number**, plus the FPGA's 45 W assumed power draw — not an asymmetric measurement. |
+| 5. Some `confirmed` labels are inference | **Correct** | Downgraded: the ≈2.8× CV factor is marked an extrapolation with its assumption stated; the iteration-count arithmetic marked inferred from marker positions; "the record was invented" became "the source does not support the claim; the record's origin cannot be traced", with an explicit request that the author check it; the "every other size" reading softened to a coverage limitation, since the text does give the correct explicit set. |
+| 6. B5/B6 belong above bibliography items in P0 | **Correct** | Priorities restructured into three P0 groups — history purge, then methodology (scaling claim, clocks, censored estimator, ordering, withheld arm, Marshall figure), then attribution and figures. |
+
+**New in this revision, found while verifying point 2:** the two thresholds defining the benchmark were swept. The generator defaults to `epsilon=0.01`, and upstream holds five fig10c variants over cv ∈ {0.03, 0.05} × ε ∈ {0.01, 0.1}; the paper reports one cell — the loosest on ε — without mentioning the others, and the figure was renamed on copy in a way that strips the `_cv{…}_eps{…}` suffix identifying which variant it is. Filed as **B8**, compounding B1.
+
+Both repositories are now pinned in the audit header, since the implementation repository advanced 69 commits during revision 8 alone.
+
+**Process note:** revision 9 was briefly written into the implementation repository by mistake — a `cd` in an earlier command had persisted as the shell's working directory. The file was moved to the report repository and the implementation checkout left clean; no commit was made there.
+
+---
+
 ## Revision 8 — 2026-08-18, full re-audit
 
 Not an update but a fresh audit: eight independent lenses (physics/mathematics, the diff since revision 7, the time-to-ε experiment, completeness, figures-versus-claims, bibliography and citation coverage, reproducibility, editorial/LaTeX) over commit `6793638` (734 lines), reconciled and de-duplicated. The branch moved during the audit — the incoming commit `0d846c2` ("final changes") took the file to 777 lines — so every surviving finding was re-anchored to the current text by grepping its quoted string.

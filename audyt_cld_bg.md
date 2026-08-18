@@ -1,220 +1,207 @@
 # Audit: *Quantum Variational Algorithms on Adiabatic Quantum Computing Devices* (`report.tex`)
 
-**Revision 8** — 2026-08-18. A full re-audit, not an update: eight independent lenses (physics/mathematics, the diff since the last audit, the time-to-ε experiment, completeness, figures-versus-claims, bibliography and citation coverage, reproducibility, editorial/LaTeX) were run over the manuscript, then reconciled and de-duplicated. History in [`CHANGELOG_audytu.md`](CHANGELOG_audytu.md).
+**Revision 9** — 2026-08-18. Revision 8's findings, corrected after a reviewer critique that was right on every factual point it raised. History and the list of corrections in [`CHANGELOG_audytu.md`](CHANGELOG_audytu.md).
 
-**Target.** The audit ran against the committed snapshot **`6793638`** ("plot update", 734 lines). While it ran, the branch grew to **777 lines** via the incoming commit `0d846c2` ("final changes"), now merged as `482c7cb`; that material adds an abstract, a Conclusion, a code-and-data-availability paragraph and a second metric (energy) with its own figure. Every finding below has been **re-anchored to the current working tree** by grepping its quoted text; the new material is audited only where noted, and §4.1 flags what it introduces. Verify your copy with `wc -l report.tex` (→ 777).
+**Pinned targets.** Manuscript: the 777-line working tree, i.e. `6793638` plus the merge `482c7cb` of `0d846c2` ("final changes"). Implementation: `iitis/adiabatic-boltzmann` at **`a4b0f2006`** ("integrated all result files together, energy corrected"), fetched and inspected for this revision. Both must be pinned in any future audit — the implementation repository moved from `4746ef128` to `a4b0f2006` while revision 8 was being written, which is exactly how revision 8 got its reproducibility section wrong.
 
-**Method.** All file access via `sed`/`grep`/`awk`/`python3`/`pdftotext`/`pdftoppm` — never the editor's file cache, which served stale content earlier in this project and invalidated an entire audit revision. Numerical claims were re-derived: the exact-solver closed form against dense exact diagonalisation; the sparsity numbers recomputed from the committed caches; figure values read off the rendered PDFs at 150 dpi; all ten DOIs checked against Crossref; the cited sources fetched and read.
+**Method.** All file access via `sed`/`grep`/`awk`/`python3`/`pdftotext`/`pdftoppm`. Claims were re-derived rather than read: the TFIM closed form against dense exact diagonalisation over 90 (N, J, h, boundary-condition) cells; the RBM trace-out and the CEM conditional against brute-force enumeration; the average sign against exact diagonalisation of the J₁–J₂ chain; the CV stopping rule against tuned trial states; every sparsity number recomputed from the committed caches; figure values extracted from vector paths and 150–320 dpi renders; DOIs checked against Crossref; the implementation repository inspected at the pinned commit.
 
-**Confidence.** `confirmed` = verified against the file, a build artefact, a committed cache, a decoded figure, or an external source. `measured` = read off the rendered figure. `inference` = follows from verified facts. Reproduction scripts in [`verify/`](verify/) — note these are now themselves stale (see M22).
+**Confidence.** `confirmed` = verified against a file, build artefact, committed cache, decoded figure or external source. `measured` = extracted from a rendered figure. `derived` = computed here. `inference` = follows from verified facts but has an untested step.
 
 ---
 
 ## 0. Before anything else — not a manuscript issue
 
-**A private bank document is committed to this repository, whose git remote is a public GitHub URL.** `figures/2_5316856890368498963.pdf` is tracked at HEAD, is referenced by no `\includegraphics`, and is not a plot: `pdfinfo` reports Author/Creator "ING Bank Śląski S.A.", Producer "PDFsharp 6.1.1", A4. Its text is a transaction confirmation with payer and payee sections and an account number. `git remote -v` → `https://github.com/atg205/adiabatic-boltzmann-report`. *(confirmed)*
+**A private bank document is in this repository's history, and the remote is public.** `figures/2_5316856890368498963.pdf` — tracked since commit `92acd8d` (message: `]`), never referenced by any `\includegraphics`. `pdfinfo` gives Author "ING Bank Śląski S.A."; the text is a transaction confirmation whose payer block contains a full name and home address, plus payee details and an account number. `git remote -v` → `https://github.com/atg205/adiabatic-boltzmann-report`. *(confirmed)*
 
-**Action taken in this pass:** the file is now untracked and `.gitignore`d (commit `efa3156`), and it is still on disk — but that only stops it being re-added. Deleting it from the working tree would not be sufficient either, because it is in the history. Rewrite history (`git filter-repo --path figures/2_5316856890368498963.pdf --invert-paths`, or BFG), force-push, and ask GitHub Support to purge cached views; then treat the contents as having been public and act accordingly. This is the one step left, and it needs your decision because it rewrites shared history and requires a force-push. Do it before the next push, and before anyone is invited to the repository. Also audit the rest of `figures/` for anything else not generated by a plotting script.
+The file is now untracked and `.gitignore`d (commit `efa3156`) and still on disk — that only stops it being re-added. **It remains in the history**, so treat it as public since `92acd8d`:
+
+```
+git filter-repo --path figures/2_5316856890368498963.pdf --invert-paths
+git push --force-with-lease --all
+```
+
+then ask GitHub Support to expire the cached object. This rewrites shared history, so it is your decision — but it is the one step left.
+
+**Also tracked and bound for that public repository, worth a decision:** the internal audit documents (`audyt_cld_bg.md`, `CHANGELOG_audytu.md`, `uwagi_do_audytu_cld_bg.md`, `ocena_audytu_cld_bg.md`), the `verify/*.py` scaffolding, and `scripts/__pycache__/*.pyc`.
 
 ---
 
 ## 1. Summary
 
-| Dimension | Prev. | Now | Verdict |
+| Dimension | Rev. 8 | Now | Verdict |
 |---|---|---|---|
-| Physics & math correctness | B | **B** | Core machinery is sound and independently re-verified. The weight-matrix orientation is fixed. Two definitions are introduced and then either never computed or identically trivial for the models they characterise. |
-| Claims versus evidence | — | **D** | The new headline sentences are contradicted by the figures they cite. This is now the dominant problem: three separate false orderings, one self-contradiction on the most consequential device setting, and one claim contradicted by the repository's own data. |
-| Completeness | C+ | **B−** | Large advance: abstract, Conclusion and availability statement now exist; the unused models were cut; CEM is now applied to QPU samples; a second metric was added. The central promise — a *sampling-quality* comparison including the QPU — is still not delivered. |
-| Novelty & positioning | narrow | **narrow** | Unchanged, and still almost entirely unpositioned: 75 lines of embedding work and 64 lines of temperature work cite nothing. |
-| Bibliography & attribution | D+ | **C** | The mechanics were genuinely repaired (DOIs print and link, case folding defeated, journals unified). The intellectual attribution was not: two citations do not support their claims, four foundational references are absent, and 13 of 22 sections cite nothing. |
-| Reproducibility | D+ | **D+** | One of fifteen figures is backed by committed data. The only experiment script the repository ever had was deleted in this diff. The availability statement now points at a repository — which is the right move and makes the rest fixable. |
-| Readability & LaTeX | C+ | **C** | Compiles cleanly with no undefined references, but hyperref draws coloured boxes around every link, listings are set in roman, and the new prose carries ~20 verified grammar and register defects. |
+| Physics & math correctness | B+ | **B+** | Everything load-bearing checks out independently: the closed form, the trace-out, the CEM conditional, the geometric tensor, the exact baselines. The defects are in two diagnostics that measure nothing, not in the machinery. |
+| Claims versus evidence | D | **D+** | Still the dominant problem, but one alleged contradiction was already fixed. What remains: the headline scaling claim is an artefact of the stopping rule, three orderings contradict their figures, and one claim is refuted by the repository's own data. |
+| Completeness | B− | **B** | Corrected upward: the affiliation, the benchmark protocol, the seed list and a full sampler-parameter table are all present — revision 8 said otherwise and was wrong. The promised QPU sampling-quality comparison is still absent. |
+| Novelty & positioning | narrow | **narrow** | Thirteen sections cite nothing, including both embedding contributions and the whole SB/LSB family. |
+| Bibliography & attribution | C | **C** | Mechanics repaired. Attribution not: one citation demonstrably does not support its claim, one misattributes a method, four foundational references absent, four records factually wrong. |
+| Reproducibility | D+ | **B−** | **Corrected upward after inspecting the pinned implementation commit**: the figure generator, the validated-convergence function, 11 842 result files and the auto-scale data are all committed there. Remaining: no commit hash in the paper, unpinned library versions, no QPU access dates. |
+| Readability & LaTeX | C | **C** | Compiles without undefined references, but three defects print on every page and two labels share one float. |
 
-### Blocking
+### Blocking, in order
 
-1. **B1 — The manuscript states two mutually exclusive `auto_scale` settings for the same body of QPU work** (L349 vs L346/L676), and its own §4.3.2 shows this single switch moves β_eff from ≈4.1/β_x to a flat ≈2.7–3.0. Every QPU number in the paper therefore has an undetermined effective temperature.
-2. **B2 — The solver-ranking sentence is false against its own figure** (L542): simulated annealing is not second-fastest, it is the *slowest* series at N≥16, and the runs the sentence calls slowest are 3–10× faster than it.
-3. **B3 — The abstract and Conclusion claim a strict FPGA win "at every size tested", which the body's own sentence contradicts** two hundred lines earlier ("both QPUs overtake them at that size"), and the forward-looking scaling claim rests on the most heavily censored cell in the study.
-4. **B4 — "We tested the sparse models only on classical hardware" (L474) is contradicted by the repository's own committed data**: `cache_sparsity_ablation_qpu.json` holds 20 real QPU training runs on exactly those four masks.
-5. **B5 — The flagship benchmark puts two different clocks on one axis and tells the reader they are comparable.** TTE is defined as wall-clock; panel (c) reports `qpu_access_time` only, while every classical series carries the full host-side SR cost the QPU runs also pay.
-6. **B6 — The plotted statistic is a median over validated seeds only**, which is not an estimator of median time-to-ε under censoring; in four filled cells fewer than half the seeds produce an event, so the median is not even identified.
-7. **B7 — Two citations do not support their claims**, and both are checkable in a minute: the Heisenberg model's only citation points at a document that never mentions Heisenberg and whose bibliography record is invented; Stochastic Reconfiguration is credited to a paper whose own abstract says SR was introduced earlier.
-8. **B8 — The stated seeding protocol is non-reproducible by construction and contradicted by the caches** (L676).
+1. **B1 — The headline scaling claim is an artefact of the stopping rule** (§3.1). This is the paper's contribution sentence.
+2. **B2 — Two clocks share one axis and are declared comparable; the plotted median is conditioned on success** in cells where it is formally unidentified (§3.2). These are the foundations of the flagship comparison.
+3. **B3 — The solver-ordering sentence (L542) is false against its own figure**, for the second consecutive revision (§3.3).
+4. **B4 — The abstract and Conclusion overclaim**: a strict FPGA win "at every size tested" that the body contradicts, and an energy claim covering "classical and quantum alike" when QPU energy was never measured (§3.4).
+5. **B5 — "We tested the sparse models only on classical hardware" is refuted by 20 committed QPU runs** — which are not budget-matched, so the fix is disclosure, not restoration (§3.5).
+6. **B6 — The sign-problem instrument is identically zero** for every model it is introduced for, and the figure that would supply its missing evidence is already committed and never included (§3.6).
+7. **B7 — Two citations do not support their claims** (§3.7).
+8. **B8 — The two thresholds that define the benchmark were swept, and the paper reports the loosest pair without saying so** (§3.8). This compounds B1.
 
 ---
 
 ## 2. What is now good — do not disturb this
 
-Credit where it is due; several of these were long-standing findings and the fixes are real and verified.
-
-- **The bibliography mechanics were properly repaired.** DOIs and arXiv links print and are live (52 `/URI` annotations recovered from the PDF, one link on every one of the 16 references, all three web URLs returning HTTP 200); `unsrt`'s case folding is *completely* defeated — zero survivors across all 16 titles for the eight proper nouns previously mangled; journal names are unified; the `{M}{P}{I}{P}{K}{S}` URL artefact is gone; `report.blg` reports zero warnings; all 16 entries are cited and all citations resolve. All ten DOIs verify against Crossref. *(confirmed)*
-- **The weight-matrix orientation (previous N14) is now dimensionally consistent** across the ansatz, the CEM formula and the code listing. *(confirmed)*
-- **The time-to-ε protocol went from under-specified to genuinely careful**: an oracle-free stopping rule (CV of the local energy below 0.05 for 10 consecutive iterations), an explicit *validation* step against the true ground-state energy so that a run stopping at the wrong plateau is censored rather than counted, an honest "matched-hyperparameter, not matched-tuning-effort" disclaimer, a stated QPU timing basis, and a justified omission of N=128 rather than an extrapolation. The censoring convention is now internally consistent. *(confirmed)*
-- **The temperature caveat is propagated into the TTE section** (L539: β_eff of the QPU runs "is not independently calibrated here") — the previous audit's F2 residual 1. *(confirmed)*
-- **CEM is now applied to QPU samples**, with and without correction, as separate series — previously an open gap and the natural payoff of the temperature section. The report finds CEM-corrected series validate far more consistently, which is a genuine result. *(confirmed)*
-- **The unused models were cut** rather than left dangling, and the stale "long range interactions" justification that survived the cut has since been removed in the working tree. *(confirmed)*
-- **Abstract, Conclusion, and a code-and-data availability statement now exist** (uncommitted), as does a GPU/driver/CUDA specification and a Metropolis burn-in figure. *(confirmed)*
-- **The one experiment with committed data reproduces exactly**: the exact floor recomputes to 1.047/1.484/3.446/2.406 % against the stated 1.05/1.48/3.45/2.41 %, and the Metropolis curve to 13.37 % → 28.47 % as stated. *(confirmed)*
-- **The exact TFIM closed form is correct** — re-verified against dense exact diagonalisation, agreement 9×10⁻¹⁶…4×10⁻¹⁴. *(confirmed)*
+- **The physics machinery checks out.** The TFIM closed form reproduces dense ED to ≤4×10⁻¹⁴ for J>0, h≥0, PBC at every N tested including odd N, and fails only for J<0 at odd N — exactly the case the stated validity range excludes. The trace-out is exact to 2.3×10⁻¹⁵. The CEM conditional ⟨h_j⟩ = **+**tanh(βΘ_j) is correct under the current energy convention (error 1.9×10⁻¹⁶; the −tanh alternative is off by up to 1.8). The weight orientation is consistent across the ansatz, the CEM formula, the listing and the implementation. D_TV, the SR update sign, the appendix derivation, the CG matvec, TTS and the Metropolis acceptance ratio are all correct. *(derived)*
+- **The exact baselines are right.** Independent PBC Pauli-convention ED reproduces the convergence figure's reference lines at N=8 (E/N = −1.60686, −1.50000, −1.59782, −1.87911 for J₂/J₁ = 0.3/0.5/0.7/0.9), including exactly −1.5/site at the Majumdar–Ghosh point, which holds only under PBC with even N. *(derived)*
+- **The `auto_scale` contradiction reported in revision 8 is fixed.** L349 and L676 now agree on `auto_scale=False`. *(confirmed — revision 8's B5 was stale and is withdrawn.)*
+- **The experimental protocol is now properly documented**: TFIM at h=0.5, lr=0.08, reg=0.05, 200 samples/iteration, 100 iterations and **seeds 0–19** stated at L678, with every classical sampler's internal mixing parameters — including LSB's δ, γ and σ⁻² — in `tab:classical_sampler_params`. The affiliation is at L41–44. *(confirmed — revision 8 claimed these were missing and was wrong.)*
+- **The reproducibility artefacts exist**, in the repository the availability statement names, at `a4b0f2006`: `scripts/viz/paper_figures.py` containing `compute_validated_convergence_iter(history, exact_energy, size, epsilon, cv_threshold, window=10)` — the paper's own criterion — and the fig10c/fig10d generators; **11 842 result files** (5 580 TFIM), each carrying `history`, `exact_energy`, `config` and per-run timing; `plots/dtv_autoscale/dtv_autoscale_N8_h1.0.json`; and a `requirements.txt`. *(confirmed at the pinned commit.)*
+- **The bibliography mechanics were properly repaired**: DOIs and arXiv links print and are live (52 `/URI` annotations, every reference linked, all URLs HTTP 200); `unsrt`'s case folding completely defeated; journal names unified; zero bibtex warnings; all ten DOIs verified against Crossref. *(confirmed)*
+- **The time-to-ε protocol is carefully designed**: oracle-free stopping rule, explicit validation against the true ground-state energy, an honest "matched-hyperparameter, not matched-tuning-effort" disclaimer, a stated QPU timing basis, and a justified omission of N=128. The problems below are about what is concluded from it. *(confirmed)*
+- **CEM is applied to QPU samples** with and without correction, and the corrected series validate far more consistently — the strongest single result in the paper. *(confirmed)*
 
 ---
 
-## 3. Blocking findings in detail
+## 3. Blocking findings
 
-### B1 — Contradictory `auto_scale` setting *(confirmed)*
+### 3.1 B1 — The headline scaling claim is a stopping-rule artefact *(derived; the size factor is `inference`)*
 
-L349: "As can be seen from \autoref{fig:dtv_autoscale_dtv_N8}, enabling autoscaling dramatically worsens sampling performance. **Therefore, all other D-Wave experiments in this work use `auto_scale=False`**." L676 (Hardware and Software Configuration, i.e. exactly where a reader goes to reproduce): "with **`auto_scale` enabled** (see \autoref{sec:autoscale} for why this matters for β_x)" — cross-referencing L349's own section as its justification. L346 also describes it as "enabled by default (\autoref{sec:hw_config})".
+The abstract and Conclusion argue the annealer "scales more favorably … pointing to quantum competitiveness at larger scale", sourced from the legend's fitted exponents: **Pegasus ∝ N^−0.38, Pegasus+CEM ∝ N^−0.35, Zephyr ∝ N^+0.06, Zephyr+CEM ∝ N^−0.55** against **FPGA ∝ N^1.90**. *(measured)*
 
-This is not a detail. §4.3.2 measures that the switch moves β_eff from ≈4.1/β_x to a flat ≈2.7–3.0, never the VMC target of 1. Until it is resolved, no QPU result in the paper — TTE, parallel embedding, sparsity-QPU — has an attributable device configuration. **Fix:** determine which setting the runs actually used, make the two sentences agree, and state β_eff (or its absence) for each QPU experiment. If they used `True`, the honest consequence is that the β_x knob and the CEM loop were inert on the QPU for those runs.
+A negative time-to-ε exponent says the annealer converges *faster* on bigger problems. The gate is CV = std(E_loc)/|mean(E_loc)| < 0.05, and CV falls as N^(−1/2) at fixed energy error per spin: measured on TFIM trial states tuned to exactly 0.1 error/spin against H(h=0.5), **CV = 0.1613 / 0.1408 / 0.1265 at N = 8/10/12 while CV·√N = 0.456 / 0.445 / 0.438 — constant to 4 %**. So the gate loosens with N, and the solver whose per-iteration cost grows slowest benefits most. *(derived)* Extrapolating that scaling to N=64 gives a factor ≈2.8, but that step assumes the N^(−1/2) law holds beyond the sizes measured here and at the accuracy the QPU runs actually reach — treat the factor as indicative, not exact.
 
-### B2 — The solver ordering is false against the figure *(measured)*
+**Fix:** make the threshold size-aware (require CV·√N below a constant calibrated to equal per-spin accuracy at every N) and re-fit; or remove the scaling claim from the abstract and Conclusion and state what was measured.
 
-L542: "panel (b)'s FPGA is consistently fastest, followed by \gls{sa}, then panel (c)'s two QPUs, with panel (a)'s Metropolis and Gibbs and panel (b)'s \gls{lsb} the slowest."
+### 3.2 B2 — Two clocks on one axis, and a median conditioned on success *(confirmed / measured)*
 
-Measured medians from `figures/fig10c_tte_vs_n_self_convergence.pdf` (N = 8/12/16/24/32/64, seconds): FPGA 0.005/0.011/0.019/0.049/0.070/0.250; SA 2.635 (N=16) → 4.836 → 6.095 → 12.780 (N=64); LSB 1.772/2.616 at the comparable sizes. **SA is the slowest series in the figure at every N≥16**, and LSB and Gibbs — which the sentence names as slowest — are 3–10× faster than SA. Both QPUs are faster than SA from N=12 upward.
+TTE is defined as wall-clock time; panel (c) reports `qpu_access_time` only, while every classical series carries the full host-side SR cost the QPU runs also pay. The caption says the shared y-axis keeps "absolute scale directly comparable". What the classical clock measures is never stated, and no figure is given for the excluded QPU queue and network time.
 
-The same sentence's second clause is also wrong: "both QPUs overtake them at that size" — at N=64 only one of the four QPU series beats FPGA (Pegasus 0.200 s vs FPGA 0.250 s); one ties within a marker width and two are slower. **Fix:** rewrite the paragraph from the measured values.
+Separately, the plotted median is taken over validated seeds only. Four cells have fewer than 10/20 events, where a median under censoring is formally unidentified — Pegasus 2/20 at N=8, Zephyr 5/20 at N=16 and 6/20 at N=32, FPGA 6/20 at N=64, three of them in the classical-versus-quantum panel. The 2/20 and 5/20 cells are drawn with **zero-length IQR bars** while the 19/20 cell carries a bar spanning a factor of 3.6, so the least-supported cells render as the most precise.
 
-### B3 — Abstract and Conclusion overclaim, and contradict the body *(confirmed)*
+**Fix:** report both clocks, or one end-to-end clock; use Kaplan–Meier medians with intervals, grey out cells below ~10/20, draw no whisker where the quartiles are degenerate, and state that the conditioning biases the plotted medians low by different amounts in different cells.
 
-Abstract: "Across both metrics, the FPGA-based solver outperforms all other samplers, classical and quantum alike, at the system sizes tested." Conclusion: "The FPGA-based solver is the fastest and most energy-efficient sampler at every size tested." The body says the opposite at L542 ("both QPUs overtake them at that size", N=64), and the measurement in B2 confirms a QPU is faster there.
+### 3.3 B3 — The solver ordering is false against the figure *(measured, four independent extractions)*
 
-Second, the forward-looking claim — "the quantum annealer's time-to-solution scales more favorably with system size than the FPGA's … pointing to quantum competitiveness at larger scale" — is inferred across a range in which the FPGA is **censored on 14 of 20 seeds at N=64** (the report's own number). A favourable-scaling claim resting on the most heavily censored cell in the study is the first thing a referee will attack. **Fix:** state the crossover honestly ("at N=64 one QPU series is faster than the FPGA, on 6/20 validating FPGA seeds"), and either support the scaling claim with a fit and its uncertainty over the uncensored range or downgrade it to an observation.
+L542: "panel (b)'s FPGA is consistently fastest, followed by \gls{sa}, then panel (c)'s two QPUs, with panel (a)'s Metropolis and Gibbs and panel (b)'s \gls{lsb} the slowest … both QPUs overtake them at that size."
 
-Third, the energy metric and its figure (`fig10d_energy_vs_n_self_convergence.pdf`) are new and **unaudited here** — but note the Conclusion's energy claim inherits B5's clock asymmetry: if the QPU's time excludes host-side cost, its *energy* almost certainly does too, and an energy comparison between a device measured on-chip and solvers measured host-side needs its boundary stated even more explicitly than the time comparison does.
+SA is **slower than every QPU series from N=16 upward** and the **slowest of all nine series at N≥24**, reaching ≈12–13.5 s at N=64; Gibbs, named among the slowest, is flat at 0.7–1.3 s. The legend corroborates: SA ∝ N^1.19, Gibbs ∝ N^0.08. The second clause fails too: at N=64 FPGA (≈0.27 s) sits *inside* the QPU band (≈0.20–0.51 s) — one series faster, one tied, two slower.
 
-### B4 — "Only on classical hardware" is contradicted by the committed data *(confirmed)*
+**Fix:** generate this sentence and the caption mechanically from `paper_figures.py`'s data structures. This is the second consecutive revision in which a hand-written ordering sentence contradicted this figure.
 
-L474: "For budget constraints, we tested the sparse models only on classical hardware." But `figures/sparsity/cache_sparsity_ablation_qpu.json` holds **20 real QPU training runs** — N=16, Zephyr, the same four masks, seeds 42/123/456/789/1234, each with a populated `qpu_time_ms_used` (2.7–31 s). The plotted file is still named `sparsity_ablation_qpu_vs_classical.pdf` while its legend now lists only three classical samplers and the exact floor. Recomputed from those caches (mean |ε|/N over 5 seeds, h=1, N=16), the QPU arm gives 10.68/12.27/45.69/76.42 %.
+### 3.4 B4 — The abstract and Conclusion overclaim *(confirmed)*
 
-Either the sentence is wrong or the data are stale; a reader who opens the repository finds the contradiction immediately. **Fix:** say what was actually run and why the QPU arm is not shown (the previous audit's budget-mismatch finding is the honest reason — the QPU arm ran 14–300 SR iterations against the classical arm's uniform 300), or restore the arm with matched budgets. Rename the figure file either way.
+"Across both metrics, the FPGA-based solver outperforms all other samplers, classical and quantum alike, at the system sizes tested" (abstract) and "the fastest and most energy-efficient sampler at every size tested" (Conclusion) are contradicted by the body at L542 and by the measurement in B3.
 
-### B5 — Two clocks, one axis, declared comparable *(confirmed)*
+On energy the problem is not an asymmetric measurement — L544 states plainly that the QPUs are omitted "because no API exposes per-job energy draw" — it is that **the abstract claims superiority over quantum samplers on a metric for which no quantum number exists**. The FPGA's own energy figure is additionally "an assumed constant power draw of 45 W … since it was never GPU-metered", by the caption's own admission.
 
-L539 defines TTE as "the wall-clock time until training reaches a validated convergence"; L541 reports for D-Wave "the QPU's own `qpu_access_time` (on-chip programming, anneal, and readout), with network latency and queueing excluded and embedding treated as a one-time cost"; L543 says the three panels share a y-axis "so that absolute scale stays directly comparable". The classical series necessarily include the host-side SR cost — local energies, gradient observables, the CG solve — which the QPU runs also pay but which is zeroed out of their number. What the classical clock measures is never stated. **Fix:** either report total wall-clock for every series, or plot both (QPU-access-only and end-to-end) and drop "directly comparable".
+**Fix:** restrict the energy claim to the metered classical solvers, mark the FPGA number as an estimate, and state the N=64 crossover honestly.
 
-### B6 — The plotted median is conditioned on success *(measured)*
+### 3.5 B5 — A withheld experiment the repository commits *(derived from the caches)*
 
-L551 (caption): "Filled markers give the median over seeds whose self-detected convergence is validated." A median over only the seeds that succeeded is a survivorship-biased estimate, not the median time-to-ε; and in cells with fewer than 10/20 events the median is not identified at all under any censoring-aware estimator. Decoded event counts include Pegasus N=8 at 2/20 (plotted at 0.451 s) and Zephyr N=16 at 5/20 (0.249 s), plotted on the same axis as 20/20 cells. Twelve of the sixteen QPU cells are censored to some degree — the text's summary of censoring understates this materially. **Fix:** use Kaplan–Meier medians with the undefined cells shown as bounded arrows, or plot the validated fraction alongside the time and stop calling it a median TTE.
+L474: "Due to budget constraints, we tested the sparse models only on classical hardware." `figures/sparsity/cache_sparsity_ablation_qpu.json` contains **20 records — 4 masks × 5 seeds (42/123/456/789/1234), N=16, Zephyr, each with a populated `qpu_time_ms_used`**. The plotted file is still named `sparsity_ablation_qpu_vs_classical.pdf` while its legend lists only three classical samplers and the exact floor; `sparsity_heatmap_REAL_QPU_zephyr.pdf` is also committed and unused. The withheld arm gives 10.68 / 12.27 / 45.69 / 76.42 % per-spin error.
 
-### B7 — Two citations do not support their claims *(confirmed by fetching the sources)*
+Restoring it is not clean: the QPU arm ran **14–300 SR iterations** per run (per mask `[26,31,176,205,300]`, `[185,297,300,300,300]`, `[15,28,133,300,300]`, `[14,18,25,32,44]`) against a uniform **300** for every classical run.
 
-- **L109**: "The Heisenberg model describes spins on lattice sites interacting via exchange coupling~\cite{mpg}". That reference is a five-page PDF whose only section is "Transverse-field Ising model" and which contains **zero occurrences of "Heisenberg"**; its `pdfinfo` Title and Author are empty, so the bibliography entry's title ("Quantum Magnetism Lecture Notes") and author ("Max-Planck-Gesellschaft") are invented, and its `year` field is empty. **Fix:** cite Heisenberg (1928) or a textbook here, and move the lecture note to the TFIM subsection it actually covers — which currently has no citation at all.
-- **L560**: "we use the \gls{sr} method introduced in \cite{Sorella_2001}". That paper's own abstract says SR "has been recently introduced", i.e. elsewhere. **Fix:** cite Sorella's 1998 PRL for the method and 2001 for the variant used.
+**Fix:** state what was actually run — "a real-QPU arm was run but is not reported because its iteration budget was not matched to the classical arms" — or plot it with the mismatch disclosed. A committed dataset that refutes the text is the largest single credibility risk here.
 
-### B8 — The seeding protocol *(confirmed)*
+### 3.6 B6 — The sign-problem instrument measures nothing *(derived)*
 
-L676: "All stochastic components (JAX/NumPy) are seeded per run via `np.random.randint` feeding `jax.random.PRNGKey`." Without an argument-level seed this draws from global entropy, so it produces a fresh unrecorded key every execution — the opposite of reproducible. The caches show the actual practice was the opposite: all 175 sparsity records end in one of exactly five fixed seeds, none of which appears in the manuscript. **Fix:** state the master seed and the per-experiment seeds, or the five fixed values actually used.
+⟨s⟩ = Σ_v Ψ₀(v) / Σ_v |Ψ₀(v)| is **identically zero** for every model it is introduced for: Σ_v Ψ₀(v) = 2^{N/2}⟨+|^{⊗N}|Ψ₀⟩ vanishes by SU(2) symmetry for any singlet ground state. Measured across 12 (N, J₂/J₁) cells at N = 6, 8, 10 and J₂/J₁ = 0, 0.3, 0.5, 0.7: **|⟨s⟩| ≤ 3×10⁻¹⁶ everywhere**, including the provably sign-free J₂ = 0 case. No number derived from it appears in the paper. In the **Marshall gauge** the same formula is informative: 1.000 → 0.997 → 0.941 → 0.000 at N=8 across J₂/J₁ = 0 → 0.3 → 0.5 → 0.7.
+
+L511's claim that "without the correction the variational energy degrades significantly" also has no evidence in the paper: the cited figure shows one Marshall-corrected curve per panel, no ablation, no mention of the gauge.
+
+**Fix — nearly free:** `figures/marshall_comparison.pdf` is **already committed and never included**, and contains exactly "With Marshall (Ψ = s·A)" / "Without Marshall (Ψ = A)" / "Average sign ⟨s⟩" against J₂/J₁. Include it, state the gauge, and either evaluate ⟨s⟩ in the Marshall gauge or delete the definition.
+
+### 3.7 B7 — Two citations do not support their claims
+
+- **L109** cites `mpg` as the sole authority for the Heisenberg model. The cited PDF is 5 pages, its only heading is "Transverse-field Ising model", and full-text search returns **zero** hits for "heisenberg", "exchange", "isotropic" or "XXZ" — so the source does not support the claim. Its PDF metadata are empty, so the bibliography record's title, author and year cannot be traced to it; that is a provenance problem, not proof of fabrication. *(confirmed for the content; `inference` for the record's origin — please check the record's source yourself.)* **Fix:** cite Heisenberg (1928) or a textbook; the lecture note is a correct source for the TFIM subsection, which has no citation at all.
+- **L560** credits Stochastic Reconfiguration to `Sorella_2001`, whose own abstract says SR "has been recently introduced" — i.e. elsewhere (Sorella, PRL 80, 4558 (1998)). *(confirmed)* **Fix:** cite the 1998 PRL for the method, 2001 for the variant.
+
+### 3.8 B8 — The stopping thresholds were swept; the reported pair is the loosest *(confirmed at `a4b0f2006`)*
+
+The paper presents CV < 0.05 and ε = 0.1 per spin as *the* protocol. Upstream, the generator's signature is `fig10c_tte_vs_n_self_convergence(cv_threshold=0.05, window=10, epsilon=0.01)` — i.e. ε defaults to **0.01**, ten times tighter than the reported value — and the repository contains **five** fig10c variants spanning cv ∈ {0.03, 0.05} × ε ∈ {0.01, 0.1} plus two fig10d variants. The manuscript reports one cell of that grid, the loosest available on ε, and never mentions that the others exist.
+
+Two consequences. First, this compounds **B1**: the fitted exponents, the censoring pattern and therefore the "scales more favorably" claim are all functions of the pair (CV, ε), and the pair was chosen after seeing the alternatives. Second, provenance: the figure shipped in the report is named `fig10c_tte_vs_n_self_convergence.pdf`, and **that filename does not exist upstream** — the upstream convention always carries the `_cv{…}_eps{…}` suffix, so the rename stripped exactly the two parameters that identify which variant the paper shows.
+
+**Fix:** state both thresholds and why they were chosen; show at least the tighter-ε variant (in an appendix is fine) and say whether the ordering and the exponents survive it; and keep the parameterised filename so the figure is traceable to its generating call.
 
 ---
 
 ## 4. Major findings
 
-### 4.1 The time-to-ε experiment (beyond B2, B3, B5, B6)
+**M1 — The energy figure's caption contradicts its own annotations.** It claims "the same validated-convergence cells" as the TTE figure, but the TTE figure carries 19 `n/20` annotations and the energy figure 10, overlapping in exactly one value. The same cells under the same censoring rule cannot yield different validated fractions. *(measured)*
 
-- **The benchmark does not say what problem it solves.** Neither the section nor the caption names the Hamiltonian, the transverse field, the hidden-unit count or α. `h=0.5` appears only inside the plotted figure's own title — and it is the easiest regime, not the critical point used elsewhere in the report. All three were present in the caption that this rewrite deleted. *(confirmed)* **This is a regression.**
-- **The convergence target was loosened tenfold without disclosure**: ε=0.1 per spin, which at h=0.5 is a **9.4 % relative energy error** — a level the report elsewhere treats as poor, not as "a genuinely good answer". *(measured)*
-- **The stopping criterion is not size-independent.** CV of the local energy scales as N^(−1/2) at fixed energy error per spin, so a fixed 0.05 threshold demands a ≈14× tighter energy error at N=8 than at N=128 — and the y-axis is time until that criterion fires. *(inference, from the estimator's definition)*
-- **The criterion is arithmetically incompatible with the plotted QPU times**: using the hollow markers to fix the per-iteration cost, the QPU medians correspond to 4–9 iterations, fewer than the 10 consecutive iterations the rule requires before it can fire. *(measured)* One of these two — the rule, the times, or the marker semantics — is misdescribed.
-- **The QPU coverage sentence denies a gap its own enumeration proves.** Six sizes are plotted; panel (c) has markers at four (no data at N=12 or N=24), while the text says Pegasus and Zephyr "are both represented at every other size". *(measured)*
-- **The N=128 exclusion rationale applies with nearly equal force at N=64**, which is the size used to make the headline claim. *(inference)*
-- **Two hardware accounts contradict each other**: L676 says all non-QPU methods including SA "run locally via JAX on a single NVIDIA TITAN RTX GPU" and, in the same paragraph, that SA baselines "use `dwave-neal`" — a CPU sampler. SA's wall-clock is a plotted series and the QPU's comparison baseline. *(confirmed)*
-- **The fastest solver has no Methods description.** FPGA/VeloxQ appears only in the TTE figure/prose and one hardware sentence; the "Quantum (inspired) solvers" chapter covers only adiabatic QC and SB/LSB. *(confirmed)*
-- **Figure legibility**: in panel (c) the with-CEM and without-CEM variants of each device are drawn in the same colour, distinguished only by marker shape at ~4 pt; two seed-count annotations at N=32 overprint each other and are unreadable. *(measured)*
+**M2 — Figure 4(a)'s caption is wrong by a factor of two.** It says "24 visible and 24 hidden units"; connected-component counting on a 150-dpi render gives **12 and 12**, and panel (b) corroborates with 24 chain qubits, one per logical node. *(measured)*
 
-### 4.2 Sampling quality and the QPU
+**M3 — The hardware paragraph contradicts itself about simulated annealing.** L676 says all non-QPU methods including SA run "locally via JAX on a single NVIDIA TITAN RTX GPU", then states SA uses `dwave-neal` — a single-threaded CPU sampler. This is load-bearing twice: SA's wall-clock is a plotted series, and the energy panel reports **measured** `gpu_energy_wh` for SA. *(confirmed)*
 
-- **The central promise is still undelivered.** L64 promises to assess "D-Wave's ability to sample from a probability distribution" and L87 to "systematically evaluate the quality and time of these samples … rigorously compare the quantum annealer to classical physics inspired algorithms". The Sampling Quality section contains **no QPU series** (legend: SA/Metropolis/Gibbs/LSB), and not one QPU `D_TV` number appears in the prose anywhere. The only QPU distribution-quality data in the document is the auto-scale ablation panel. *(confirmed)*
-- **The two D_TV experiments are not comparable as run**: different sample counts and different sampling floors, so the QPU panel cannot be read against the classical benchmark. *(measured)*
-- **CEM is deployed on QPU samples but never validated on them**, and no β_eff is reported for any QPU run that uses it; the validation figure never says which sampler produced the samples being fitted. *(confirmed)*
-- **The CEM→β_x feedback loop is never written down**, yet the "+CEM vs no-CEM" QPU comparison and the claim that CEM "corrects the effective-temperature miscalibration" depend entirely on it. *(confirmed)*
-- **The RBM→Ising map is never written**, although the whole QPU-sampling premise rests on it — and the report's energy uses a non-standard `+a·v` sign, which changes the sign of the programmed local fields. *(confirmed)*
-- **The causal claim "enabling autoscaling dramatically worsens sampling performance" (L349) is confounded**: `auto_scale` does not degrade the anneal, it pins β_eff at the device's uncontrolled native value and removes the ability to set it. The report's own two panels support the latter reading. *(inference from the report's own figures)*
+**M4 — The benchmark's parameters are stated 130 lines from the figure, and one is still missing.** The protocol (TFIM, h=0.5, seeds 0–19, sampler table) lives in the Implementation section at L678, not in the time-to-ε section or its caption, and the **hidden-unit count is given nowhere**. Also ε=0.1 per spin is a **9.4 % relative** energy error at h=0.5 (|E₀|/N = 1.0635), against the 0.01 % the same model and size reaches in the spin-ordering figure — worth stating in relative terms. *(confirmed / derived)*
 
-### 4.3 The sparsity study
+**M5 — Coverage.** The figure spans N∈{8,12,16,24,32,64} but the QPU series appear at only four sizes. The text gives the correct explicit set, so this is a coverage limitation to acknowledge rather than a false statement; "should not be mistaken for a QPU coverage gap" is nonetheless a strange way to describe a figure in which the QPU covers four of six sizes. *(measured; softened from revision 8)*
 
-- **The "8–17×" gap holds only for Metropolis** but is asserted for all three classical samplers (L474 vs L506): recomputed across samplers the true range is 6.6×–16.9×, with SA at sparsity 0.809 only 6.58× above the floor. *(confirmed from caches)* This is how the previous audit's N1 contradiction was resolved — by copying the Metropolis range onto a three-sampler claim.
-- **The floor's headline shape is a single-seed artefact**: with the median instead of the mean, the exact-ansatz floor is monotone increasing, rises 2.3× rather than "roughly triples", and has no peak at the third mask. *(confirmed from caches)*
-- **The legend box covers three of the four floor markers** in Fig. 14(b) — precisely the points the prose quotes. *(measured)*
-- **Seed count is never stated** for this study (the caches say 5), while the surrounding prose reasons explicitly about seed-to-seed spread. *(confirmed)*
-- **The parallel-embedding times are misdescribed**: 13.6 s and 5.7 s are the right-hand endpoints of the curve families, i.e. total run lengths, not times-to-plateau as the prose and caption say. *(measured)*
+**M6 — The sparsity floor's shape is one outlier seed.** Per-seed values at mask 0.809 are **1.97, 2.02, 2.22, 3.53, 7.49 %**; with medians the floor is 1.06/1.51/2.22/2.44 % — monotone, a 2.3× rise, peaking at the **fourth** mask, so "roughly triples before falling back, peaking at the third mask" is an artefact of a 5-seed mean. The "8–17×" band holds only for Metropolis (7.89–16.88×); across the three samplers it is **6.6–16.9×** (SA = 6.58× at mask 0.809). Gibbs is non-monotone (12.16 → 21.42 → 34.39 → 28.44 %), against the claim that error "increases sharply as sparsity increases". *(derived)*
 
-### 4.4 Attribution and citation coverage
+**M7 — The Fig. 14(b) legend box covers three of the four floor markers the text quotes.** *(measured)*
 
-Beyond B7: **Carleo & Troyer is absent from the entire document** (`grep -i carleo` → nothing), so the paper's central method — an RBM as a variational wave function — is presented with no attribution. The 2025 D-Wave beyond-classical claim that frames the introduction (L64) is uncited. The whole SB/LSB subsection cites nothing. Metropolis–Hastings is cited only to a personal blog post with an empty year field; simulated annealing and Gibbs sampling cite nothing. Marshall's sign rule is stated as a known theorem with no reference to Marshall — only the paper reporting its *violation*, two lines later, and that paper is a **square-lattice** result used to justify a **1D chain** observation. Troyer & Wiese is cited for an average sign defined over QMC weights while the report defines it over wave-function amplitudes. The 64-line temperature section — including the auto-scale result presented as a contribution — cites nothing, not even the two annealer-temperature papers already in its own bibliography. The 75 lines of embedding work cite nothing, so parallel embedding reads as novel when it is standard practice. Eq. (1)'s TTS definition and the censored-benchmarking protocol are attributed only to the authors' own papers. **Sixteen references for a twenty-two-page report is thin by a factor of two to three; 13 of 22 sections contain zero citations, and the Experimental Analysis — a third of the manuscript — contains three, all in one paragraph.** *(all confirmed)*
+**M8 — The parallel-embedding numbers are total run lengths, and the claim rests on one seed.** "13.6 s versus 5.7 s" are the right-hand endpoints of the two curve families, not times-to-plateau (the converging n=5 seed plateaus by ≈0.3 s, the n=1 seed by ≈6.0 s). The same paragraph discloses that **2 of 3 seeds at n_parallel=5 diverge**, so the Conclusion's "more effective use of quantum-annealer time" rests on a single seed; 2.4× is also strongly sublinear against the naive 5×. *(measured)*
 
-Three factual errors in the reference list: reference [16] names an author replaced in the current version of that preprint; reference [3] is cited as a 2024 preprint but was published (NIC Series 52, 239–250, 2025, with a DOI); reference [4] still prints with no page or article number. The DOI mechanism is a hand-added `note={\url{...}}` in every entry, so every real `doi`, `url`, `eprint` and `issue` field in `bib.bib` is dead — including the flagship self-citation's issue number. *(confirmed)*
+**M9 — Figure 1 argues the opposite direction to the abstract.** Its caption says "on current QPU hardware, classical (or even random) approaches asymptotically outperform the quantum annealer", three pages from an abstract claiming the annealer "scales more favorably". Panel (b) also contradicts its own caption (only the MC encoding is asymptotically worse than random; CFA at 2^−0.9l beats it, and the body says so). "Classical solvers dominate for N ≳ 100" understates panel (a), which shows dominance across the whole 16–112 range with no crossing. Per its generator's docstring, panel (a)'s points were **digitised out of the published figure's vector paths** — disclosed nowhere in the manuscript. *(confirmed)*
 
-### 4.5 Two definitions that measure nothing
+**M10 — Attribution.** Thirteen sections carry zero citations, including the whole of SB/LSB, the sampling-temperature section, and both embedding contributions, so both read as novel where prior art exists. Absent entirely: **Carleo & Troyer 2017** for the neural-quantum-state ansatz that is the paper's core method (`grep -i carleo` returns nothing anywhere); King et al. 2025 for the beyond-classical claim the paper is framed around; Goto et al. 2019 for SB; Metropolis/Hastings, Kirkpatrick and Geman & Geman (Metropolis–Hastings is cited only to a blog post with an empty year); Marshall 1955; Benedetti et al. 2016; Pelofske et al. 2022. Richter 1994 is a square-lattice result used for a 1D chain, and the average sign is attributed to Troyer & Wiese, who define a ratio of partition functions rather than of amplitudes. *(confirmed)*
 
-- **The average sign is identically zero for the models it is introduced to characterise.** With Σ_v Ψ₀(v) = 2^(N/2)⟨+|^⊗N|Ψ₀⟩ and an SU(2)-singlet (S=0) ground state, the numerator vanishes by symmetry, independently of J₂/J₁. *(inference, exact)* It is also never computed anywhere in the paper. **Fix:** define it in the Marshall-rotated basis where it is meaningful, or drop the definition.
-- **The Marshall with/without comparison is asserted but never shown**: the cited figure plots only Marshall-corrected runs, with no ablation in any figure or number. *(confirmed)*
+**M11 — Four bibliography records are factually wrong.** `veloxq` lists an author replaced in v2 of that preprint (updated 2026-05-04) while linking to a version-less URL now serving v2 — on a collaborator's paper. `willsch2024state` is cited as a 2024 preprint but was published (NIC Series 52, 239–250, 2025, DOI `10.34734/FZJ-2025-01965`). `Mehta_2025` prints "112(3)" with no locator; the article number is 032616. `rrf3-jm5m` uses `issue`, which `unsrt` ignores. Two `@misc` entries print undated. `\bibliography` precedes `\bibliographystyle`. *(confirmed)*
 
-### 4.6 Reproducibility
+**M12 — Reproducibility: the artefacts exist; the pointers to them do not.** At `a4b0f2006` the implementation repository contains the figure generator, the paper's own validated-convergence function, 11 842 result files and the auto-scale data. What is missing is the ability to *find* the right state: the availability statement names the repository with **no commit hash or DOI** — and that repository advanced by 69 commits during this audit alone; `requirements.txt` pins **no versions**; and the QPU runs carry no access dates or solver version strings, although `Advantage_system6` is a family with several calibrations. Separately, `scripts/dtv_autoscale.py` was deleted from the report repository in `2e0c162` (the data survive upstream). **Fix:** pin a commit hash or mint a Zenodo DOI in the availability statement, pin versions, and record QPU access dates. *(confirmed at the pinned commit — this supersedes revision 8, which judged from a stale checkout and was wrong.)*
 
-One of fifteen figures is backed by committed data. **The only experiment-generating script the repository ever contained, `scripts/dtv_autoscale.py`, was deleted in this diff** — so §4.3.2, the section carrying the paper's one genuinely novel methodological control, now has zero committed provenance. That is a regression. The TTE experiment — nine series × six sizes × 20 seeds — has neither script nor data table committed; the only TTE script that exists anywhere implements a different, oracle-based criterion and predates the figure by two months. Library versions are unpinned for everything that determines a numerical result (JAX, dwave-ocean-sdk, dwave-neal, minorminer, netket, scipy, Python), and there is no requirements file. QPU runs carry no access dates or solver version strings, although `Advantage_system6` is a family with several calibrations. The caches do not record hyperparameters, so the captions' claims cannot be checked against them. **M22:** the five `verify/*.py` scripts committed by earlier audit revisions are pinned to line numbers that no longer exist and one now prints a false statement — either update or delete them before submission. Figure 1(a)'s data were **recovered from the published figure's vector paths** rather than from underlying data (the generating script says so; the caption does not), and Figure 1(b)'s data repository is never cited. *(all confirmed)*
+**M13 — The seeding sentence contradicts the paper's own seed list.** L676 describes seeding "via `np.random.randint` feeding `jax.random.PRNGKey`", while L678 states seeds 0–19 and the sparsity caches use a fixed {42, 123, 456, 789, 1234}. Unseeded, `np.random.randint` draws from global entropy; it is deterministic only if a global seed was set beforehand, which the paper does not say. **Fix:** describe the actual mechanism, or delete the sentence now that the seed lists are stated. *(confirmed for the inconsistency; `inference` for the non-reproducibility.)*
 
-The new availability statement pointing at `github.com/iitis/adiabatic-boltzmann` is the right fix for most of this — but only if that repository actually contains the TTE and auto-scale scripts and data.
+**M14 — Three defects print on every page.** `hyperref` loaded bare draws coloured rectangles around all 91 link annotations; `listings` with no `\lstset` sets all three code blocks in the roman body font with fixed columns, printing as `@ f u n c t o o l s . p a r t i a l ( …)`; and **two `\label`s sit on one float**, so four cross-references render as "Figure 7 and Figure 7". *(confirmed)*
+
+**M15 — The promised sampling-quality comparison is still absent.** The Sampling Quality section contains no QPU series and no QPU `D_TV` number appears anywhere in the prose; the only QPU distribution-quality data is the auto-scale ablation, run at different sample counts and floors. CEM is deployed on QPU samples but never validated on them, and no β_eff is reported for any QPU run that uses it. The CEM→β_x feedback loop and the RBM→Ising map are never written down. *(confirmed)*
+
+**M16 — The `auto_scale` causal claim is a temperature confound.** L349's "enabling autoscaling dramatically worsens sampling performance" reads as a property of the switch. At the leftmost β_x both settings sit at β_eff ≈ 2.7 with D_TV ≈ 62.5 % and ≈ 63.5 % — the curves coincide where the temperatures coincide; `auto_scale=False` only reaches its minimum ≈29.5 % at β_x ≈ 5.5, where β_eff crosses 1. `auto_scale` does not degrade the anneal; it removes the ability to tune β_eff toward the VMC target. *(measured)*
 
 ---
 
 ## 5. Completeness
 
-**Now delivered:** an abstract, a Conclusion, an availability statement; a cross-solver timing comparison to N=64 (QPU) and N=128 (classical, excluded from the figure with reason); a second, energy metric; QPU β_eff measured for one configuration; CEM applied to QPU samples; the unused models cut; GPU/driver/CUDA and Metropolis burn-in specified.
+**Delivered:** abstract, Conclusion, availability statement, affiliation; the full training protocol and per-sampler parameter table; a cross-solver timing comparison and an energy metric; QPU β_eff measured for one configuration; CEM applied to QPU samples; unused models cut; GPU, driver and CUDA specified.
 
-**Still missing:** any QPU sampling-quality measurement comparable to the classical benchmark (§4.2); a headline accuracy number for QPU-driven training at any N; β_eff for the QPU experiments that use it; the model and field of the headline benchmark; a Methods description of the fastest solver; per-figure seeds and sample budgets (every figure containing a real QPU sampling-quality measurement lacks all three); numeric η, λ, CG tolerance and LSB settings; a pinned `\date` (the title page currently stamps "August 18, 2026" and changes on every rebuild); an affiliation; and `\appendix` (so the appendix prints as "6 Appendix" and equation numbering continues into it).
+**Still missing:** any QPU sampling-quality measurement comparable to the classical benchmark (M15); a headline accuracy number for QPU-driven training at any N; β_eff for the QPU experiments that use it; the hidden-unit count of the headline benchmark (M4); a Methods description of the fastest solver — FPGA/VeloxQ appears only in the TTE figure and one hardware sentence; per-figure seeds and sample budgets for the QPU-facing figures; numeric η, λ and CG tolerance; a pinned `\date`; and `\appendix`, so the appendix prints as a numbered section with equation numbering running on.
 
 ---
 
 ## 6. Novelty and positioning
 
-Unchanged from revision 7 and not repeated here: the CEM validation is pre-empted by Kubo & Goto; the sparse chain-free RBM is incremental against Park et al., Golubeva & Melko, Pilati & Pieri and Marshall et al.; parallel embedding is standard practice (Pelofske et al.); the sampling-quality benchmark sits in the territory of Berns et al., PRApplied 25, 024085 (2026). The residual open gap is an SB-class sampler with per-iteration temperature correction inside an NQS/VMC loop — and the report now *has* that experiment (LSB+CEM, and CEM on the QPU), which is the strongest thing in it. It cannot be claimed while the section that would position it cites nothing (§4.4). The auto-scale result remains a useful methodological control whose standalone novelty is undemonstrated. *(editorial judgement, not an audit finding.)*
+Unchanged: the CEM validation is pre-empted by Kubo & Goto; the sparse chain-free RBM is incremental against Park et al., Golubeva & Melko, Pilati & Pieri and Marshall et al.; parallel embedding is standard practice (Pelofske et al.); the sampling-quality benchmark sits in the territory of Berns et al., PRApplied 25, 024085 (2026). The residual open gap is an SB-class sampler with per-iteration temperature correction inside an NQS/VMC loop — and the report now *has* that experiment (LSB+CEM, and CEM on the QPU), which is the strongest thing in it. It cannot be claimed while the sections that would position it cite nothing. *(editorial judgement, not an audit finding.)*
 
 ---
 
-## 7. Readability, language and LaTeX
-
-Compiles with no undefined references and zero bibtex warnings; all 32 `\includegraphics` targets exist. Remaining, all verified in the rendered PDF:
-
-- **hyperref is loaded with no options**, so every internal and bibliographic link prints inside a coloured rectangle (red boxes around "Equation 19", "Figure 14", green around citations). Add `\hypersetup{hidelinks}` or `colorlinks=true` with sober colours.
-- **The three code listings are set in the roman body font** with `listings`' default fixed columns, producing letter-spaced pseudo-code instead of monospace.
-- **A sentence begins with a lowercase word** because `\gls{sa}` is used sentence-initially with a lower-case long form.
-- **Three of the four log warnings come from raw `$\epsilon$` in the §4.2 heading**, producing a broken PDF bookmark with a dangling hyphen. Wrap in `\texorpdfstring`.
-- **Figures are first cited out of numerical order** in two places (Figure 6 before 5, Figure 11 before 10).
-- **Numeric citation labels used as sentence subjects** in three places.
-- **Notation**: the hidden-unit count is written both `M` and `N_h`, and `N_h` is never defined; `α` carries two unrelated meanings (energy rescaling `1/β_x`, and hidden-to-visible ratio); `N` is overloaded in the new factoring caption, where it means an integer to be factored while denoting spin count everywhere else; `D_TV` and `β_eff` each appear in several spellings.
-- **~20 verified grammar defects** (agreement, articles, part of speech, prepositions), mixed British/American orthography sometimes for the same word, four punctuation defects that print (missing sentence separators inside captions), and **register slips** of two kinds: sentences arguing with a reviewer about how the data may be read, and thesis-style roadmap sentences.
-- **Structure**: `\section{Appendix}` without `\appendix`; Methods (§5 Implementation) after Results (§4), with §4 forward-referencing §5 twice.
-- **Cross-reference**: Fig. 8(b)'s subcaption defines β_eff via KL-argmin and points at §4.3.2, which never mentions KL divergence — the definition is in §4.3.3, which has no label. The same subcaption describes an estimator for a figure that was not regenerated.
-- **Fig. 3(b) shows three edge colours; the caption defines two** — the undefined one is presumably the "Odd Couplers" the text lists immediately above.
-- **Fig. 8(b) is cited for a "β_eff = 1/β_x behaviour" it does not show**: LSB's measured β_eff lies 29–52 % below the drawn ideal curve and is not proportional to 1/β_x (the product β_eff·β_x falls monotonically from 0.71 to 0.48). *(measured)*
-- **Fig. 9(b) is unreadable as evidence**: one labelled y-tick, no minor ticks, and the legend box breaks the reference line — although both numeric claims made about it are correct and I reproduced them.
-- **Fig. 1's caption and body make opposite claims about panel (b)** (whether random guessing beats the annealer asymptotically or the reverse), and the surviving "classical solvers dominate for N ≳ 100" understates the panel, which shows classical dominance over the whole plotted range by 3–4.5 orders of magnitude.
-
----
-
-## 8. Priorities
+## 7. Priorities
 
 ### P0 — before the next push
-1. **Purge the bank PDF from the working tree and from git history**, force-push, and treat the contents as exposed (§0).
+1. Purge the bank PDF from history and force-push; decide what to do about the tracked internal documents and `verify/` scaffolding (§0).
 
-### P0 — before anyone reads the manuscript
-2. Resolve the `auto_scale` contradiction and state β_eff per QPU experiment (B1).
-3. Rewrite the solver-ordering paragraph from the measured figure values (B2), and make the abstract and Conclusion consistent with it (B3).
-4. Fix or explain the sparse-QPU claim, and rename `sparsity_ablation_qpu_vs_classical.pdf` (B4).
-5. Fix the two misattributed citations, and add Carleo & Troyer, King et al. 2025, Marshall 1955, Goto et al., Metropolis/Hastings, Kirkpatrick, Geman & Geman (B7, §4.4).
-6. State the model, transverse field and hidden-unit count of the headline benchmark; restore what the rewrite deleted (§4.1).
-7. Correct the seeding sentence (B8).
+### P0 — methodological, before the manuscript is shown
+2. Fix or withdraw the scaling claim (B1) — it is the contribution sentence.
+3. Report both clocks and replace the validated-seeds median with a censoring-aware estimator (B2).
+4. Regenerate the ordering sentence and caption from the plotting data (B3); reconcile the abstract and Conclusion and restrict the energy claim (B4, M1).
+5. Say what was actually run on the QPU for the sparse models, and rename the figure file (B5).
+6. Include the already-committed Marshall comparison and fix or drop the average sign (B6).
+6a. Disclose the (CV, ε) sweep, show the tighter-ε variant, and restore the parameterised figure filename (B8).
+
+### P0 — attribution and figures
+7. Fix the two misattributed citations; add Carleo & Troyer, King et al., Marshall, Goto, Metropolis/Hastings, Kirkpatrick, Geman & Geman, Benedetti, Pelofske (B7, M10).
+8. Fix the Fig. 4(a) node count (M2), the SA hardware contradiction (M3), Fig. 1's caption and its undisclosed provenance (M9), and state the hidden-unit count and relative ε at the benchmark (M4).
 
 ### P1 — before submission
-8. Report both clocks, or one honest end-to-end clock, for the TTE and energy comparisons (B5, B3).
-9. Replace the validated-seeds median with a censoring-aware estimator, or relabel the axis (B6).
-10. Add a QPU `D_TV` measurement comparable to the classical benchmark, and report β_eff for the QPU runs that use CEM (§4.2).
-11. Write the RBM→Ising map and the CEM→β_x feedback loop (§4.2).
-12. Fix the sparsity claims to match the caches — the across-sampler range, the median-versus-mean floor shape, the seed count, the legend occlusion (§4.3).
-13. Either define the average sign where it is non-trivial or drop it; add the Marshall ablation or drop the comparative claim (§4.5).
-14. Commit or point the availability statement at the TTE and auto-scale scripts and data; pin library versions; record QPU access dates and solver versions; update or delete the stale `verify/` scripts; disclose Fig. 1(a)'s provenance (§4.6).
-15. Position the embedding and temperature work against its prior art (§4.4, §6).
+9. Add a QPU `D_TV` measurement comparable to the classical benchmark; report β_eff for QPU runs using CEM; write the RBM→Ising map and the CEM→β_x loop (M15).
+10. Fix the sparsity claims to match the caches — median floor, per-sampler ranges, Gibbs non-monotonicity, legend occlusion (M6, M7).
+11. Restate the parallel-embedding numbers and add seeds at n=5, or soften the Conclusion (M8).
+12. Pin a commit hash or Zenodo DOI in the availability statement, pin library versions, record QPU access dates (M12); correct the seeding sentence (M13); fix the four bibliography records (M11); reframe the `auto_scale` causal claim (M16).
 
 ### P2 — polish
-16. `\hypersetup`, monospace listings, `\appendix`, the `$\epsilon$` heading, figure citation order, notation collisions, the ~20 grammar defects and the register slips (§7). Commission an English-language edit.
+13. `\hypersetup{hidelinks}`, `\lstset`, split the double-labelled float, `\appendix`, pinned `\date`, notation collisions (`M` vs `N_h`, two meanings of α, `N` overloaded in the factoring caption), figure citation order, and an English-language edit (M14).
