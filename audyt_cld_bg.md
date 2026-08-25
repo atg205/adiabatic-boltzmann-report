@@ -1,6 +1,8 @@
 # Audit: *Quantum Variational Algorithms on Adiabatic Quantum Computing Devices* (`report.tex`)
 
-**Revision 11** — 2026-08-25. A verification pass, not a new audit. Every finding of revisions 8–10 was re-checked against the current manuscript; **the closed ones have been deleted from this document** and survive only as the one-line record in §3, so what remains below is the open list and nothing else. History in [`CHANGELOG_audytu.md`](CHANGELOG_audytu.md).
+**Revision 11** — 2026-08-25. A verification pass, not a new audit. Every finding of revisions 8–10 was re-checked against the current manuscript; **the closed ones have been deleted from this document** and survive only as the one-line record in §3, so what remains below is the open list and nothing else.
+
+*Provenance of this document.* Revision 8 was a full eight-lens re-audit. Revision 9 corrected three errors of revision 8 that had reached a published state — a stale `auto_scale` blocker, a reproducibility verdict formed from an out-of-date checkout, and several "missing" items that were in fact present. Revision 10 corrected revision 9 after a second review round: it rewrote the clock finding on verified implementation code, downgraded the scaling claim from proven artefact to confounded, withdrew a sub-finding, and refuted — with the indexing arithmetic — a proposed blocker about a supposedly forward-looking validation window. Each correction is recorded in the finding it touches. The separate changelog and review files have been removed at the author's request; this file is now the whole audit.
 
 **Target.** `report.tex` at **`9917b34`** ("small text fixes") — 796 lines, 27 compiled pages. Bibliography: 29 entries. Verify with `wc -l report.tex` (→ 796) and `git log -1 --format=%h -- report.tex` (→ `9917b34`). Implementation repository: `iitis/adiabatic-boltzmann`, last inspected at `a4b0f2006`.
 
@@ -19,7 +21,7 @@ The private bank document is gone from the rewritten history: `git log --all` an
 
 Until step 2 is confirmed, treat the file as reachable by anyone holding an old SHA. The file itself still sits untracked and `.gitignore`d in `figures/` on disk — it is yours to keep or delete, but it does not belong in a project folder.
 
-**Separately:** the internal audit documents (`audyt_cld_bg.md`, `CHANGELOG_audytu.md`, `uwagi_do_audytu_cld_bg.md`, `ocena_audytu_cld_bg.md`, `ocena_audytu_cld_bg_runda_2.md`) and the `verify/*.py` scaffolding are still tracked and will ship with the public repository. Decide whether that is what you want.
+**Resolved 2026-08-25:** the changelog, the three review documents, the `verify/*.py` scaffolding and a tracked `__pycache__` artefact have been removed from the repository, so this file is the only audit material that ships with it.
 
 ---
 
