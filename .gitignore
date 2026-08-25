@@ -336,3 +336,7 @@ TSWLatexianTemp*
 
 ## Not a figure: private document accidentally committed; purge from history separately
 figures/2_5316856890368498963.pdf
+
+## Python bytecode
+__pycache__/
+*.pyc
