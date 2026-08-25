@@ -1,5 +1,15 @@
 # Revision history of `audyt_cld_bg.md`
 
+## Revision 11 — 2026-08-25, verification pass; closed findings removed
+
+Every finding of revisions 8–10 was re-checked against `report.tex` at `9917b34` (796 lines, 27 pages) — against the text and the bibliography, not against the author's annotations. **16 of 24 findings are verified closed and have been deleted from the audit**, leaving eight open items (O1–O8) plus a one-line record of what was closed and how.
+
+The three post-audit commits (`5ab5210` "fixed audits findings", `a8d03fc`, `9917b34`) resolved every blocking finding except one, and did so substantively: the CV stopping rule was removed outright rather than re-tuned; the axis was relabelled sampler time with the SR/CG exclusion stated; the average sign was moved into the Marshall gauge with an explicit note that it vanishes by SU(2) symmetry otherwise; the misattributed citations were replaced with `Heisenberg_1928` and `{Sorella_1998,Sorella_2001}`; the parallel-embedding numbers were restated as total budget rather than time-to-plateau; the `dwave-neal` ambiguity was resolved by naming which implementation produced the results; and the bibliography grew from 16 to 29 entries, adding every foundational reference the audit had listed as absent.
+
+Still open: the sparse-QPU contradiction (the refuting cache is still tracked in *this* repository even if it was removed upstream), the absent QPU sampling-quality measurement, the undisclosed ε-sensitivity behind a sign-flipping exponent, Figure 1(a)'s digitised provenance, the availability statement's missing commit hash, one incomplete bibliography record, `\appendix`/`\date`, and the two sampler clocks' boundaries.
+
+---
+
 ## Revision 10 — 2026-08-18, after the second review round
 
 `ocena_audytu_cld_bg_runda_2.md` is **right on five of its eight points, wrong on the one it calls a new blocker**. Everything was checked against the pinned implementation `a4b0f2006`, which was fetched before the network went down and inspected offline.
