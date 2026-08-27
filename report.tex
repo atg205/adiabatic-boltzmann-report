@@ -35,6 +35,7 @@
 \newacronym{mcmc}{MCMC}{Markov chain Monte Carlo}
 \newacronym{kpo}{KPO}{Kerr-nonlinear parametric oscillators}
 \newacronym{cem}{CEM}{Conditional Expectation Matching}
+\newacronym{lsb}{LSB}{Langevin Simulated Bifurcation}
 \newacronym{srbm}{SRBM}{Semi-Restricted Boltzmann Machine}
 \newacronym{tfim}{TFIM}{Transverse Field Ising Model}
 \newacronym{qubo}{QUBO}{quadratic unconstrained binary optimization}
@@ -74,8 +75,7 @@ We compare classical samplers, quantum annealers, and physics-inspired hardware 
 
 \section{Overview}
 Since the development of programmable quantum processors, many claims regarding quantum advantage have been made. Often, these advantage claims did not last long. In this work, we focus exclusively on the D-Wave Quantum Annealer, which leverages quantum technology to solve \gls{qubo} problems. D-Wave is among the first companies to commercially sell quantum computers. In 2025, researchers from D-Wave claimed to have solved a scientifically relevant problem faster using quantum technology than it would have been possible on classical devices~\cite{King_2025}. However, it is currently an open question whether the D-Wave Quantum Annealer is able to solve other problems well, and possibly faster than conventional computers. In this work, we assess D-Wave's ability to sample from a probability distribution, to approximate the ground state of different statistical mechanical models using variational algorithms.  
-\subsection{Previous work \& motivation}
-\subsubsection{Quantum Annealing Performance}
+\subsection{Previous work}
 The D-Wave Quantum Annealer's performance scaling for finding the ground state (corresponding to the minimum of the quadratic binary cost function) has been extensively studied, in the area of cryptography and physical simulation. In general, classical methods exhibit faster solving times and better scaling (see \autoref{fig:tta_overview}).
 
 We briefly report on previous work in the field of simulating physical systems using quantum annealing hardware. In \cite{rrf3-jm5m}, we used a method presented in \cite{jalowiecki2020parallel} to encode the solution to the wave function of different Hamiltonians into a \gls{qubo} problem. These instances were then solved on different physical and physics-inspired solvers. We evaluate the scaling of the samplers using the \gls{tts} metric, which corresponds to the computational time needed to solve the optimisation problem with a success probability of at least $P_\text{target}$. The TTS is defined as
@@ -83,9 +83,10 @@ We briefly report on previous work in the field of simulating physical systems u
 \text{TTS} = \frac{\ln(1-P_\text{target})}{\ln(1-P_\text{success})} T_r,
 \label{eq:tts}
 \end{equation}
-where $P_\text{success}$ is the probability of obtaining the ground state in a single run, and $T_r$ denotes the runtime of a single run. It is important to note that current D-Wave devices exhibit limited connectivity. As a consequence, most problem instances need to be adapted in an additional \textit{embedding} step, increasing the number of physical qubits required. \autoref{fig:tta-native} shows the resulting TTS for the native, embedding-free formulation of one such Hamiltonian; classical solvers dominate across the entire range tested ($N=16$ to $112$), with no crossing point.
+where $P_\text{success}$ is the probability of obtaining the ground state in a single run, and $T_r$ denotes the runtime of a single run. \autoref{fig:tta-native} shows the resulting TTS for the native, embedding-free formulation of one such Hamiltonian; classical solvers dominate across the entire range tested ($N=16$ to $112$).
 
-A cryptographically motivated instance of the same trend is integer factorisation on the D-Wave Annealer, i.e.\ recovering the two prime factors $p,q$ of a semiprime $N = p \times q$. \cite{willsch2024state} benchmark three \gls{qubo} encodings of this problem -- a direct cost function on the unknown bits (Direct), a multiplication-circuit encoding (MC), and a custom-embedded controlled-full-adder encoding (CFA) -- against uniformly random guessing. \autoref{fig:tta-factoring} reproduces their result: all three encodings still scale exponentially in the number of unknown bits $l = l_p^* + l_q^*$, and only the custom-embedded CFA encoding, which avoids the costly generic embedding step, asymptotically beats random guessing.
+
+Another previous work that we report on is integer factorisation on the D-Wave Annealer, that is, computing the two prime factors $p,q$ of a semiprime $N = p \times q$. \cite{willsch2024state} benchmark three \gls{qubo} adaptations of this problem against uniformly random guessing. \autoref{fig:tta-factoring} reproduces their result: all three encodings still scale exponentially in the number of unknown bits $l = l_p^* + l_q^*$, and only the instances using custom embedding (denoted as CFA\cite{ding2023effectiveprimefactorizationquantum}), asymptotically beats random guessing.
 
 \begin{figure}[htbp]
 \centering
@@ -104,11 +105,11 @@ A cryptographically motivated instance of the same trend is integer factorisatio
     \label{fig:tta-factoring}
 \end{subfigure}
 
-\caption{Two independent illustrations of a related trend on current QPU hardware, on problems and metrics distinct from the rest of this work (native \gls{qubo} encodings solved directly on the annealer, evaluated by \gls{tts}, rather than this paper's RBM-VMC training evaluated by \gls{tte}). \textbf{(a)} TTS99 for simulating a native single-qubit rotation, governed by $H_1 = \frac{\pi}{2}\sigma_y$, vs.\ system size $N$ \cite{rrf3-jm5m}: classical solvers dominate throughout, with exponential scaling $\propto \exp(N/\beta)$; missing points indicate zero success probability. \textbf{(b)} Success frequency of factoring a semiprime $N = p \times q$ vs.\ the number of unknown bits $l = l_p^* + l_q^*$, reproduced from \cite{willsch2024state}, for the Direct, MC, and CFA \gls{qubo} encodings and for uniformly random guessing; markers are the mean success frequency over $\sim\!10$ random semiprimes per $l$, bars span the 25th--75th percentile, and lines are fitted exponential scalings $\propto 2^{-bl}$. Most encodings scale no better than random guessing; the custom-embedded CFA encoding is the exception (see text).}
+\caption{Illustration of previous results on solving optimization problems using QPU hardware. \textbf{(a)} TTS99 for simulating a native single-qubit rotation, governed by $H_1 = \frac{\pi}{2}\sigma_y$, vs.\ system size $N$ \cite{rrf3-jm5m}, missing points indicate zero success probability. \textbf{(b)} Success frequency of factoring a semiprime $N = p \times q$ vs.\ the number of unknown bits $l = l_p^* + l_q^*$, reproduced from \cite{willsch2024state}, for three different \gls{qubo} encodings and for uniformly random guessing; markers are the mean success frequency over $\sim\!10$ random semiprimes per $l$, bars span the 25th--75th percentile, and lines are fitted exponential scalings $\propto 2^{-bl}$.}
 \label{fig:tta_overview}
 \end{figure}
 
-As previously shown, results returned by the quantum annealer are inherently noisy. This makes it difficult to sample the \textit{exact} ground state of the submitted Hamiltonian. In this work, we therefore assess the device's ability to act as a Gibbs sampler and sample from the Boltzmann distribution. It has been shown earlier that the D-Wave device can in fact be used as a Gibbs sampler\cite{Mehta_2025,Nelson_2022}. Here, we systematically evaluate the quality and time of these samples on computationally hard problems, which allows us to rigorously compare the quantum annealer to classical physics inspired algorithms.
+To conclude, results returned by the quantum annealer are inherently noisy. This makes it difficult to sample the \textit{exact} ground state of the submitted Hamiltonian. In this work, we therefore assess the device's ability to act as a Gibbs sampler and sample from the Boltzmann distribution. It has been shown earlier that the D-Wave device can in fact be used as a Gibbs sampler\cite{Mehta_2025,Nelson_2022} and that these samples can be used to train small-scale neural networks to solve many-body problems\cite{Gardas_2018}. In this work we aim to extend the analysis to different many-body models, notably the J1-J2 Heisenberg model, and propose a rigorous comparison between different quantum and classical samplers for bigger system sizes. 
 \section{Methods}
 \subsection{Quantum Ising Models}
 The Ising model consists of discrete spins arranged on a lattice, interacting via nearest-neighbour couplings. In its quantum extension, the \gls{tfim}, a transverse magnetic field is added, introducing quantum fluctuations through non-commuting terms in the Hamiltonian~\cite{mpg}. The Hamiltonian for the one-dimensional \gls{tfim} is given by
@@ -135,9 +136,7 @@ The frustrated $J_1$-$J_2$ Heisenberg chain extends the Heisenberg model with a 
 
 where $J_1$ and $J_2$ are the nearest- and next-nearest-neighbour coupling strengths. The competing interactions frustrate the system, preventing simultaneous minimisation of both exchange terms. Setting $J_2 = 0$ recovers the standard Heisenberg chain, while increasing $J_2/J_1$ drives the system into a more frustrated regime that poses a more stringent test for variational methods.
 
-\subsection{Quantum (inspired) solvers}
-Here we present two solver types: First, a special quantum machine designed to find the ground state of an Ising Hamiltonian, and second, a classical quantum inspired algorithm. 
-\subsubsection{Adiabatic Quantum Computing}
+\subsection{Adiabatic Quantum Computing}
 \label{sec:solvers:quantum:adiab}
  Adiabatic Quantum Computing is based on the adiabatic theorem, which states: \textit{A physical system remains in its instantaneous eigenstate if a given perturbation is acting on it slowly enough and if there is a gap between the eigenvalue and the rest of the Hamiltonian's spectrum.}
 In this work we focus on the D-Wave Quantum Annealer, which acts according to the adiabatic theorem in the following way: 
@@ -160,7 +159,7 @@ H(s) = A(s)H_D + B(s)H_P
 \end{equation}
 where $s \in [0,1]$ is the normalized time. $A(s)$ decreases the driving terms in $H_D$ as $s$ increases,
 and $B(s)$ activates the terms of the problem Hamiltonian $H_P$. At the end of the evolution, if the process happens slow enough, and assuming a noiseless environment, the system will be in the ground state of the problem Hamiltonian according to the adiabatic theorem.
-It is important to note that the qubits in the D-Wave Quantum Annealer are not \textit{all-to-all} connected. The qubits are arranged in an architecture dependent grid. In the Pegasus topology, one qubit couples on average to 15 other qubits, while Zephyr qubits couple to 20 other qubits. Therefore, most problems require an additional embedding step, in which multiple physical qubits are \textit{chained} together to form one logical qubit. For a toy-problem example of embedding a triangle shaped connectivity pattern on a QPU, see \autoref{fig:embedding-toy-result}.
+It is important to note that the qubits in the D-Wave Quantum Annealer are not \textit{all-to-all} connected. The qubits are arranged in an architecture dependent grid. In the Pegasus topology, one qubit couples on average to 15 other qubits, while Zephyr qubits couple on average to 20 other qubits. Therefore, most problems require an additional embedding step, in which multiple physical qubits are \textit{chained} together to form one logical qubit. For a toy-problem example of embedding a triangle shaped connectivity pattern on a QPU, see \autoref{fig:embedding-toy-result}.
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}[]{0.30\linewidth}
@@ -204,8 +203,6 @@ There exist three different types of couplers, connecting physical qubits:
 \label{fig:anneal:overview}
 \end{figure*}
 See \autoref{fig:anneal:overview} for visualization of different QPU topologies. 
-\subsubsection{Conditional Expectation Matching}
-\gls{cem} estimates the sampler's effective inverse temperature $\beta_\text{eff}$ by matching the sampler's observed hidden-unit statistics, at a fixed visible configuration, against their closed-form conditional expectation~\cite{kubo2025unlockingpowerboltzmannmachines}; the full derivation, including the pooled variant used in this work, is given in \autoref{sec:exper:temp}. \gls{cem} can also be used with other temperature-dependent solvers, e.g. the D-Wave Quantum Annealer.
 \subsection{Metropolis-Hastings inspired methods}
 We use several \gls{mcmc} methods to generate samples from probability distribution from which direct sampling would be difficult. All of these methods can be traced back to the Metropolis-Hastings algorithm~\cite{Metropolis_1953,Hastings_1970}, which we explain below.
 \subsubsection{Metropolis-Hastings Algorithm}
@@ -215,7 +212,7 @@ A(x_n\rightarrow x^*) =\min\left(1, \frac{f(x^*)}{f(x_n)}\times\frac{q(x_n|x^*)}
 \end{equation}
 For the evaluation of $\frac{f(x^*)}{f(x_n)}$, knowledge of the normalization constant is not necessary. The candidate $x^*$ is accepted with probability $A(x_n\rightarrow x^*)$.
 \subsubsection{Simulated Annealing and Gibbs sampling}
-\gls{sa}~\cite{Kirkpatrick_1983} is the classical analogue and predecessor of quantum annealing. It works by exploring the neighborhood of a given configuration, accepting the proposed solution with a temperature dependent probability, or if the new configuration has a lower energy than the current one.
+\Gls{sa}~\cite{Kirkpatrick_1983} is the classical analogue and predecessor of quantum annealing. It works by exploring the neighborhood of a given configuration, accepting the proposed solution with a temperature dependent probability, or if the new configuration has a lower energy than the current one.
 Gibbs sampling~\cite{Geman_1984} can be considered a special case of the Metropolis-Hastings algorithm. It is used when sampling directly from a joint distribution is difficult, but sampling from the full conditional distributions is tractable. The algorithm constructs a Markov chain by iteratively sampling each variable (or block of variables) from its distribution conditioned on the current values of all other variables. This procedure generates a chain whose stationary distribution is the target joint distribution.
 \section{Variational Algorithms}
 Variational algorithms are a class of hybrid quantum-classical optimization methods designed to find the ground state of a given Hamiltonian. Unlike the \acrfull{vqe}, which prepares and measures a parametrised circuit on a gate-based quantum computer, this work uses quantum-assisted Variational Monte Carlo: a classical neural-network ansatz~\cite{Carleo_2017} is optimised via Stochastic Reconfiguration, and a quantum device is used only to generate samples of that ansatz. Variational Monte Carlo consists of three parts: the \textit{cost function} to be minimized, the \textit{ansatz}, which in our case is a Boltzmann machine, and an \textit{expectation value estimation}. Additionally, a classical optimizer is needed to improve the ansatz at each iteration. Depending on how the ansatz is realised on quantum hardware, two approaches for estimating the expectation value are possible:
@@ -243,9 +240,10 @@ Tracing out the hidden variables in \autoref{eq:rawansatz}, the ansatz becomes:
 \label{eq:ansatz}
 \Psi(\mathbf{v}) = e^{-\mathbf{a} \cdot \mathbf{v}/2} \prod_{j=1}^{N_h} \left[ 2\cosh\!\left(b_j + \sum_i W_{ij} v_i\right) \right]^{1/2}.
 \end{equation}
-Two sampling regimes are used in this work. Classical Metropolis-Hastings sampling operates directly on the closed-form marginal $\Psi(\mathbf{v})$ of \autoref{eq:ansatz}: only the visible units are instantiated, and $\mathbf{h}$ never appears as an explicit random variable. Gibbs sampling on the D-Wave annealer instead targets the joint distribution $p_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})$: both $\mathbf{v}$ and $\mathbf{h}$ are encoded as physical qubits (\autoref{fig:rbm-embedding}), the annealer returns samples of the pair $(\mathbf{v},\mathbf{h})$, and $\mathbf{h}$ is subsequently discarded (marginalized) to obtain samples of $\mathbf{v}$ distributed as $\rho(\mathbf{v})$. Since D-Wave qubit biases and coupler strengths are restricted to a fixed hardware range, $\mathbf{a}, \mathbf{b}, \mathbf{W}$ are rescaled by a common factor $\beta_x$ before being programmed onto the device. Under \texttt{auto\_scale=False}, this rescaling is the origin of the effective inverse temperature $\beta_\text{eff}$ discussed in \autoref{sec:exper:temp}; \autoref{sec:exper:temp} shows this mechanism no longer holds once \texttt{auto\_scale} is enabled.
+Two sampling regimes are used in this work. Classical Metropolis-Hastings sampling operates directly on the closed-form marginal $\Psi(\mathbf{v})$ of \autoref{eq:ansatz}: only the visible units are instantiated, and $\mathbf{h}$ never appears as an explicit random variable. Gibbs sampling on the D-Wave annealer instead targets the joint distribution $p_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})$: both $\mathbf{v}$ and $\mathbf{h}$ are encoded as physical qubits (\autoref{fig:rbm-embedding}), the annealer returns samples of the pair $(\mathbf{v},\mathbf{h})$, and $\mathbf{h}$ is subsequently discarded (marginalized) to obtain samples of $\mathbf{v}$ distributed as $\rho(\mathbf{v})$.
 \subsection{Boltzmann machine}
-A \gls{rbm} is an artificial neural network consisting of visible and hidden units that form a bipartite graph. That is, no intra-layer connections are allowed. During training, the \gls{rbm} learns to approximate a probability distribution.
+A \gls{rbm} is an artificial neural network consisting of visible and hidden units that form a bipartite graph, without intra-layer connections. It has been shown to be a universal approximator, meaning that it can represent any desired probability distribution to arbitrary accuracy\cite{10.1162/neco.2008.04-07-510}, give a sufficient number of hidden units. 
+
 The main idea is that expectation values with respect to the quantum state can be estimated using samples drawn from the probability distribution $|\Psi(\mathbf{v})|^2$. Since the wavefunction ansatz is represented by a Restricted Boltzmann Machine, which corresponds to a classical stochastic Ising model, configurations $\mathbf{v}$ can be sampled approximately using a D-Wave quantum annealer.
 
 \begin{figure}[htbp]
@@ -310,41 +308,14 @@ The peaked distribution originates from the fact that the spins in the \gls{tfim
 \end{figure}
 \subsection{Sampling temperature \& CEM}
 \label{sec:exper:temp}
-In this section, we evaluate the influence of temperature on different models and solvers. We focus on two quantities: the rescaling factor $\beta_x$ and the effective temperature $\beta_\text{eff}$~\cite{Benedetti_2016}. Sampling from an ansatz, all weights in the \gls{rbm} are rescaled by $\beta_x$, that is, the sampler is programmed with $E_\text{in}=\alpha E_{\boldsymbol\theta}$, $\alpha=1/\beta_x$. If the device samples at hardware inverse temperature $\beta_\text{hw}$, it draws from $p(\mathbf{v},\mathbf{h})\propto e^{-\beta_\text{hw}E_\text{in}(\mathbf{v},\mathbf{h})}=e^{-(\alpha\beta_\text{hw})E_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})}$, i.e.\ relative to the unscaled model $\beta_\text{eff}=\alpha\beta_\text{hw}$. For an ideal Gibbs sampler held at $\beta_\text{hw}=1$, the following equation holds:
+In this section, we evaluate the influence of temperature on different models and solvers. We focus on two quantities: the rescaling factor $\beta_x$ and the effective temperature $\beta_\text{eff}$~\cite{Benedetti_2016}. 
+
+\subsubsection{D-Wave QPU}
+The D-Wave has been found to reproduce a classical Boltzmann distribution\cite{Benedetti_2016}, parametrized by a device- and problem-dependent temperature $\beta_\text{hw}$:
 \begin{equation}
-\beta_\text{eff}=\frac{1}{\beta_x}.
-\end{equation}
-\subsubsection{Simulated Annealing}
-Simulated annealing is a Metropolis-Hastings chain held at a fixed final temperature $\beta_x$; given enough sweeps it converges to the Boltzmann distribution at that temperature~\cite{Kirkpatrick_1983,Metropolis_1953}. \autoref{fig:dtv_beta_scale_N8} demonstrates this experimentally, showing $\beta_\text{eff}$ converge toward the ideal $1/\beta_x$ line, and $D_\mathrm{TV}$ toward its sampling floor, as the number of cooling sweeps increases.
+p(\mathbf{v},\mathbf{h})\propto e^{-\beta_\text{hw}E_\text{in}(\mathbf{v},\mathbf{h})}
+\end{equation}. Concretely, the RBM's own weights $\boldsymbol\theta=\{\mathbf{a},\mathbf{b},\mathbf{W}\}$ are divided by $\beta_x$ before being embedded on the QPU, i.e.\ $E_\text{in}=E_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})/\beta_x$, so the hardware effectively samples the RBM's joint distribution at $\beta_\text{eff}=\beta_\text{hw}/\beta_x$. Therefore, all problems submitted to the QPU need to be rescaled by a factor $\beta_x$, which we estimate using \gls{cem} (described in the next section).
 
-\begin{figure}[htbp]
-    \centering
-    \begin{subfigure}{\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{figures/dtv_beta_scale_dtv_N8}
-        \subcaption{Total variation distance $D_\mathrm{TV}$ between \gls{sa}'s empirical
-        histogram and the exact distribution $|\Psi(v)|^2$.
-        The horizontal dashed line marks the sampling floor.}
-        \label{fig:dtv_beta_dtv_N8}
-    \end{subfigure}
-
-    \vspace{0.5em}
-
-    \begin{subfigure}{\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{figures/dtv_beta_scale_beta_N8}
-        \subcaption{Effective inverse temperature $\beta_\text{eff}$ of \gls{sa}'s samples,
-        estimated via KL-argmin (\(\beta_\text{eff}=\arg\min_\beta D_\mathrm{KL}(p_S \parallel p_\beta)\), \autoref{sec:autoscale}). The dashed curve shows the ideal $1/\beta_x$ prediction for a perfect Gibbs sampler, the horizontal dotted line marks the VMC target $\beta_\text{eff}=1$.}
-        \label{fig:dtv_beta_beta_N8}
-    \end{subfigure}
-
-    \caption{%
-        Influence of \gls{sa}'s final-temperature parameter $\beta_x$ on sampling quality for a trained \gls{tfim} \gls{rbm} with $N=8$ visible spins, at three cooling-sweep counts.
-        The vertical dotted line in each panel marks the $\beta_x$ that minimises $D_\mathrm{TV}$.
-    }
-    \label{fig:dtv_beta_scale_N8}
-\end{figure}
-\subsubsection{Auto-Scaling on the D-Wave QPU}
 \label{sec:autoscale}
 A common pitfall when using the D-Wave QPU is its device dependent, limited parameter range for the $h$ and $J$ values. Using the API's default settings, these parameters get automatically rescaled to fully match the allowed range. While this is not problematic for a standard minimization problem, it does impact the temperature dependent sampling process, as any temperature adjust is without effect when autoscaling is turned on.
 We verify this on the \texttt{Advantage\_system6} (Pegasus) chip, using a chain-free \gls{rbm} embedded directly onto a native Pegasus biclique \autoref{fig:dtv_autoscale_N8} sweeps $\beta_x$ under both settings: with \texttt{auto\_scale=True}, the total variation distance $D_TV$ between the target and the sampled distribution stays mostly flat, as does the efficient temperature $beta_{eff}$ in \autoref{fig:dtv_autoscale_dtv_N8}. This clearly is not the case with \texttt{auto\_scale=False}, upon reaching the optimal device sampling temperature, $D_{TV}$ reduces to $\approx 30\%$. Therefore, all other D-Wave experiments in this work use \texttt{auto\_scale=False}
@@ -416,6 +387,21 @@ We validate this matching procedure against an independent, exact ground-truth e
         The CEM matching step for $N=16$ spins with $h=1.0$. (a) Several candidate $\tanh(\beta\Theta)$ curves against the empirically observed hidden-unit samples. The curve at $\beta_\text{eff}=1.94$ approximates the data most closely and represents the best estimate of the sampler's temperature. (b) The squared loss function to be minimized.
     }
     \label{fig:cem_matching}
+\end{figure}
+
+
+\subsubsection{Simulated Annealing}
+Simulated annealing is a Metropolis-Hastings chain held at a fixed final temperature $\beta_x$; given enough sweeps it converges to the Boltzmann distribution at that temperature~\cite{Kirkpatrick_1983,Metropolis_1953}. \autoref{fig:dtv_beta_scale_N8} demonstrates this experimentally, showing $D_\mathrm{TV}$ converge toward its sampling floor as the number of cooling sweeps increases.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/dtv_beta_scale_dtv_N8}
+    \caption{%
+        Total variation distance $D_\mathrm{TV}$ between \gls{sa}'s empirical
+        histogram and the exact distribution $|\Psi(v)|^2$, for a trained \gls{tfim} \gls{rbm} with $N=8$ visible spins, at three cooling-sweep counts.
+        The horizontal dashed line marks the sampling floor; the vertical dotted line in each panel marks the $\beta_x$ that minimises $D_\mathrm{TV}$.
+    }
+    \label{fig:dtv_beta_scale_N8}
 \end{figure}
 
 \subsection{Improving D-Wave Topology performance}
@@ -566,7 +552,7 @@ Since sampler time conflates solver speed with hardware efficiency, \autoref{fig
 In this section, we are going to describe the conceptual and technological aspects of implementing variational algorithms in a hybrid quantum / classical setup. 
 \subsection{Stochastic gradient descent versus Stochastic reconfiguration}
 \label{sec:stochsticreconfig}
-Traditionally, neural networks are trained using gradient descent. We will not go into details about this well known approach, as it is extensively covered by literature. Gradients are computed efficiently using backpropagation which exploits the chain rule, reusing intermediate derivatives to evaluate the compositions of continuous functions. For most of this article, we use the \gls{sr} method introduced in \cite{Sorella_1998,Sorella_2001}. The main advantage of \gls{sr} over gradient descent is that it exploits more knowledge about the ansatz than gradient descent. In particular, gradient descent lives in the \textit{parameter space}, and does not take into account the influence of parameter changes on the actual wave function \textit{probability space} $|\Psi|^2$.
+Traditionally, neural networks are trained using gradient descent. We will not go into details about this well known approach, as it is extensively covered by literature. Gradients are computed efficiently using backpropagation which exploits the chain rule, reusing intermediate derivatives to evaluate the compositions of continuous functions. Carleo et al., in their article on using neural networks for solving many-body problems (\cite{Carleo_2017}) instead use a method known as Stochastic Reconfiguration, first described by Sorello et al. in \cite{Sorella_1998,Sorella_2001}. The main advantage of \gls{sr} over gradient descent is that it exploits more knowledge about the ansatz than gradient descent. In particular, gradient descent lives in the \textit{parameter space}, and does not take into account the influence of parameter changes on the actual wave function \textit{probability space} $|\Psi|^2$.
 
 \subsubsection{Stochastic reconfiguration}
 \gls{sr} is implemented as follows: given the logarithmic derivative for each parameter $k$, that is the gradient observable
@@ -624,25 +610,27 @@ with learning rate $\eta$.
 \end{algorithm}
 
 \subsubsection{Conjugate gradient}
-As $\mathbf{S} \in \mathbb{R}^{N_\text{params} \times N_\text{params}}$ grows quadratically with the number of parameters $N_\text{params} = N + M + NM$, with $N$ and $M$ the number of visible and hidden units respectively, solving the \gls{sr} system in \autoref{eq:srsystem} is intractable for large system sizes. We therefore apply a technique called \gls{cg}, which requires only matrix vector products $\mathbf{S} \cdot \mathbf{x}$
+As $\mathbf{S} \in \mathbb{R}^{N_\text{params} \times N_\text{params}}$ grows quadratically with the number of parameters $N_\text{params} = N + M + NM$, with $N$ and $M$ the number of visible and hidden units respectively, solving the \gls{sr} system in \autoref{eq:srsystem} is intractable for large system sizes. We therefore apply a technique called \gls{cg}, introduced by Hestenes et al. in \cite{Hestenes1952}, which requires only matrix vector products $\mathbf{S} \cdot \mathbf{x}$
 and converges for any symmetric positive-definite matrix. Computing the matrix--vector product then costs only $\mathcal{O}(N_s \cdot N_\text{params})$:
 \begin{equation}
     \mathbf{S} \cdot \mathbf{x} = \frac{1}{N_s}\bar{\mathbf{O}}^\top(\bar{\mathbf{O}}\,\mathbf{x}) + \lambda \mathbf{x}
 \end{equation}
 \subsection{Exact Solving}
 Determining the exact value of the ground state up to numerical precision is crucial for evaluating the performance of the trained models. For \gls{tfim}, exact solving is possible for arbitrary system sizes, whereas solving the $J_1$-$J_2$ Heisenberg model is computationally hard.
-\subsubsection{\texorpdfstring{\gls{tfim}}{TFIM} ground state solving in \texorpdfstring{$O(N)$}{O(N)}}
-The 1D \gls{tfim} defined in \autoref{eq:tfim} can be solved exactly in $O(N)$ time, for $J>0$, $h\geq0$, and periodic boundary conditions on the spin chain. This is the regime used throughout this work. Dziarmaga~\cite{Dziarmaga_2005} solves the identical Hamiltonian by mapping it to a system of free fermions via the Jordan--Wigner transformation, followed by a Fourier and Bogoliubov transformation. The periodic boundary conditions split the fermionic Hilbert space into two parity sectors, each restricted to its own set of allowed momenta; for $J>0$, $h\geq0$ the ground state always sits in the antiperiodic sector. Directly applying the quasiparticle dispersion of Eq.~(16) and the ground-state (vacuum) energy of Eq.~(18) in \cite{Dziarmaga_2005} gives the closed-form ground-state energy, with $g=h/J$ (see also \cite{He_2017} for the parity-sector momenta). We denote the dispersion $\omega(k)$ here rather than $\epsilon(k)$, to avoid colliding with the \gls{tte} target $\epsilon$ used elsewhere in this work:
+\subsubsection{TFIM ground state solving in \texorpdfstring{$O(N)$}{O(N)}}
+The 1D \gls{tfim} defined in \autoref{eq:tfim} can be solved exactly in $O(N)$ time, for $J>0$, $h\geq0$ with periodic boundary condition. We closely follow the method presented in \cite{Lieb1961}\cite{He_2017}, to exactly solve the model, by mapping the spins to fermions using the Jordan-Wigner transformation, and thereby splitting it into a periodic and an antiperiodic boundary-condition sector for the fermions. In accordance with \cite{He_2017}, we find that only the fermionic sector with antiperiodic boundary condition is relevant for analytically computing the ground state. Therefore, using the dispersion relation
+\begin{equation}
+\omega(k) = \sqrt{J^2+h^2-2Jh\cos(k)}
+\end{equation},
+the closed form for the ground state is given by
 \begin{equation}
 E_0 = -\sum_{m=0}^{N-1} \omega\!\left(\frac{\pi(2m+1)}{N}\right),
 \qquad
-\omega(k) = \sqrt{J^2+h^2-2Jh\cos(k)}.
-\end{equation}
+\end{equation}.
 We verified this closed-form result numerically against exact diagonalization (\texttt{netket}, using \texttt{scipy}'s sparse \texttt{eigsh}) for $N \in \{4,6,8,10\}$ and $h \in \{0.5, 1.0, 1.5\}$, finding agreement to machine precision ($<10^{-13}$).
 \subsubsection{Exact Diagonalization}
 In cases where mapping to a quadratic fermion Hamiltonian is not possible, e.g. for the frustrated $J_1$-$J_2$ Heisenberg chain, exact diagonalization is used for small system sizes $N$.
 Exact diagonalization works by enumerating all $2^N$ basis states of the Hilbert space, constructing the Hamiltonian as a $2^N \times 2^N$ matrix in that basis, and finding its lowest eigenvalue via the Lanczos algorithm. The Lanczos algorithm avoids diagonalizing the entire matrix and only returns the matrix's lowest eigenvalue. We use \texttt{scipy}'s \texttt{eigsh} implementation of this algorithm.
-The variational principle bounds the exact expectation value $\langle H\rangle_\Psi = \langle\Psi_{\boldsymbol\theta}|H|\Psi_{\boldsymbol\theta}\rangle / \langle\Psi_{\boldsymbol\theta}|\Psi_{\boldsymbol\theta}\rangle$ for a fixed parameter vector $\boldsymbol\theta$: it can never fall below the true ground-state energy.
 \subsection{JAX}
 (Quantum) variational algorithms do not only strain \textit{quantum} resources, but also push \textit{classical} computers to their limits. Notably, at each iteration, the stochastic reconfiguration process described in \autoref{sec:stochsticreconfig} adapts all parameters of the weights and biases. We use several techniques in this project to speed up this process. JAX, implementing the \textit{functional programming} paradigm, allows for the speed up of function calls and linear algebra calculation by offering features such as \gls{jit} compilation and XLA (accelerated linear algebra). We will describe the features of JAX in detail and give examples from our codebase.
 \subsubsection{Just-in-time compilation}
