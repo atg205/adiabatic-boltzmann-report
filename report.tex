@@ -110,7 +110,7 @@ Another previous work that we report on is integer factorisation on the D-Wave A
 \end{figure}
 
 To conclude, results returned by the quantum annealer are inherently noisy. This makes it difficult to sample the \textit{exact} ground state of the submitted Hamiltonian. In this work, we therefore assess the device's ability to act as a Gibbs sampler and sample from the Boltzmann distribution. It has been shown earlier that the D-Wave device can in fact be used as a Gibbs sampler\cite{Mehta_2025,Nelson_2022} and that these samples can be used to train small-scale neural networks to solve many-body problems\cite{Gardas_2018}. In this work we aim to extend the analysis to different many-body models, notably the J1-J2 Heisenberg model, and propose a rigorous comparison between different quantum and classical samplers for bigger system sizes. 
-\section{Methods}
+\section{Quantum Models}
 \subsection{Quantum Ising Models}
 The Ising model consists of discrete spins arranged on a lattice, interacting via nearest-neighbour couplings. In its quantum extension, the \gls{tfim}, a transverse magnetic field is added, introducing quantum fluctuations through non-commuting terms in the Hamiltonian~\cite{mpg}. The Hamiltonian for the one-dimensional \gls{tfim} is given by
 \begin{equation}
@@ -135,7 +135,23 @@ The frustrated $J_1$-$J_2$ Heisenberg chain extends the Heisenberg model with a 
 \end{equation}
 
 where $J_1$ and $J_2$ are the nearest- and next-nearest-neighbour coupling strengths. The competing interactions frustrate the system, preventing simultaneous minimisation of both exchange terms. Setting $J_2 = 0$ recovers the standard Heisenberg chain, while increasing $J_2/J_1$ drives the system into a more frustrated regime that poses a more stringent test for variational methods.
-
+\subsection{Exact Solving}
+Determining the exact value of the ground state up to numerical precision is crucial for evaluating the performance of the trained models. For \gls{tfim}, exact solving is possible for arbitrary system sizes, whereas solving the $J_1$-$J_2$ Heisenberg model is computationally hard.
+\subsubsection{TFIM ground state solving in \texorpdfstring{$O(N)$}{O(N)}}
+The 1D \gls{tfim} defined in \autoref{eq:tfim} can be solved exactly in $O(N)$ time, for $J>0$, $h\geq0$ with periodic boundary condition. We closely follow the method presented in \cite{Lieb1961}\cite{He_2017}, to exactly solve the model, by mapping the spins to fermions using the Jordan-Wigner transformation, and thereby splitting it into a periodic and an antiperiodic boundary-condition sector for the fermions. In accordance with \cite{He_2017}, we find that only the fermionic sector with antiperiodic boundary condition is relevant for analytically computing the ground state. Therefore, using the dispersion relation
+\begin{equation}
+\omega(k) = \sqrt{J^2+h^2-2Jh\cos(k)}
+\end{equation},
+the closed form for the ground state is given by
+\begin{equation}
+E_0 = -\sum_{m=0}^{N-1} \omega\!\left(\frac{\pi(2m+1)}{N}\right),
+\qquad
+\end{equation}.
+We verified this closed-form result numerically against exact diagonalization (\texttt{netket}, using \texttt{scipy}'s sparse \texttt{eigsh}) for $N \in \{4,6,8,10\}$ and $h \in \{0.5, 1.0, 1.5\}$, finding agreement to machine precision ($<10^{-13}$).
+\subsubsection{Exact Diagonalization}
+In cases where mapping to a quadratic fermion Hamiltonian is not possible, e.g. for the frustrated $J_1$-$J_2$ Heisenberg chain, exact diagonalization is used for small system sizes $N$.
+Exact diagonalization works by enumerating all $2^N$ basis states of the Hilbert space, constructing the Hamiltonian as a $2^N \times 2^N$ matrix in that basis, and finding its lowest eigenvalue via the Lanczos algorithm. The Lanczos algorithm avoids diagonalizing the entire matrix and only returns the matrix's lowest eigenvalue. We use \texttt{scipy}'s \texttt{eigsh} implementation of this algorithm.
+\section{Classical and quantum samplers}
 \subsection{Adiabatic Quantum Computing}
 \label{sec:solvers:quantum:adiab}
  Adiabatic Quantum Computing is based on the adiabatic theorem, which states: \textit{A physical system remains in its instantaneous eigenstate if a given perturbation is acting on it slowly enough and if there is a gap between the eigenvalue and the rest of the Hamiltonian's spectrum.}
@@ -159,7 +175,7 @@ H(s) = A(s)H_D + B(s)H_P
 \end{equation}
 where $s \in [0,1]$ is the normalized time. $A(s)$ decreases the driving terms in $H_D$ as $s$ increases,
 and $B(s)$ activates the terms of the problem Hamiltonian $H_P$. At the end of the evolution, if the process happens slow enough, and assuming a noiseless environment, the system will be in the ground state of the problem Hamiltonian according to the adiabatic theorem.
-It is important to note that the qubits in the D-Wave Quantum Annealer are not \textit{all-to-all} connected. The qubits are arranged in an architecture dependent grid. In the Pegasus topology, one qubit couples on average to 15 other qubits, while Zephyr qubits couple on average to 20 other qubits. Therefore, most problems require an additional embedding step, in which multiple physical qubits are \textit{chained} together to form one logical qubit. For a toy-problem example of embedding a triangle shaped connectivity pattern on a QPU, see \autoref{fig:embedding-toy-result}.
+It is important to note that the qubits in the D-Wave Quantum Annealer are not \textit{all-to-all} connected. The qubits are arranged in an architecture dependent grid. In the Pegasus topology, one qubit couples on average to 15 other qubits, while Zephyr qubits couple on average to 20 other qubits. Therefore, most problems require an additional embedding step, in which multiple physical qubits are \textit{chained} together to form one logical qubit. For a toy-problem example of embedding a triangle shaped connectivity pattern on a QPU, see \autoref{fig:embedding-toy-result}. As all problems examined in this work can be represented as bipartite graphs, we use \texttt{minorminor.busclique}, which is part of D-Wave's Ocean SDK.
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}[]{0.30\linewidth}
@@ -211,21 +227,44 @@ The Metropolis-Hastings Algorithm is a \gls{mcmc} method used to obtain samples 
 A(x_n\rightarrow x^*) =\min\left(1, \frac{f(x^*)}{f(x_n)}\times\frac{q(x_n|x^*)}{q(x^*|x_n)}\right).
 \end{equation}
 For the evaluation of $\frac{f(x^*)}{f(x_n)}$, knowledge of the normalization constant is not necessary. The candidate $x^*$ is accepted with probability $A(x_n\rightarrow x^*)$.
-\subsubsection{Simulated Annealing and Gibbs sampling}
-\Gls{sa}~\cite{Kirkpatrick_1983} is the classical analogue and predecessor of quantum annealing. It works by exploring the neighborhood of a given configuration, accepting the proposed solution with a temperature dependent probability, or if the new configuration has a lower energy than the current one.
-Gibbs sampling~\cite{Geman_1984} can be considered a special case of the Metropolis-Hastings algorithm. It is used when sampling directly from a joint distribution is difficult, but sampling from the full conditional distributions is tractable. The algorithm constructs a Markov chain by iteratively sampling each variable (or block of variables) from its distribution conditioned on the current values of all other variables. This procedure generates a chain whose stationary distribution is the target joint distribution.
+\subsubsection{Simulated Annealing}
+\Gls{sa}~\cite{Kirkpatrick_1983} is the classical analogue and predecessor of quantum annealing. It works by exploring the neighborhood of a given configuration, accepting the proposed solution with a temperature dependent probability, or if the new configuration has a lower energy than the current one. In this work, we use a geometrical temperature schedule\cite{YANG201467} instead of a linear one. The schedule is given by the formula
+\begin{equation}
+T_k = T_{\text{initial}}\left(\frac{T_{\text{final}}}{T_{\text{initial}}}\right)^{k/(n_{\text{steps}}-1)},\qquad k = 0, 1, \dots, n_{\text{steps}}-1,
+\end{equation}
+where $T_{\text{initial}}$ and $T_{\text{final}}$ are the starting and target temperatures and $n_{\text{steps}}$ is the total number of annealing steps.
+
+\subsection{Gibbs Sampling}
+\label{sec:gibbs}
+Gibbs sampling~\cite{Geman_1984} is used when sampling directly from a joint distribution is difficult, but sampling from the full conditional distributions is tractable. The algorithm constructs a Markov chain by iteratively sampling each variable (or block of variables) from its distribution conditioned on the current values of all other variables. This procedure generates a chain whose stationary distribution is the target joint distribution. In this work we use an adapted version of this procedure, \textit{blocked} Gibbs sampling, which allows to sample from all the hidden (visible) variables together. We closely follow the method description given in D'Angelo et al.\cite{PhysRevResearch.2.023266}. As we are using a \gls{rbm} which by definition is bipartite without any intra-layer connections, there is  mutual independence between the hidden (visible) variables if the visible (hidden) variables are held fixed. The blocked Gibbs sampling can then be described by the following equations:
+
+\begin{equation}
+  p(h_j = +1 \mid \mathbf{v}) = \sigma\!\left(2\left(b_j + \sum_{i} W_{ij}
+  v_i\right)\right), \qquad
+  p(v_i = +1 \mid \mathbf{h}) = \sigma\!\left(2\left(\sum_{j} W_{ij} h_j -
+  a_i\right)\right),
+\end{equation}
+with $\sigma(x) = 1/(1+e^{-x})$, $\mathbf{a}$ the visible bias, $\mathbf{b}$ the hidden bias, and $W$ the weight matrix. Since $h_j, v_i \in \{-1,+1\}$, each unit is sampled by drawing $u \sim \mathcal{U}(0,1)$ and setting the unit to $+1$ if $u < p(\cdot=+1\mid\cdot)$, else $-1$.                                          
+One full block-Gibbs sweep is                                                                      
+\begin{equation}
+  \mathbf{h} \sim p(\mathbf{h}\mid\mathbf{v}), \qquad \mathbf{v}' \sim
+  p(\mathbf{v}\mid\mathbf{h}),
+\end{equation}                                                                                                                                         
+with all components of $\mathbf{h}$ (resp. $\mathbf{v}'$) drawn simultaneously. Before sampling for the first time, we initialize the sampler by performing a so-called \textit{warm-up}, that is, performing 200 full block-Gibbs sweeps to allow the chain to converge to its stationary distribution (in the optimal case). Under the \textit{persistent chain} assumption from \cite{PhysRevResearch.2.023266}, no warm-up is performed for subsequent sampling calls. The PCD assumption states that the chain stays near-equilibrium for small parameter changes.
 \section{Variational Algorithms}
 Variational algorithms are a class of hybrid quantum-classical optimization methods designed to find the ground state of a given Hamiltonian. Unlike the \acrfull{vqe}, which prepares and measures a parametrised circuit on a gate-based quantum computer, this work uses quantum-assisted Variational Monte Carlo: a classical neural-network ansatz~\cite{Carleo_2017} is optimised via Stochastic Reconfiguration, and a quantum device is used only to generate samples of that ansatz. Variational Monte Carlo consists of three parts: the \textit{cost function} to be minimized, the \textit{ansatz}, which in our case is a Boltzmann machine, and an \textit{expectation value estimation}. Additionally, a classical optimizer is needed to improve the ansatz at each iteration. Depending on how the ansatz is realised on quantum hardware, two approaches for estimating the expectation value are possible:
 \begin{itemize}
 	\item On gate-based quantum computers, measuring can be used to gather expectation values of the modified ansatz and improve it further
 	\item In adiabatic quantum computing, the quantum device is used to generate representative samples of the modified ansatz. These samples are then used to approximate the expectation value. 
 \end{itemize}
-As we are interested in comparing current quantum annealing devices with their classical counterparts, we focus solely on the second case. The goal is to approximate the ground state, that is, the eigenstate corresponding to the lowest eigenvalue of a Hamiltonian $H$. 
-In the adiabatic case, the ansatz is defined via an energy function over visible and hidden units,
+As we are interested in comparing current quantum annealing devices with their classical counterparts, we focus solely on the second case. 
+\subsection{Restricted Boltzmann Machine}
+Different constructions for the ansatz are possible, here we focus on a \gls{rbm} which has been shown to successfully approach the ground state in previous  works\cite{PhysRevResearch.2.023266,Carleo_2017,Gardas_2018}. A \gls{rbm} is an artificial neural network consisting of visible and hidden units that form a bipartite graph, without intra-layer connections. It has been shown to be a universal approximator, meaning that it can represent any desired probability distribution to arbitrary accuracy\cite{10.1162/neco.2008.04-07-510}, give a sufficient number of hidden units. The main idea is that expectation values with respect to the quantum state can be estimated using samples drawn from the probability distribution $|\Psi(\mathbf{v})|^2$. Since the wavefunction ansatz is represented by a Restricted Boltzmann Machine, which corresponds to a classical stochastic Ising model, configurations $\mathbf{v}$ can be sampled approximately using a D-Wave quantum annealer.
+Commonly for \glspl{rbm}, the ansatz is defined via an energy function over visible and hidden units,
 \begin{equation}
 E_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})=\mathbf{a}\cdot \mathbf{v} -\mathbf{b}\cdot \mathbf{h} - \mathbf{h}\cdot \mathbf{W}^\top \cdot \mathbf{v},
 \end{equation}
-with weights $\boldsymbol\theta=\{\mathbf{a}, \mathbf{b}, \mathbf{W}\}$ respectively applied to the vector of visible units $\mathbf{v}=(v_1, \ldots, v_N)\in\{-1,+1\}^N$ and hidden units $\mathbf{h}=(h_1, \ldots, h_M)\in\{-1,+1\}^M$. Both are Ising-valued rather than the more common $\{0,1\}$ Bernoulli convention; this is what gives \autoref{eq:ansatz}'s $2\cosh(\cdot)$ factor and the conditional expectation $\langle h_j\rangle=\tanh(\beta\Theta_j)$ used in \autoref{sec:exper:temp} their specific form. Throughout, $\mathbf{W}\in\mathbb{R}^{N\times M}$ is indexed visible-by-hidden, $W_{ij}$ with $i$ the visible and $j$ the hidden index, matching its representation in the implementation. The joint quantum state is
+with weights $\boldsymbol\theta=\{\mathbf{a}, \mathbf{b}, \mathbf{W}\}$ respectively applied to the vector of visible units $\mathbf{v}=(v_1, \ldots, v_N)\in\{-1,+1\}^N$ and hidden units $\mathbf{h}=(h_1, \ldots, h_M)\in\{-1,+1\}^M$. Throughout, $\mathbf{W}\in\mathbb{R}^{N\times M}$ is indexed visible-by-hidden, $W_{ij}$ with $i$ the visible and $j$ the hidden index, matching its representation in the implementation. The joint quantum state is
 \begin{equation}
 \label{eq:rawansatz}
 \ket\Psi =\sum_{\mathbf{v}}\Psi(\mathbf{v})\ket{\mathbf{v}}, \qquad \Psi(\mathbf{v})=\sqrt{\sum_{\mathbf{h}} e^{-E_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})}},
@@ -235,17 +274,35 @@ so that $|\Psi(\mathbf{v})|^2=\sum_{\mathbf{h}} e^{-E_{\boldsymbol\theta}(\mathb
 \rho(\mathbf{v})=\frac{|\Psi(\mathbf{v})|^2}{\sum_{\mathbf{v}'}|\Psi(\mathbf{v}')|^2},
 \end{equation}
 which is however intractable to normalize for large Hilbert spaces.
-Tracing out the hidden variables in \autoref{eq:rawansatz}, the ansatz becomes:
+Tracing out the hidden variables in \autoref{eq:rawansatz}, the ansatz becomes\cite{Carleo_2017}:
 \begin{equation}
 \label{eq:ansatz}
 \Psi(\mathbf{v}) = e^{-\mathbf{a} \cdot \mathbf{v}/2} \prod_{j=1}^{N_h} \left[ 2\cosh\!\left(b_j + \sum_i W_{ij} v_i\right) \right]^{1/2}.
 \end{equation}
-Two sampling regimes are used in this work. Classical Metropolis-Hastings sampling operates directly on the closed-form marginal $\Psi(\mathbf{v})$ of \autoref{eq:ansatz}: only the visible units are instantiated, and $\mathbf{h}$ never appears as an explicit random variable. Gibbs sampling on the D-Wave annealer instead targets the joint distribution $p_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})$: both $\mathbf{v}$ and $\mathbf{h}$ are encoded as physical qubits (\autoref{fig:rbm-embedding}), the annealer returns samples of the pair $(\mathbf{v},\mathbf{h})$, and $\mathbf{h}$ is subsequently discarded (marginalized) to obtain samples of $\mathbf{v}$ distributed as $\rho(\mathbf{v})$.
-\subsection{Boltzmann machine}
-A \gls{rbm} is an artificial neural network consisting of visible and hidden units that form a bipartite graph, without intra-layer connections. It has been shown to be a universal approximator, meaning that it can represent any desired probability distribution to arbitrary accuracy\cite{10.1162/neco.2008.04-07-510}, give a sufficient number of hidden units. 
-
-The main idea is that expectation values with respect to the quantum state can be estimated using samples drawn from the probability distribution $|\Psi(\mathbf{v})|^2$. Since the wavefunction ansatz is represented by a Restricted Boltzmann Machine, which corresponds to a classical stochastic Ising model, configurations $\mathbf{v}$ can be sampled approximately using a D-Wave quantum annealer.
-
+Two sampling regimes are used in this work. Classical Metropolis-Hastings samples directly from the closed-form marginal $\Psi(\mathbf{v})$ of \autoref{eq:ansatz}: only the visible units are instantiated, and $\mathbf{h}$ never appears as an explicit random variable. Gibbs sampling on the D-Wave annealer instead targets the joint distribution $p_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})$: both $\mathbf{v}$ and $\mathbf{h}$ are encoded as physical qubits (\autoref{fig:rbm-embedding}), the annealer returns samples of the pair $(\mathbf{v},\mathbf{h})$. $\mathbf{h}$ is subsequently marginalized to obtain samples of $\mathbf{v}$ distributed as $\rho(\mathbf{v})$.
+\subsection{Training a RBM}
+The \gls{rbm} training loop can be summarized in four steps:
+\begin{enumerate}
+\item Sampling a configuration of visible variables $\mathbf{v}$ using classical / QPU samplers (see previous section)
+\item Calculating the \textbf{local energies}: The local energy is given by
+\begin{equation}
+E_\text{loc}(\mathbf v)=\frac{\langle \mathbf v|H|\Psi\rangle}{\Psi(\mathbf v)}
+\end{equation}
+(see \autoref{eq:localenergy} for the expanded form used during training). For the \gls{tfim} \eqref{eq:tfim}, evaluating this only requires the ansatz \eqref{eq:ansatz} at the current configuration and at each single-spin-flipped configuration $\bar{\mathbf v}_i$ (i.e.\ $\mathbf v$ with $v_i \to -v_i$)\cite{Gardas_2018,Carleo_2017}:
+\begin{equation}
+E_\text{loc}(\mathbf v) = -J\sum_{\langle i,j\rangle} v_i v_j - h\sum_i \frac{\Psi(\bar{\mathbf v}_i)}{\Psi(\mathbf v)}.
+\end{equation}
+\item Calculating the \textbf{log-derivatives}: Since the ansatz \eqref{eq:ansatz} already has the hidden units traced out, the gradient observable $O_k$ needed for \gls{sr} (\autoref{sec:stochsticreconfig}) can likewise be evaluated from the visible units alone. Writing $\theta_j = b_j + \sum_i W_{ij} v_i$,
+\begin{equation}
+\frac{\partial \log \Psi(\mathbf v)}{\partial \theta_k} = \frac{1}{2}
+\begin{cases}
+-v_i, & \theta_k = a_i\\
+\tanh(\theta_j), & \theta_k = b_j\\
+v_i \tanh(\theta_j), & \theta_k = W_{ij}.
+\end{cases}
+\end{equation}
+\item Updating the \textbf{parameters} $\boldsymbol\theta=\{\mathbf a,\mathbf b,\mathbf W\}$ via \gls{sr}, as detailed in \autoref{sec:stochsticreconfig}.
+\end{enumerate}
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}{0.6\linewidth}
@@ -264,6 +321,72 @@ The main idea is that expectation values with respect to the quantum state can b
     \caption{(a) RBM with $12$ visible and $12$ hidden units. (b) Embedding of the corresponding bipartite graph onto the Zephyr hardware topology. Blue nodes are visible units, red nodes are hidden units, orange nodes are auxiliary chain qubits. Each physical node is connected to one auxiliary qubit.}
     \label{fig:rbm-embedding}
 \end{figure}
+\subsection{Stochastic gradient descent versus Stochastic reconfiguration}
+\label{sec:stochsticreconfig}
+Traditionally, neural networks are trained using gradient descent. We will not go into details about this well known approach, as it is extensively covered by literature. Gradients are computed efficiently using backpropagation which exploits the chain rule, reusing intermediate derivatives to evaluate the compositions of continuous functions. Carleo et al., in their article on using neural networks for solving many-body problems (\cite{Carleo_2017}) instead use a method known as Stochastic Reconfiguration, first described by Sorello et al. in \cite{Sorella_1998,Sorella_2001}. The main advantage of \gls{sr} over gradient descent is that it exploits more knowledge about the ansatz than gradient descent. In particular, gradient descent lives in the \textit{parameter space}, and does not take into account the influence of parameter changes on the actual wave function \textit{probability space} $|\Psi|^2$.
+
+\subsubsection{Stochastic reconfiguration}
+\gls{sr} is implemented as follows: given the logarithmic derivative for each parameter $k$, that is the gradient observable
+\begin{equation}
+    O_k(\mathbf{v}) = \frac{\partial \log \Psi(\mathbf{v})}{\partial \theta_k},
+\end{equation}
+with $\boldsymbol{\theta} = \{\mathbf{a}, \mathbf{b}, \mathbf{W}\}$, the energy gradient or force vector is defined as
+\begin{equation}
+    F_k = \langle O_k E_\text{loc} \rangle - \langle O_k \rangle \langle E_\text{loc} \rangle,
+\end{equation}
+which is the covariance of the gradient observable and the local energy. The local energy $E_\text{loc}(\mathbf{v})$ estimates the variational energy $\langle H \rangle$ of the current \gls{rbm} ansatz using samples drawn from $|\Psi(\mathbf{v})|^2$\cite{Carleo_2017}:
+\begin{equation}
+\label{eq:localenergy}
+  E_\text{loc}(\mathbf{v}) = \frac{\langle \mathbf{v} | H | \Psi \rangle}{\langle
+  \mathbf{v} | \Psi \rangle} = \sum_{\mathbf{v}'} H_{\mathbf{v}\mathbf{v}'}
+  \frac{\Psi(\mathbf{v}')}{\Psi(\mathbf{v})}
+\end{equation}
+
+
+
+The next step then is to define the quantum geometric tensor $\mathbf{S}$, the regularised sample covariance of the $O_k$ vectors, which measures how sensitive the Born distribution $|\Psi|^2$ is to each parameter direction. In matrix form, if $\bar{\mathbf{O}}$ is the matrix of mean-centred gradients, then $\mathbf{S} = \frac{1}{N_s}\bar{\mathbf{O}}^\top \bar{\mathbf{O}} + \lambda I$, with a small regularisation $\lambda$ added for numerical stability. After solving the \gls{sr} system
+\begin{equation}
+\label{eq:srsystem}
+\mathbf{S} \cdot \delta\boldsymbol{\theta} = \mathbf{F}
+\end{equation}
+for $\delta\boldsymbol{\theta}$, the parameters are updated by
+\begin{equation}
+    \boldsymbol{\theta} \leftarrow \boldsymbol{\theta} - \eta\,\delta\boldsymbol{\theta},
+\end{equation}
+with learning rate $\eta$.
+\begin{algorithm}
+\caption{Stochastic Reconfiguration}
+\begin{algorithmic}[1]
+\Require Parameters $\boldsymbol{\theta} = \{\mathbf{a}, \mathbf{b}, \mathbf{W}\}$,
+         learning rate $\eta$, regularisation $\lambda$
+\For{$t = 1, 2, \ldots$}
+    \State Sample $\mathbf{v}^{(s)} \sim |\Psi_{\boldsymbol{\theta}}|^2$
+           for $s = 1, \ldots, N_s$ \Comment{MCMC}
+    \State $E_\text{loc}(\mathbf{v}^{(s)}) \leftarrow
+           \sum_{\mathbf{v}'} H_{\mathbf{v}\mathbf{v}'}
+           \,\Psi(\mathbf{v}')/\Psi(\mathbf{v})$ \quad for each $s$
+    \State $O_k(\mathbf{v}^{(s)}) \leftarrow
+           \partial \log \Psi(\mathbf{v}^{(s)}) / \partial \theta_k$
+           \quad for each $s, k$
+    \State $F_k \leftarrow
+           \langle O_k E_\text{loc} \rangle -
+           \langle O_k \rangle \langle E_\text{loc} \rangle$
+    \State $\mathbf{S} \leftarrow \tfrac{1}{N_s}\bar{\mathbf{O}}^\top \bar{\mathbf{O}} + \lambda I$
+    \State Solve $\mathbf{S}\,\delta\boldsymbol{\theta} = \mathbf{F}$
+           \Comment{conjugate gradient, matrix-free}
+    \State $\boldsymbol{\theta} \leftarrow \boldsymbol{\theta} -
+           \eta\,\delta\boldsymbol{\theta}$
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Conjugate gradient}
+As $\mathbf{S} \in \mathbb{R}^{N_\text{params} \times N_\text{params}}$ grows quadratically with the number of parameters $N_\text{params} = N + M + NM$, with $N$ and $M$ the number of visible and hidden units respectively, solving the \gls{sr} system in \autoref{eq:srsystem} is intractable for large system sizes. We therefore apply a technique called \gls{cg}, introduced by Hestenes et al. in \cite{Hestenes1952}, which requires only matrix vector products $\mathbf{S} \cdot \mathbf{x}$
+and converges for any symmetric positive-definite matrix. Computing the matrix--vector product then costs only $\mathcal{O}(N_s \cdot N_\text{params})$:
+\begin{equation}
+    \mathbf{S} \cdot \mathbf{x} = \frac{1}{N_s}\bar{\mathbf{O}}^\top(\bar{\mathbf{O}}\,\mathbf{x}) + \lambda \mathbf{x}
+\end{equation}
+Both this matrix-free \gls{cg} solve and the local-energy/gradient evaluations above are implemented in JAX for GPU acceleration; see \autoref{sec:jax} for implementation details.
 \section{Experimental Analysis}
 We conduct experiments analyzing sampler quality and physical properties of samplers and models.
 \subsection{Sampling Quality}
@@ -548,90 +671,14 @@ Since sampler time conflates solver speed with hardware efficiency, \autoref{fig
     \label{fig:tte_self_convergence}
 \end{figure}
 
-\section{Implementation}
-In this section, we are going to describe the conceptual and technological aspects of implementing variational algorithms in a hybrid quantum / classical setup. 
-\subsection{Stochastic gradient descent versus Stochastic reconfiguration}
-\label{sec:stochsticreconfig}
-Traditionally, neural networks are trained using gradient descent. We will not go into details about this well known approach, as it is extensively covered by literature. Gradients are computed efficiently using backpropagation which exploits the chain rule, reusing intermediate derivatives to evaluate the compositions of continuous functions. Carleo et al., in their article on using neural networks for solving many-body problems (\cite{Carleo_2017}) instead use a method known as Stochastic Reconfiguration, first described by Sorello et al. in \cite{Sorella_1998,Sorella_2001}. The main advantage of \gls{sr} over gradient descent is that it exploits more knowledge about the ansatz than gradient descent. In particular, gradient descent lives in the \textit{parameter space}, and does not take into account the influence of parameter changes on the actual wave function \textit{probability space} $|\Psi|^2$.
+\section{Conclusion}
+We assessed classical, quantum-annealing, and physics-inspired samplers within one framework, across the transverse-field Ising and Heisenberg models, using both time-to-solution and energy consumption. FPGA is the fastest and most energy-efficient of the metered classical solvers; QPU energy was not measured, so no classical-versus-quantum energy comparison is claimed. On time-to-solution, Pegasus(+\gls{cem}) becomes statistically indistinguishable from FPGA by $N=64$; only Zephyr(+\gls{cem}) shows a weak favorable trend, not robust enough across the criterion's parameters to claim general quantum competitiveness. Native sparse embedding onto the annealer's hardware graph costs more accuracy than it saves in overhead; parallel embedding of multiple problem copies is a promising direction, but the seed count collected here is too small to support a quantitative speedup claim. The variational ansatz cannot represent ground states with sign structure; the Marshall sign rule restores good accuracy for weakly frustrated Heisenberg chains, but accuracy degrades beyond moderate frustration. Overall, physics-inspired classical hardware remains the strongest sampler at current scale; the QPU's scaling behavior is mixed across encodings and not strong enough, on its own, to support a general claim of future competitiveness.
 
-\subsubsection{Stochastic reconfiguration}
-\gls{sr} is implemented as follows: given the logarithmic derivative for each parameter $k$, that is the gradient observable
-\begin{equation}
-    O_k(\mathbf{v}) = \frac{\partial \log \Psi(\mathbf{v})}{\partial \theta_k},
-\end{equation}
-with $\boldsymbol{\theta} = \{\mathbf{a}, \mathbf{b}, \mathbf{W}\}$, the energy gradient or force vector is defined as
-\begin{equation}
-    F_k = \langle O_k E_\text{loc} \rangle - \langle O_k \rangle \langle E_\text{loc} \rangle,
-\end{equation}
-which is the covariance of the gradient observable and the local energy. The local energy $E_\text{loc}(\mathbf{v})$ estimates the variational energy $\langle H \rangle$ of the current \gls{rbm} ansatz using samples drawn from $|\Psi(\mathbf{v})|^2$ :
-\begin{equation}
-\label{eq:localenergy}  
-  E_\text{loc}(\mathbf{v}) = \frac{\langle \mathbf{v} | H | \Psi \rangle}{\langle
-  \mathbf{v} | \Psi \rangle} = \sum_{\mathbf{v}'} H_{\mathbf{v}\mathbf{v}'}
-  \frac{\Psi(\mathbf{v}')}{\Psi(\mathbf{v})}
-\end{equation}
-
-
-
-The next step then is to define the quantum geometric tensor $\mathbf{S}$, the regularised sample covariance of the $O_k$ vectors, which measures how sensitive the Born distribution $|\Psi|^2$ is to each parameter direction. In matrix form, if $\bar{\mathbf{O}}$ is the matrix of mean-centred gradients, then $\mathbf{S} = \frac{1}{N_s}\bar{\mathbf{O}}^\top \bar{\mathbf{O}} + \lambda I$, with a small regularisation $\lambda$ added for numerical stability. After solving the \gls{sr} system
-\begin{equation}
-\label{eq:srsystem}
-\mathbf{S} \cdot \delta\boldsymbol{\theta} = \mathbf{F}
-\end{equation}
-for $\delta\boldsymbol{\theta}$, the parameters are updated by
-\begin{equation}
-    \boldsymbol{\theta} \leftarrow \boldsymbol{\theta} - \eta\,\delta\boldsymbol{\theta},
-\end{equation}
-with learning rate $\eta$.
-\begin{algorithm}
-\caption{Stochastic Reconfiguration}
-\begin{algorithmic}[1]
-\Require Parameters $\boldsymbol{\theta} = \{\mathbf{a}, \mathbf{b}, \mathbf{W}\}$,
-         learning rate $\eta$, regularisation $\lambda$
-\For{$t = 1, 2, \ldots$}
-    \State Sample $\mathbf{v}^{(s)} \sim |\Psi_{\boldsymbol{\theta}}|^2$
-           for $s = 1, \ldots, N_s$ \Comment{MCMC}
-    \State $E_\text{loc}(\mathbf{v}^{(s)}) \leftarrow
-           \sum_{\mathbf{v}'} H_{\mathbf{v}\mathbf{v}'}
-           \,\Psi(\mathbf{v}')/\Psi(\mathbf{v})$ \quad for each $s$
-    \State $O_k(\mathbf{v}^{(s)}) \leftarrow
-           \partial \log \Psi(\mathbf{v}^{(s)}) / \partial \theta_k$
-           \quad for each $s, k$
-    \State $F_k \leftarrow
-           \langle O_k E_\text{loc} \rangle -
-           \langle O_k \rangle \langle E_\text{loc} \rangle$
-    \State $\mathbf{S} \leftarrow \tfrac{1}{N_s}\bar{\mathbf{O}}^\top \bar{\mathbf{O}} + \lambda I$
-    \State Solve $\mathbf{S}\,\delta\boldsymbol{\theta} = \mathbf{F}$
-           \Comment{conjugate gradient, matrix-free}
-    \State $\boldsymbol{\theta} \leftarrow \boldsymbol{\theta} -
-           \eta\,\delta\boldsymbol{\theta}$
-\EndFor
-\end{algorithmic}
-\end{algorithm}
-
-\subsubsection{Conjugate gradient}
-As $\mathbf{S} \in \mathbb{R}^{N_\text{params} \times N_\text{params}}$ grows quadratically with the number of parameters $N_\text{params} = N + M + NM$, with $N$ and $M$ the number of visible and hidden units respectively, solving the \gls{sr} system in \autoref{eq:srsystem} is intractable for large system sizes. We therefore apply a technique called \gls{cg}, introduced by Hestenes et al. in \cite{Hestenes1952}, which requires only matrix vector products $\mathbf{S} \cdot \mathbf{x}$
-and converges for any symmetric positive-definite matrix. Computing the matrix--vector product then costs only $\mathcal{O}(N_s \cdot N_\text{params})$:
-\begin{equation}
-    \mathbf{S} \cdot \mathbf{x} = \frac{1}{N_s}\bar{\mathbf{O}}^\top(\bar{\mathbf{O}}\,\mathbf{x}) + \lambda \mathbf{x}
-\end{equation}
-\subsection{Exact Solving}
-Determining the exact value of the ground state up to numerical precision is crucial for evaluating the performance of the trained models. For \gls{tfim}, exact solving is possible for arbitrary system sizes, whereas solving the $J_1$-$J_2$ Heisenberg model is computationally hard.
-\subsubsection{TFIM ground state solving in \texorpdfstring{$O(N)$}{O(N)}}
-The 1D \gls{tfim} defined in \autoref{eq:tfim} can be solved exactly in $O(N)$ time, for $J>0$, $h\geq0$ with periodic boundary condition. We closely follow the method presented in \cite{Lieb1961}\cite{He_2017}, to exactly solve the model, by mapping the spins to fermions using the Jordan-Wigner transformation, and thereby splitting it into a periodic and an antiperiodic boundary-condition sector for the fermions. In accordance with \cite{He_2017}, we find that only the fermionic sector with antiperiodic boundary condition is relevant for analytically computing the ground state. Therefore, using the dispersion relation
-\begin{equation}
-\omega(k) = \sqrt{J^2+h^2-2Jh\cos(k)}
-\end{equation},
-the closed form for the ground state is given by
-\begin{equation}
-E_0 = -\sum_{m=0}^{N-1} \omega\!\left(\frac{\pi(2m+1)}{N}\right),
-\qquad
-\end{equation}.
-We verified this closed-form result numerically against exact diagonalization (\texttt{netket}, using \texttt{scipy}'s sparse \texttt{eigsh}) for $N \in \{4,6,8,10\}$ and $h \in \{0.5, 1.0, 1.5\}$, finding agreement to machine precision ($<10^{-13}$).
-\subsubsection{Exact Diagonalization}
-In cases where mapping to a quadratic fermion Hamiltonian is not possible, e.g. for the frustrated $J_1$-$J_2$ Heisenberg chain, exact diagonalization is used for small system sizes $N$.
-Exact diagonalization works by enumerating all $2^N$ basis states of the Hilbert space, constructing the Hamiltonian as a $2^N \times 2^N$ matrix in that basis, and finding its lowest eigenvalue via the Lanczos algorithm. The Lanczos algorithm avoids diagonalizing the entire matrix and only returns the matrix's lowest eigenvalue. We use \texttt{scipy}'s \texttt{eigsh} implementation of this algorithm.
+% -------------------- Appendix -------------------- *
+\clearpage
+\section{Appendix}
 \subsection{JAX}
+\label{sec:jax}
 (Quantum) variational algorithms do not only strain \textit{quantum} resources, but also push \textit{classical} computers to their limits. Notably, at each iteration, the stochastic reconfiguration process described in \autoref{sec:stochsticreconfig} adapts all parameters of the weights and biases. We use several techniques in this project to speed up this process. JAX, implementing the \textit{functional programming} paradigm, allows for the speed up of function calls and linear algebra calculation by offering features such as \gls{jit} compilation and XLA (accelerated linear algebra). We will describe the features of JAX in detail and give examples from our codebase.
 \subsubsection{Just-in-time compilation}
 JAX transformations require functions to be \textit{functionally pure}. To summarize, a function is considered functionally pure, if its output depends only on the function's input parameters, and all output is passed through the return variable. As an example, a function that involves \texttt{print()} statements or writes to global variables is not considered to be functionally pure, as its output does not exclusively pass through the \texttt{return} statement. JAX does not guarantee the proper behavior of impure functions. During \gls{jit} compilation, the function is transformed to primitives, which in JAX are defined to be "fundamental units of computation"\cite{jaxGlossaryTerms}. As an example, the following function header is used to calculate the local energy (\autoref{eq:localenergy}):
@@ -648,7 +695,7 @@ JAX transformations require functions to be \textit{functionally pure}. To summa
   ) -> jax.Array:    # (ns,)   local energies
       ...
   \end{lstlisting}
-$h$ and $N$ are passed as static parameters, meaning that they will be hard-coded in the compiled function after \gls{jit}. JAX compiles a kernel for each combination of static variables; as $h$ and $N$ never change during a training run, this means that the function is only compiled once. 
+$h$ and $N$ are passed as static parameters, meaning that they will be hard-coded in the compiled function after \gls{jit}. JAX compiles a kernel for each combination of static variables; as $h$ and $N$ never change during a training run, this means that the function is only compiled once.
 
 \subsubsection{Vectorized Map}
 
@@ -670,10 +717,10 @@ JAX also offers automatic differentiation, but we do not use it, since gradients
 
 \subsection{Hardware and Software Configuration}
 \label{sec:hw_config}
-All non-QPU methods -- RBM training itself and the classical Metropolis, Gibbs, and \gls{sa} samplers -- run locally via JAX on a single NVIDIA TITAN RTX GPU (24\,GB, driver 560.35.03, CUDA 12.6); only the D-Wave Pegasus/Zephyr QPU calls and the separate FPGA backend run on external hardware. D-Wave experiments use the \texttt{Advantage\_system6} (Pegasus) and \texttt{Advantage2\_system1} (Zephyr) solvers; no per-run solver calibration version or timestamp is recorded in the archived result files, so exact calibration cannot be pinned, but the underlying data was collected between 2026-05-11 and 2026-08-10 (per commit history), a window over which D-Wave periodically recalibrates a given solver family. Forward-anneal runs use a $20\,\mu\mathrm{s}$ anneal time and \texttt{num\_reads} equal to the requested sample count, with \texttt{auto\_scale} disabled (see \autoref{sec:autoscale} for why this matters for $\beta_x$) and D-Wave's default chain strength unless stated otherwise; embeddings are cached per \texttt{(n\_visible, solver)} using \texttt{minorminer}'s biclique embedder. Classical simulated-annealing baselines run on this same JAX/GPU path (internal parameters in \autoref{tab:classical_sampler_params}); a separate \texttt{dwave-neal}-based \gls{sa} implementation also exists in the codebase but is not used for any result in this paper. Classical Metropolis-Hastings sampling uses a 200-sweep burn-in followed by 1 sampling sweep per \gls{sr} iteration (a sweep being $N$ single-spin-flip proposals). FPGA runs use \texttt{Float32} precision, a $120\,\mathrm{MHz}$ core clock, and 1024 parallel replicas; its reported time is an on-device cycle count divided by this clock frequency, computed by the external FPGA firmware driver rather than measured by this codebase. All stochastic components are seeded per run directly and deterministically from the stated per-run integer seed: \texttt{jax.random.PRNGKey(seed)} is split to separately seed model initialization and the sampler before training starts.
+All classical computation (classical and training loop) run locally via JAX on a single NVIDIA TITAN RTX GPU (24\,GB, driver 560.35.03, CUDA 12.6). The FPGA backend runs on external hardware. D-Wave experiments use the \texttt{Advantage\_system6} (Pegasus) and \texttt{Advantage2\_system1} (Zephyr) solvers and were run between 2026-05-11 and 2026-08-10. Forward-anneal runs use a $20\,\mu\mathrm{s}$ anneal time and \texttt{num\_reads} equal to the sample count, with \texttt{auto\_scale} disabled and with D-Wave's default chain strength. Embeddings are cached per \texttt{(n\_visible, solver)} using \texttt{minorminer}'s biclique embedder. FPGA runs use \texttt{Float32} precision, a $120\,\mathrm{MHz}$ core clock, and 1024 parallel replicas. Its reported time is an on-device cycle count divided by this clock frequency. All stochastic components are seeded per run directly and deterministically from the stated per-run integer seed: \texttt{jax.random.PRNGKey(seed)} is split to separately seed model initialization and the sampler before training starts.
 
-\paragraph{Solver internal parameters.} Beyond the shared protocol stated above (\gls{tfim} $h=0.5$, lr$=0.08$, reg$=0.05$, $200$ samples/iteration, $100$ iterations, seeds $0$-$19$), each classical sampler in panels (a)-(b) has its own internal mixing/integration parameters, held fixed across every $(N,\text{seed})$ cell. These are listed in \autoref{tab:classical_sampler_params} so a reviewer can reproduce them exactly. Metropolis and Simulated Annealing restart their $200$-chain ensemble from a uniform-random configuration at every SR iteration; Gibbs instead runs Persistent Contrastive Divergence (PCD), paying its warmup once when the $200$ chains are first created and reusing them, refreshed by $10$ block-Gibbs sweeps, at every subsequent iteration. Every archived result file also carries its own \texttt{sampler\_config} record (the exact values in \autoref{tab:classical_sampler_params}, resolved at run time rather than assumed from a default) and the \texttt{git\_sha} of the code that produced it. This means the table is checkable against the archive itself, rather than taken on faith.
-
+\paragraph{Solver internal parameters.}
+Each classical sampler in panels (a)-(b) has its own internal mixing/integration parameters, held fixed across every $(N,\text{seed})$ cell (see \autoref{tab:classical_sampler_params}). Metropolis and Simulated Annealing restart their $200$-chain ensemble from a uniform-random configuration at every SR iteration. Gibbs instead uses Persistent Contrastive Divergence (PCD), described in \autoref{sec:gibbs}.
 \begin{table}[htbp]
 \centering
 \begin{tabular}{lll}
@@ -689,18 +736,9 @@ Simulated Annealing & $200$ warmup @ $T{=}5.0$ $+$ $40$ cooling sweeps$^\dagger$
 \label{tab:classical_sampler_params}
 \end{table}
 
-\paragraph{Reproducibility check.} We re-ran a sample of the archived cells behind \autoref{fig:tte_self_convergence} under the current codebase ($N\in\{8,16\}$, seeds $0$-$2$, all three classical solvers), matching $(N,\text{seed},\text{method})$ exactly, and compared the full $100$-entry per-iteration energy trajectory against the archived one. Metropolis, Gibbs, and Simulated Annealing reproduced bit-for-bit in every case tested.
-
 \paragraph{Code and data availability.} The implementation, experiment scripts, and archived result caches underlying this report are available at \url{https://github.com/iitis/adiabatic-boltzmann}.
 
-\section{Conclusion}
-We assessed classical, quantum-annealing, and physics-inspired samplers within one framework, across the transverse-field Ising and Heisenberg models, using both time-to-solution and energy consumption. FPGA is the fastest and most energy-efficient of the metered classical solvers; QPU energy was not measured, so no classical-versus-quantum energy comparison is claimed. On time-to-solution, Pegasus(+\gls{cem}) becomes statistically indistinguishable from FPGA by $N=64$; only Zephyr(+\gls{cem}) shows a weak favorable trend, not robust enough across the criterion's parameters to claim general quantum competitiveness. Native sparse embedding onto the annealer's hardware graph costs more accuracy than it saves in overhead; parallel embedding of multiple problem copies is a promising direction, but the seed count collected here is too small to support a quantitative speedup claim. The variational ansatz cannot represent ground states with sign structure; the Marshall sign rule restores good accuracy for weakly frustrated Heisenberg chains, but accuracy degrades beyond moderate frustration. Overall, physics-inspired classical hardware remains the strongest sampler at current scale; the QPU's scaling behavior is mixed across encodings and not strong enough, on its own, to support a general claim of future competitiveness.
-
-% -------------------- Appendix -------------------- *
-\clearpage
-\section{Appendix}
-\textbf{Claim.} Given the regularised quantum geometric tensor
-$\mathbf{S} = \frac{1}{N_s}\bar{\mathbf{O}}^\top\bar{\mathbf{O}} + \lambda I$,
+$S = \frac{1}{N_s}\bar{\mathbf{O}}^\top\bar{\mathbf{O}} + \lambda I$,
 its product with any vector $\mathbf{x} \in \mathbb{R}^{N_\text{params}}$ satisfies
 \begin{equation}
     \mathbf{S}\,\mathbf{x} = \frac{1}{N_s}\bar{\mathbf{O}}^\top(\bar{\mathbf{O}}\,\mathbf{x}) + \lambda \mathbf{x}.
