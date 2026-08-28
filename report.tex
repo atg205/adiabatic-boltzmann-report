@@ -396,20 +396,19 @@ One measure for sampling quality is the \textit{total variation distance} $D_\ma
       D_{\mathrm{TV}}(\mu, \nu) = \frac{1}{2}\sum_{\boldsymbol{\sigma} \in \{-1,+1\}^N} \left|\mu(\boldsymbol{\sigma}) - \nu(\boldsymbol{\sigma})\right|,
   \end{equation}
 where $\mu$ is the histogram returned from the sampler and $\nu(\boldsymbol{\sigma}) \propto |\Psi(\boldsymbol{\sigma})|^2$ is the \gls{rbm} distribution.
+A related measure is the \textit{Kullback-Leibler divergence} $D_{\mathrm{KL}}$, defined as
+\begin{equation}
+      D_{\mathrm{KL}}(\mu \| \nu) = \sum_{\boldsymbol{\sigma} \in \{-1,+1\}^N} \mu(\boldsymbol{\sigma}) \log\frac{\mu(\boldsymbol{\sigma})}{\nu(\boldsymbol{\sigma})}.
+  \end{equation}
+$D_\mathrm{KL}$ is mainly used in this work as an objective function to be minimized when \textit{fitting} a continuous parameter.
 As every sampler has a range of parameters, we are interested in how well the sampling performs with regards to the different tuning parameters. \Gls{sa}, Gibbs, and Metropolis can be tuned by the number of \textit{sweeps}, that is, the number of single-spin-flip proposals.
 
-We use the following workflow to determine $D_\mathrm{TV}$: First, we use a \gls{sa} pretrained \gls{rbm} and compute its exact distribution $|\Psi|^2$ numerically by enumerating all possible spin configurations. We then collect samples from different samplers and compare the resulting empirical histogram to the exact distribution.
+To determine $D_\mathrm{TV}$, we use a \gls{sa} pretrained \gls{rbm} and compute its exact distribution $|\Psi|^2$ numerically by enumerating all possible spin configurations. We then collect samples from different samplers and compare the resulting empirical histogram to the exact distribution.
 
-The results are presented in \autoref{fig:dtv_classical_N8_M8}. As a sanity check, it can be seen that Metropolis and Gibbs sampling perform theoretically near-optimal, as is expected. The performance of \gls{sa} improves as the transverse field bias $h$ increases. In \autoref{fig:dtv_classical_N8_M8}\textbf{(b)} the exact histogram of configurations $|\Psi(\mathbf{v})|^2$ is plotted. For $h=0.5$ the distribution is peaked around a handful of highly probable sample configurations, whereas the distribution becomes more uniform for stronger values of $h$. This explains the performance increase for the \gls{sa} sampler.
+The results are presented in \autoref{fig:dtv_classical_N8_M8}. As expected, it can be seen that Metropolis and Gibbs sampling perform theoretically near-optimal. The performance of \gls{sa} improves as the transverse field bias $h$ increases. In \autoref{fig:dtv_classical_N8_M8}\textbf{(b)} the exact histogram of configurations $|\Psi(\mathbf{v})|^2$ is plotted. For $h=0.5$ the distribution is peaked around some highly probable sample configurations, whereas the distribution becomes more uniform for stronger values of $h$. A possible explanation for the performance increase of the \gls{sa} sampler with $h$ is that it could be easier to sample from a uniform distribution than from a peaked one. 
 
-The peaked distribution originates from the fact that the spins in the \gls{tfim} description given by \autoref{eq:tfim} are aligned for low $h$ values (\textit{ferromagnetic} phase). For $h\rightarrow\infty$ the transverse field dominates and the ground state becomes a product of single-spin $\sigma_x$ eigenstates. Measured in the z-basis, this leads to an exactly uniform distribution over spin configurations for any $N$. \autoref{fig:tfim_ordering} illustrates this directly: sampled spin configurations and correlation functions at three values of $h$, spanning the ferromagnetic and paramagnetic regimes.
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=\linewidth]{figures/spin_ordering_across_qpt}
-  \caption{Spin configurations sampled from a trained RBM-VMC model for the one-dimensional Transverse-Field Ising Model (TFIM) at three values of the transverse field $h$. \textbf{Top row:} each column shows 2\,000 spin configurations $\boldsymbol{\sigma} \in \{-1,+1\}^N$ sampled from the learned wave function $|\Psi_{\boldsymbol\theta}|^2$, sorted by total magnetisation. \textbf{Bottom row:} spin-spin correlation $C(r) = \langle \sigma^z_0 \sigma^z_r \rangle$ as a function of distance $r$, computed from VMC samples (solid line) and exact diagonalisation (dashed line). The relative energy error $\varepsilon = |E_\mathrm{VMC} - E_\mathrm{exact}|/|E_\mathrm{exact}|$ is shown in each panel. The model is a fully-connected RBM ($N = N_h = 16$) trained for 300 iterations of Stochastic Reconfiguration with 500 Metropolis-Hastings samples per step.}
-  \label{fig:tfim_ordering}
-\end{figure}
-\begin{figure}[htbp]
+For low $h$ values, the spins in the \gls{tfim} are aligned (so-called ferromagnetic phase). With $h\rightarrow\infty$ the transverse field dominates and the spins tend to align in the $x$-direction, as the ground state becomes a product of single-spin $\sigma_x$ eigenstates. Measured in the z-basis, this leads to an exactly uniform distribution over spin configurations for any $N$. This phase transition from the ferromagnetic to the paramagnetic phase is illustrated in \autoref{fig:tfim_ordering}.
+\begin{figure}[h]
     \centering
 
     \begin{subfigure}{\linewidth}
@@ -428,6 +427,13 @@ The peaked distribution originates from the fact that the spins in the \gls{tfim
 
     \caption{Sampling quality for different samplers for a trained \gls{rbm} approximating the ground state of a \gls{tfim} with 8 spins, corresponding to a \gls{rbm} with 8 visible and 8 hidden units. The sampling floor is the best possible total variation distance reachable with the given number of samples. Effort is measured in sweeps.}
     \label{fig:dtv_classical_N8_M8}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{figures/spin_ordering_across_qpt}
+  \caption{Spin configurations sampled from a trained RBM-VMC model for the one-dimensional Transverse-Field Ising Model (TFIM) at three values of the transverse field $h$. Each column shows 2\,000 spin configurations $\boldsymbol{\sigma} \in \{-1,+1\}^N$ sampled from the learned wave function $|\Psi_{\boldsymbol\theta}|^2$, sorted by total magnetisation. The model is a fully-connected RBM ($N = N_h = 16$) trained for 300 iterations of Stochastic Reconfiguration with 500 Metropolis-Hastings samples per step.}
+  \label{fig:tfim_ordering}
 \end{figure}
 \subsection{Sampling temperature \& CEM}
 \label{sec:exper:temp}
@@ -460,40 +466,22 @@ We verify this on the \texttt{Advantage\_system6} (Pegasus) chip, using a chain-
     \end{subfigure}
 
     \caption{%
-      Impact of \texttt{auto\_scale} on $\beta_x$ for a chain-free Pegasus-embedded \gls{tfim} \gls{rbm} ($N=8$, $h=1$). \texttt{auto\_scale=True} (red) makes $\beta_\text{eff}$ independent of $\beta_x$; \texttt{auto\_scale=False} (blue) restores the intended $1/\beta_x$ control.
-    }
+      Impact of \texttt{auto\_scale} on $\beta_x$ for a chain-free Pegasus-embedded \gls{tfim} \gls{rbm} ($N=8$, $h=1$).}
     \label{fig:dtv_autoscale_N8}
 \end{figure}
 \subsubsection{CEM}
 We have seen that correctly choosing the sampling temperature is crucial in obtaining meaningful distributions. \gls{cem}'s original formulation~\cite{kubo2025unlockingpowerboltzmannmachines} exploits that the hidden units of a Boltzmann machine are conditionally independent given the visible units: for a visible configuration fixed to a condition vector $\mathbf{v}=\mathbf{r}$, the conditional expectation $\langle h_j\rangle = \tanh(\beta\Theta_j)$, $\Theta_j = b_j + \sum_i r_i W_{ij}$, is known in closed form for any $\beta$. To estimate the unknown $\beta_\text{eff}$, the sampler is queried repeatedly at the fixed condition $\mathbf{r}$ to obtain an empirical conditional average $\langle h_j\rangle_{\mathbf{r},C}$, which is then matched against $\tanh(\beta\Theta_j)$ by minimizing the squared residual over $\beta$.
 
-In this work we use a pooled variant of this matching step reuses the ordinary joint samples $(\mathbf{v}_i,\mathbf{h}_i)_{i=1}^{N_s}$ the sampler already produces at each training iteration. Each sample has its own, generally distinct, visible configuration $\mathbf{v}_i$; we fit a single $\beta_\text{eff}$ across the whole batch,
+In this work we use a pooled variant of this matching step which reuses the joint samples $(\mathbf{v}_i,\mathbf{h}_i)_{i=1}^{N_s}$ the sampler already produces at each training iteration. We fit a single $\beta_\text{eff}$ across the whole batch,
 \begin{equation}
 \beta_\text{eff} = \arg\min_\beta F(\beta), \quad F(\beta) = \sum_{i=1}^{N_s}\sum_{j=1}^{N_h}\left(h_{ij}-\tanh(\beta\cdot\Theta_j(\mathbf{v}_i))\right)^2,
 \end{equation}
 with $i$ being the sample index. $h_{ij}$ is the observed hidden unit $j$ in sample $i$, and $\Theta_j(\mathbf{v}_i) = b_j + \sum_l v_{i,l}W_{lj}$ with $l$ the visible-unit index. This allows us to perform the CEM algorithm without additional sampling cost.
 
-The matching step is visualized in \autoref{fig:cem_matching}, where the left subfigure shows multiple candidate functions $\tanh(\beta\Theta)$ dependent on $\beta$ that can be used to match the returned samples. The right subfigure describes the corresponding minimization, in which the squared loss function $F(\beta)$ is minimized over $\beta$ (in practice using scipy's \texttt{minimize\_scalar} function).
-We validate this matching procedure against an independent, exact ground-truth estimate. That estimate is obtained by minimising the KL divergence between the empirical visible-marginal distribution and the true visible marginal of the $\beta$-rescaled joint distribution, $p_\beta(\mathbf v)\propto e^{-\beta\,\mathbf a\cdot\mathbf v}\prod_j 2\cosh(\beta\Theta_j)$, via exact enumeration. We sweep $N\in\{8,12\}$, $h\in\{0.5,1.0,1.5,2.0\}$, and $\beta_x\in\{0.5,1.0,1.5,2.0\}$, with 5 seeds per condition and three checkpoints during training (see \autoref{fig:cem_validation}). Both subplots give the same picture: the $\beta_{eff}$ calculated by \gls{cem} is very close to the exact solver temperature given by exact enumeration.
-\begin{figure}[htbp]
-    \centering
-    \begin{subfigure}{0.48\linewidth}
-        \includegraphics[width=\linewidth]{figures/cem_validation_calibration.pdf}
-        \caption{CEM vs.\ exact ground truth.}
-        \label{fig:cem_validation_calibration}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}{0.48\linewidth}
-        \includegraphics[width=\linewidth]{figures/cem_validation_bias.pdf}
-        \caption{Bias across training.}
-        \label{fig:cem_validation_bias}
-    \end{subfigure}
-    \caption{%
-        Validation of the \gls{cem} $\beta_\text{eff}$ estimator against an exact estimate given by minimizing $D_{KL}$ against the true visible marginal of the $\beta$-rescaled joint Boltzmann distribution, pooled over $N\in\{8,12\}$, $h\in\{0.5,1.0,1.5,2.0\}$, $\beta_x\in\{0.5,1.0,1.5,2.0\}$, and 5 seeds per condition (480 draws total). (a) CEM's estimate vs. the exact ground truth; the dashed lines gives the optimal values. One draw (marked $\times$) saturated CEM's optimizer search bound and is excluded from the plot. (b) Bias of the CEM estimate relative to ground truth, averaged over $h$ and $\beta_x$, at three checkpoints during training ($10\%$/$50\%$/$100\%$ of iterations). Error bars show $95\%$ confidence intervals over seeds.
-    }
-    \label{fig:cem_validation}
-\end{figure}
-\begin{figure}[htbp]
+The matching step is visualized in \autoref{fig:cem_matching}, where the left subfigure shows multiple candidate functions $\tanh(\beta\Theta)$ dependent on $\beta$ that can be used to match the returned samples. The right subfigure describes the corresponding minimization, in which the squared loss function $F(\beta)$ is minimized over $\beta$ (using scipy's \texttt{minimize\_scalar} function).
+
+For small sizes, the effective temperature $\beta_\text{eff}$ can be calculated exactly using exact enumerations. To assess the quality of the temperature estimate given by \gls{cem}, we first need to calculate the actual $\beta_\text{eff}$ numerically. This is done by first sampling from a temperature dependent sampler, follow by a minimization over $\beta$ of the KL-divergence between the sampled probability distribution and the actual, $\beta$ rescaled \gls{rbm} distribution $\nu_\beta(\mathbf v)$. This algorithm is performed over $N\in\{8,12\}$, $h\in\{0.5,1.0,1.5,2.0\}$, and $\beta_x\in\{0.5,1.0,1.5,2.0\}$ with 5 seeds and three checkpoints during training (see \autoref{fig:cem_validation}). Both subplots give the same picture: the $\beta_text{eff}$ calculated by \gls{cem} is very close to the exact solver temperature given by exact enumeration.
+\begin{figure}[h]
     \centering
     \begin{subfigure}{0.48\linewidth}
         \includegraphics[width=\linewidth]{figures/cem_matching_candidates.pdf}
@@ -510,6 +498,24 @@ We validate this matching procedure against an independent, exact ground-truth e
         The CEM matching step for $N=16$ spins with $h=1.0$. (a) Several candidate $\tanh(\beta\Theta)$ curves against the empirically observed hidden-unit samples. The curve at $\beta_\text{eff}=1.94$ approximates the data most closely and represents the best estimate of the sampler's temperature. (b) The squared loss function to be minimized.
     }
     \label{fig:cem_matching}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \begin{subfigure}{0.48\linewidth}
+        \includegraphics[width=\linewidth]{figures/cem_validation_calibration.pdf}
+        \caption{CEM vs.\ exact ground truth.}
+        \label{fig:cem_validation_calibration}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.48\linewidth}
+        \includegraphics[width=\linewidth]{figures/cem_validation_bias.pdf}
+        \caption{Bias across training.}
+        \label{fig:cem_validation_bias}
+    \end{subfigure}
+    \caption{%
+        Validation of the \gls{cem} $\beta_\text{eff}$ estimator against an exact estimate given by minimizing $D_{KL}$ against the true visible marginal of the $\beta$-rescaled joint Boltzmann distribution (a) CEM's estimate vs. the exact ground truth, the dashed lines gives the optimal values. (b) Bias of the CEM estimate relative to ground truth, averaged over $h$ and $\beta_x$, at three checkpoints during training ($10\%$/$50\%$/$100\%$ of iterations). Error bars show $95\%$ confidence intervals over seeds.
+    }
+    \label{fig:cem_validation}
 \end{figure}
 
 
