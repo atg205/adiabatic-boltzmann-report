@@ -62,7 +62,7 @@ Philipp Hanussek\\[0.5em]
 \maketitle
 
 \begin{abstract}
-We compare classical samplers, quantum annealers, and physics-inspired hardware within a single rigorous framework for quantum-assisted variational Monte Carlo. A restricted Boltzmann machine represents the wavefunction and is trained with stochastic reconfiguration. We evaluate the underlying samplers -- Metropolis, Gibbs, simulated annealing, an FPGA-based solver, and D-Wave quantum annealers (Pegasus, Zephyr) -- on their behavior across different physical models: the transverse-field Ising model and the (frustrated) Heisenberg chain. We assess sampler performance by two metrics under a matched training protocol: time to a validated energy tolerance, and energy consumed to reach it. FPGA is the fastest and most energy-efficient of the metered classical solvers; no QPU energy measurement exists, so no classical-versus-quantum energy comparison is claimed. On time-to-solution, Pegasus(+\gls{cem}) becomes statistically indistinguishable from FPGA by the largest system size tested; Zephyr(+\gls{cem}) alone shows a weak favorable scaling trend, too sensitive to the convergence criterion's parameters to support a general quantum-competitiveness claim. A native sparse embedding onto the quantum annealer's hardware graph loses representational capacity; embedding multiple problem copies in parallel is a promising direction, but with only three seeds per level and a single converging run at the highest parallelism tested, the data collected here cannot support a quantitative speedup claim. The variational ansatz is restricted to non-negative amplitudes; for the frustrated Heisenberg chain, the Marshall sign rule extends its validity up to moderate frustration.
+We compare classical samplers, quantum annealers, and physics-inspired hardware within a single rigorous framework for quantum-assisted variational Monte Carlo. A restricted Boltzmann machine represents the wavefunction and is trained with stochastic reconfiguration. We evaluate the underlying samplers -- Metropolis, Gibbs, simulated annealing, an FPGA-based solver, and D-Wave quantum annealers (Pegasus, Zephyr) -- on their behavior across different physical models: the transverse-field Ising model and the (frustrated) Heisenberg chain. We assess sampler performance by two metrics under a matched training protocol: time to a validated energy tolerance, and energy consumed to reach it. FPGA is the fastest and most energy-efficient of the metered classical solvers; no QPU energy measurement exists, so no classical-versus-quantum energy comparison is claimed. On time-to-solution, under a $99\%$-confidence-corrected metric that accounts for each solver's occasionally censored seeds, Pegasus(+\gls{cem}) and Zephyr(+\gls{cem}) both scale nearly flat with $N$ and overtake FPGA by the largest system size tested, reversing the near-tie a plain-median reading would suggest; this should not be over-read as established quantum advantage given the small number of system sizes tested and this metric's sensitivity to the convergence criterion's parameters. A native sparse embedding onto the quantum annealer's hardware graph loses representational capacity; embedding multiple problem copies in parallel is a promising direction, but with only three seeds per level and a single converging run at the highest parallelism tested, the data collected here cannot support a quantitative speedup claim. The variational ansatz is restricted to non-negative amplitudes; for the frustrated Heisenberg chain, the Marshall sign rule extends its validity up to moderate frustration.
 \end{abstract}
 
 \clearpage
@@ -635,74 +635,75 @@ the ground state wavefunction can be written as
 \[
 U |\psi_0\rangle = \sum_{\sigma} |c_\sigma| \, |\sigma\rangle,
 \]
-with only positive amplitudes. This flip is exact for every $J_1$ bond, since bipartiteness guarantees each one connects $A$ to $B$. A $J_2$ bond, however, connects two sites of the \emph{same} sublattice so $U$ leaves its sign unchanged. The correction is therefore exact only for $J_2=0$. It has however been show, that the Marshall correction can survive a certain degree of frustration (that is, $J_1, J_2 \geq 0$)\cite{Richter_1994,Voigt_2000}, which we validate experimentally.
-
-We measure the impact of the sign problem on a given probability distribution by the average sign, the standard figure of merit for the severity of a sign problem\cite{Troyer_2005}; there it is defined as a ratio of partition functions for a finite-temperature path-integral ensemble, whereas here the same ratio is applied directly to a $T=0$ ground-state wavefunction, evaluated on the Marshall-rotated exact ground-state wavefunction $\phi = U|\Psi_0\rangle$ obtained by exact diagonalisation:
-  \begin{equation}
-      \langle s \rangle = \frac{\sum_{\mathbf{v}} \phi(\mathbf{v})}{\sum_{\mathbf{v}} |\phi(\mathbf{v})|}
-  \end{equation}
-Evaluated instead on the untransformed $\Psi_0$, this quantity is identically zero for any singlet ground state by SU(2) symmetry ($\sum_{\mathbf{v}}\Psi_0(\mathbf{v})$ vanishes) and is therefore uninformative in that basis; \autoref{fig:marshall-comparison-sign} shows both. We do not evaluate $\langle s\rangle$ on the RBM ansatz $\Psi_\theta$, which is strictly positive by construction and would give $\langle s\rangle \equiv 1$ trivially.
+with only positive amplitudes. This flip is exact for every $J_1$ bond, since bipartiteness guarantees each one connects $A$ to $B$. A $J_2$ bond, however, connects two sites of the \emph{same} sublattice so $U$ leaves its sign unchanged. The correction is therefore exact only for $J_2=0$. It has however been shown that the Marshall correction can survive a certain degree of frustration (i.e.\ for $J_2/J_1$ up to a certain threshold)\cite{Richter_1994,Voigt_2000}, which we validate experimentally.
 
 \begin{figure}[htbp]
     \centering
-    \begin{subfigure}[b]{0.48\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{figures/marshall_comparison/marshall_comparison_energy.pdf}
-        \caption{}
-        \label{fig:marshall-comparison-energy}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.48\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{figures/marshall_comparison/marshall_comparison_sign.pdf}
-        \caption{}
-        \label{fig:marshall-comparison-sign}
-    \end{subfigure}
-    \caption{\textbf{(a)} Energy error per site, $(E_\text{RBM}-E_\text{exact})/N$, with and without the Marshall sign correction, against $J_2/J_1$ (median and IQR over seeds). Without the correction, the ansatz's positive-amplitude restriction causes large, roughly constant error across the whole range; with it, error stays near zero up to the Majumdar-Ghosh point ($J_2/J_1=0.5$) before rising. \textbf{(b)} The average sign $\langle s\rangle$ in the Marshall-rotated basis versus the untransformed basis: the latter is flat at zero everywhere, confirming it carries no information; the former tracks the same breakdown seen in panel (a).}
+    \includegraphics[width=0.75\linewidth]{figures/marshall_comparison/marshall_comparison_energy.pdf}
+    \caption{Energy error per site, $|E_\text{RBM}-E_\text{exact}|/N$, with and without the Marshall sign correction, against $J_2/J_1$ (mean $\pm$ std over seeds). Model trained using Metropolis-Hastings sampling, $N=8$, 200SR iterations and averaged over 3 seeds, swept over 11 points from $0$ to $1$.}
     \label{fig:marshall-comparison}
 \end{figure}
 
-Interestingly, we empirically observe that even for frustrated Heisenberg models with $0\leq\frac{J_2}{J_1}\leq0.5$, the \gls{rbm} with the Marshall sign correction can accurately approach the ground state energy, whereas without the correction the variational energy degrades significantly (\autoref{fig:marshall-comparison-energy}). This is consistent with \cite{Richter_1994}'s square-lattice result and \cite{Voigt_2000}'s direct calculation for the 1D chain, both finding that the sign rule can empirically survive frustration over part of the parameter range, even though the proof no longer strictly applies beyond $J_2=0$. Empirically, we observe that the median relative error over independent seeds rises sharply once $J_2/J_1$ exceeds $0.5$ (\autoref{fig:convergence_median}), in line with expectations that stronger frustration increasingly violates the positive-amplitude assumption underlying the ansatz. We did not test a phase-capable ansatz (e.g.\ a complex-valued \gls{rbm} or a separate amplitude-and-phase network); such a comparison is left as future work.
+We validate this experimentally in \autoref{fig:marshall-comparison}: applying the Marshall sign correction reduces the ground-state energy error by several orders of magnitude compared to the uncorrected ansatz, confirming that the correction works in practice. Consistent with \cite{Richter_1994}'s square-lattice result and \cite{Voigt_2000}'s direct calculation for the 1D chain, this improvement persists over a range of frustration $J_2/J_1$ before degrading, verifying that the sign rule can empirically survive frustration beyond its proven regime of $J_2=0$. We did not test a phase-capable ansatz (e.g.\ a complex-valued \gls{rbm}) and leave it to future work.
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\linewidth]{figures/fig_convergence_median.pdf}
     \caption{RBM convergence curves ($E/N$ vs.\ SR iteration) for
-    $N \in \{8,12\}$ and $J_2/J_1 \in \{0.3,0.5,0.7,0.9\}$ on the frustrated
-    $J_1$--$J_2$ Heisenberg chain, using Gibbs sampling. The solid line is
-    the median over $n$ independent evaluation seeds (annotated per panel);
-    the shaded band is the interquartile range. For each panel, the
-    hyperparameter configuration was selected beforehand on a disjoint
-    tuning set (Optuna trials, tuning seeds excluded from evaluation);
-    $\varepsilon_\mathrm{med}$ denotes the median relative error of the
-    tail-averaged energy. Where $n$ is reported as $a/b$, $b$ seeds were
-    attempted and $b-a$ runs diverged (non-finite energy) under the selected
-    configuration and are retained as failures rather than silently dropped;
-    divergence is frequent in the strongly frustrated regime
-    ($N=8$, $J_2/J_1 \geq 0.7$). The red dashed line marks the exact
-    ground-state energy $E_\mathrm{exact}/N$. The median relative error
-    rises sharply beyond $J_2/J_1 = 0.5$.}
+    $N \in \{8,12\}$ and $J_2/J_1 \in \{0.3,0.5,0.7,0.9\}$ on the frustrated $J_1$--$J_2$ Heisenberg chain, using Gibbs sampling. The solid line is the median over $n$ independent evaluation seeds, the shaded band is the interquartile range. Where $n$ is reported as $a/b$, $b$ seeds were attempted and $b-a$ runs diverged under the selected configuration divergence is frequent in the strongly frustrated regime ($N=8$, $J_2/J_1 \geq 0.7$). The red dashed line marks the exact ground-state energy $E_\mathrm{exact}/N$.}
     \label{fig:convergence_median}
 \end{figure}
 
 \subsection{Time-to-$\epsilon$ across solvers}
 \label{sec:exper:tte}
+\subsubsection{Methodology}
+We present a hyperparameter matched solver comparison for the one-dimensional \gls{tfim} with $h=0.5$ for $N$ up to 64. Solvers are compared by pure sampling time only, that is without taking into account the classical training iteration overhead (i.e. \gls{sr} calculation, which is identical across solvers). All runs are performed using the same hyperparameters ($N$ hidden units (matching the visible count), learning rate $0.08$, regularization $0.05$, $200$ samples per iteration, a $100$-iteration budget, and $20$ seeds per cell) and solver dependent internal parameters, which can be found in \autoref{tab:classical_sampler_params}. For the D-Wave in particular, only the QPU's own \texttt{qpu\_access\_time} (on-chip programming, anneal, and readout) is taken into account as returned by D-Wave's SAPI, one-time embedding and per-sampler network latency are excluded. For the classical solvers a separate one-time call is executed before training starts to trigger JAX's \gls{jit} compilation, so that cost is excluded from every reported iteration. 
 
-We next compare solvers by \gls{tte}: the sampler time (the sampling call itself, excluding \gls{sr}/\gls{cg}/gradient work, which is identical across solvers) until the rolling-window mean energy error per spin, $|\overline{E}-E_\mathrm{exact}|/N$ averaged over the trailing $10$ iterations, first drops below $\epsilon=0.1$ (a $9.4\%$ relative energy error at this $h$) and stays below it for $10$ consecutive iterations. \gls{tte} is reported as the first iteration of that sustained window. Requiring $10$ consecutive passes, rather than a single crossing, discards runs that briefly and spuriously dip below $\epsilon$ before moving back away from it, a pattern observed in some D-Wave trajectories. Runs that do not satisfy this criterion within the $100$-iteration budget are censored rather than counted. Pegasus and Zephyr are reported here with \gls{cem} correction only; for these series, the reported time also includes \gls{cem}'s $\beta_\text{eff}$ estimation step, timed on the host identically to every other \gls{cem} series, so it is added on top of the QPU's own device-reported \texttt{qpu\_access\_time} rather than being the same kind of measurement.
+We report on \gls{tte}$_{99}$: following the same $99\%$-confidence convention already used for \gls{tts} in \autoref{eq:tts}, the expected time for a run to reach the solution to within a given energy tolerance $\epsilon$ with $99\%$ confidence, computed from the validated (successful) fraction of seeds and their convergence time. The precise definition is given below.
 
-Every series shares the same training protocol: $N$ hidden units (matching the visible count), learning rate $0.08$, regularization $0.05$, $200$ samples per iteration, a $100$-iteration budget, and $20$ seeds per cell. This is a matched-hyperparameter comparison, not a matched-tuning-effort one, and should be read as such. Concretely, what is timed differs by solver: for the classical samplers, it is a host-side timer placed around the sampler call itself in the training loop, with a separate one-time call executed before training starts solely to trigger JAX's \gls{jit} compilation, so that cost is excluded from every reported iteration. For the D-Wave runs, the reported time is the QPU's own \texttt{qpu\_access\_time} (on-chip programming, anneal, and readout) as returned by D-Wave's SAPI, with network latency and queueing excluded and embedding treated as a one-time cost paid outside the training loop. The comparison should also not be over-read as temperature-comparable: the effective inverse temperature $\beta_\text{eff}$ of the QPU runs is not independently calibrated here (see \autoref{sec:exper:temp} for how $\beta_\text{eff}$ is estimated elsewhere in this work).
+A run is considered to converge when the rolling-window mean energy error per spin, $|\overline{E}-E_\mathrm{exact}|/N$ averaged over the trailing $10$ iterations, first drops below $\epsilon=0.1$ and stays below it for $10$ consecutive iterations. A run that does not satisfy this criterion within the $100$-iteration budget is censored, i.e.\ does not validate. Pegasus and Zephyr are reported here with \gls{cem} correction only; for these series, the reported time also includes \gls{cem}'s $\beta_\text{eff}$ estimation step which is added on top of the QPU's own device-reported \texttt{qpu\_access\_time}.
 
-\autoref{fig:tte_self_convergence} (top) plots the median \gls{tte} (with interquartile range) against system size $N\in\{8,12,16,24,32,64\}$, split across three panels sharing a $y$-axis so that absolute scale stays directly comparable: \textbf{(a)} classical MCMC samplers with an asymptotic-correctness guarantee (Metropolis, Gibbs); \textbf{(b)} classical, physics-inspired heuristics with no such guarantee (\gls{sa} run locally on the GPU described in \autoref{sec:hw_config}, and FPGA); and \textbf{(c)} the Pegasus and Zephyr QPUs with \gls{cem}. Splitting the six series this way, rather than plotting them on one shared axis, is what keeps the classical-versus-quantum comparison in panel (c) legible. We omit $N=128$ from the figure: at that size the fixed $100$-iteration training budget does not bring any solver within $\epsilon$ of the exact ground-state energy, so every series would censor there for the same training-budget reason rather than any real difference in sampler speed. Plotting $N=128$ would therefore invite a solver-versus-solver reading that the data cannot support. For budget reasons, we report QPU results at four sizes only: $N\in\{8,16,32,64\}$.
+Formally, with $E_\tau$ the training energy logged at \gls{sr} iteration $\tau$, window size $w=10$, and iteration budget $T=100$, the rolling-window mean and its error are
+\begin{equation}
+\label{eq:tte-window}
+\overline{E}_t = \frac{1}{t - t_0 + 1}\sum_{\tau=t_0}^{t} E_\tau, \qquad t_0 = \max(1,\, t-w+1), \qquad
+\delta_t = \frac{\big|\overline{E}_t - E_\mathrm{exact}\big|}{N}.
+\end{equation}
+The convergence iteration is the first sustained crossing for $w$ iterations,
+\begin{equation}
+\label{eq:tte-conv}
+t^\star = \min\Big\{\, t \le T-w+1 \;:\; \delta_s < \epsilon \ \ \forall\, s \in \{t,\dots,t+w-1\} \,\Big\},
+\end{equation}
+undefined (censored) if no such $t^\star$ exists within budget. For a given solver and $N$, let $p$ be the fraction of the $20$ seeds for which $t^\star$ exists (validate), and let
+\begin{equation}
+\label{eq:tte-Tr}
+T_r = \operatorname{median}_{\text{validated seeds}} \ \sum_{\tau=1}^{t^\star} s_\tau
+\end{equation}
+be the median wall-clock convergence time of those validated seeds ($s_\tau$ the time for one sampler call, so the sum is the cumulative sampling time up to and including iteration $t^\star$). Analogously to \gls{tts} (\autoref{eq:tts}), a run that fails to validate is treated as a failure to be retried from scratch with a new seed, giving the $99\%$-confidence
+\begin{equation}
+\label{eq:tte99}
+\mathrm{TTE}_{99} =
+\begin{cases}
+T_r, & p = 1, \\[2pt]
+T_r \dfrac{\ln(1-0.99)}{\ln(1-p)}, & 0 < p < 1, \\[4pt]
+\text{undefined (censored)}, & p = 0.
+\end{cases}
+\end{equation}
+The same conversion, applied to the IQR bounds of the validated seeds' convergence times instead of their median, gives the reported \gls{tte}$_{99}$ error bars.
 
-FPGA is fastest through $N=32$; by $N=64$ its median ($0.56\,\mathrm{s}$) and Pegasus(+CEM)'s ($0.47\,\mathrm{s}$) are within each other's interquartile range, so the two are not distinguishable as faster/slower at that size. Gibbs stays essentially flat across $N$ (its lowest fitted exponent, $\propto N^{+0.22}$) since its dominant cost is a fixed one-time $200$-sweep persistent-chain initialization (\autoref{tab:classical_sampler_params}), which does not grow with $N$ in this range; Metropolis and \gls{sa} have no such fixed cost and grow steeply instead. Validated fractions stay at or above $16/20$ everywhere in this figure; no cell is fully censored.
 
-Since sampler time conflates solver speed with hardware efficiency, \autoref{fig:tte_self_convergence} (bottom) reports the same validated-convergence cells in terms of GPU energy consumed instead, restricted to the classical solvers in panels (a) and (b): the D-Wave QPUs are omitted because no API exposes per-job energy draw, and the only published figure (the whole dilution-refrigerator power draw) is not attributable to a single training run. FPGA energy is an assumed-constant-power estimate ($45\,\mathrm{W}$, matching the FPGA vendor figure used elsewhere in this work) rather than a measured value, and is labelled accordingly in the legend.
+\subsubsection{Results analysis}
+\autoref{fig:tte_self_convergence} (top) plots the median \gls{tte}$_{99}$ (with interquartile range) against system size $N\in\{8,12,16,24,32,64\}$ on three panels: \textbf{(a)} classical MCMC samplers (Metropolis, Gibbs); \textbf{(b)} classical, physics-inspired heuristics (\gls{sa} run locally on the GPU described in \autoref{sec:hw_config}, and FPGA); and \textbf{(c)} the Pegasus and Zephyr QPUs with \gls{cem} correction. For budget reasons, we report QPU results at four sizes only: $N\in\{8,16,32,64\}$. 
 
-\begin{figure}[htbp]
+FPGA is fastest through $N=32$, where every series still validates $20/20$ seeds and \gls{tte}$_{99}$ therefore equals $T_r$ (no retries needed, $p=1$). By $N=64$, however, a handful of seeds no longer validate within budget for several series (FPGA $19/20$, Zephyr(+CEM) $19/20$, Metropolis $17/20$, Gibbs $16/20$, \gls{sa} $18/20$): FPGA's \gls{tte}$_{99}$ ($0.87\,\mathrm{s}$) is now clearly higher than Pegasus(+CEM)'s ($0.47\,\mathrm{s}$, still $20/20$ validated at every size). Gibbs stays essentially flat across $N$ (its lowest fitted exponent, $\propto N^{+0.65}$) since its dominant cost is a fixed one-time $200$-sweep persistent-chain initialization (\autoref{tab:classical_sampler_params}), which does not grow with $N$ in this range; Metropolis and \gls{sa} have no such fixed cost and grow steeply instead. 
+
+\autoref{fig:tte_self_convergence} (bottom) reports the same validated-convergence cells in terms of GPU energy consumed instead, restricted to classical solvers. The D-Wave QPUs are omitted because no reliable energy consumption value could be established. FPGA energy is an assumed-constant-power estimate ($45\,\mathrm{W}$).
+
+\begin{figure}[h]
     \centering
-    \includegraphics[width=\linewidth]{figures/fig10c_tte_vs_n_validated_convergence_eps0.1.pdf}
+    \includegraphics[width=\linewidth]{figures/fig10c_tte99_vs_n_eps0.1.pdf}
     \par\vspace{1.2em}
-    \includegraphics[width=0.75\linewidth]{figures/fig10d_energy_vs_n_validated_convergence_eps0.1.pdf}
-    \caption{\textbf{(top)} Median \gls{tte} (interquartile range) against system size $N$, under the protocol given in the text. Panels: \textbf{(a)} classical samplers, \textbf{(b)} classical physics-inspired heuristics, \textbf{(c)} quantum annealers (QPU, with \gls{cem}). Markers are annotated with the validated-over-total seed count whenever that fraction is below $20/20$. Dotted lines show each series' fitted power law $\propto N^p$, with $p$ given in the legend. Pegasus/Zephyr times are D-Wave's \texttt{qpu\_access\_time} only, excluding queueing and the one-time embedding cost. \textbf{(bottom)} Median GPU energy to the same validated-convergence cells, panels (a)--(b) only; FPGA energy is an assumed-constant-power estimate and D-Wave QPU energy is omitted (see text).}
+    \includegraphics[width=0.75\linewidth]{figures/fig10d_energy99_vs_n_eps0.1.pdf}
+    \caption{\textbf{(top)} Median \gls{tte}$_{99}$ (interquartile range) against system size $N$, under the protocol given in the text. Panels: \textbf{(a)} classical samplers, \textbf{(b)} classical physics-inspired heuristics, \textbf{(c)} quantum annealers (QPU, with \gls{cem} correction; raw QPU access time omitted, see text). Markers are annotated with the validated-over-total seed count whenever that fraction is below $20/20$. Dotted lines show each series' fitted power law $\propto N^p$, with $p$ given in the legend. \textbf{(bottom)} Median GPU energy$_{99}$ to the same validated-convergence cells, panels (a)--(b) only}
     \label{fig:tte_self_convergence}
 \end{figure}
 
