@@ -292,6 +292,14 @@ E_\text{loc}(\mathbf v)=\frac{\langle \mathbf v|H|\Psi\rangle}{\Psi(\mathbf v)}
 \begin{equation}
 E_\text{loc}(\mathbf v) = -J\sum_{\langle i,j\rangle} v_i v_j - h\sum_i \frac{\Psi(\bar{\mathbf v}_i)}{\Psi(\mathbf v)}.
 \end{equation}
+For the Heisenberg and frustrated $J_1$-$J_2$ chains \eqref{eq:j1j2heisenberg}, the off-diagonal part works differently\cite{Carleo_2017,Sorella_1998}. Instead of a field flipping one spin at a time, the $\sigma^x_i\sigma^x_j+\sigma^y_i\sigma^y_j$ exchange term flips a \emph{pair} of spins $(i,j)$ together, and only when they point in opposite directions ($v_i\neq v_j$): flipping two equal spins would just reproduce $\mathbf v$ itself, so that term contributes nothing. Writing $\bar{\mathbf v}_{ij}$ for $\mathbf v$ with both $v_i$ and $v_j$ flipped, and $s\in\{-1,+1\}$ for the Marshall sign (\autoref{sec:marshall}, applied only to nearest-neighbour bonds), the local energy is
+\begin{equation}
+E_\text{loc}(\mathbf v) = J_1\sum_i v_iv_{i+1} + J_2\sum_i v_iv_{i+2}
+ + 2J_1 s\!\!\sum_{i:\,v_i\neq v_{i+1}}\!\!\frac{\Psi(\bar{\mathbf v}_{i,i+1})}{\Psi(\mathbf v)}
+ + 2J_2\!\!\sum_{i:\,v_i\neq v_{i+2}}\!\!\frac{\Psi(\bar{\mathbf v}_{i,i+2})}{\Psi(\mathbf v)}.
+\end{equation}
+The local energy formulation given here is an extension of the version given in Carleo et al.\cite{Carleo_2017}, as it includes the additional terms to take into account the next-nearest-neighbour $J_2$ coupling\cite{Sorella_1998}. In this work, the \gls{rbm} is restricted to be real-valued (in contrast to the complex-valued \gls{rbm} used in \cite{Carleo_2017}). Consequently, we need to apply a sign correction $s$ to the $J_1$ term.
+
 \item Calculating the \textbf{log-derivatives}: Since the ansatz \eqref{eq:ansatz} already has the hidden units traced out, the gradient observable $O_k$ needed for \gls{sr} (\autoref{sec:stochsticreconfig}) can likewise be evaluated from the visible units alone. Writing $\theta_j = b_j + \sum_i W_{ij} v_i$,
 \begin{equation}
 \frac{\partial \log \Psi(\mathbf v)}{\partial \theta_k} = \frac{1}{2}
@@ -536,8 +544,11 @@ Simulated annealing is a Metropolis-Hastings chain held at a fixed final tempera
 \subsection{Improving D-Wave Topology performance}
 A crucial factor in the success of an annealing process is the \textit{problem embedding} on the chip. Here, we assess two aspects related to embedding: First, introducing sparsity to fit the \gls{rbm} natively on the chip, and, second, embedding the problem multiple times to save computing time.
 \subsubsection{Sparse embedding}
-As described in \autoref{sec:solvers:quantum:adiab}, problems implementable on a quantum annealer often need to be fit to the QPU in an additional embedding step. We test whether a sparse, native \gls{rbm} that fits directly on the QPU performs reasonably. The sparse \gls{rbm} is created according to the following algorithm: First, construct a bipartite graph by keeping only edges that correspond to internal couplers on the D-Wave QPU. One set of the graph corresponds to visible \gls{rbm} units, the other one to hidden units. Then, greedily pick qubits for the visible units, by maximizing the overlap between neighbor sets of visible units. After all visible units are chosen, create a minimum set-cover by picking the fewest hidden qubits such that every visible qubit has at least one hidden neighbor. The remaining hidden units are filled by best connected qubits. See also \autoref{fig:sparse-graph-construction} for a visual overview of the algorithm.
-\begin{figure}[htbp]
+As described in \autoref{sec:solvers:quantum:adiab}, problems implementable on a quantum annealer often need to be fit to the QPU in an additional embedding step. We test whether a sparse, native \gls{rbm} that fits directly on the QPU performs reasonably. The sparse \gls{rbm} is created according to the following algorithm: First, construct a bipartite graph by keeping only edges that correspond to internal couplers on the D-Wave QPU. One set of the graph corresponds to visible \gls{rbm} units, the other one to hidden units. Then, greedily pick qubits for the visible units, by maximizing the overlap between neighbor sets of visible units. After all visible units are chosen, create a minimum set-cover by picking the fewest hidden qubits such that every visible qubit has at least one hidden neighbor. The remaining hidden units are filled by best connected qubits. See also \autoref{fig:sparse-embedding} for a visual overview of the algorithm.
+We also look directly at the effect of sparsity on its own, keeping the number of hidden units equal to the number of visible units and only changing how many of the real couplers are removed from the connectivity mask. When removing couplers, we always remove one from the hidden unit with the highest remaining degree, so that no visible or hidden unit was ever left with zero connections. \autoref{fig:sparse-embedding} shows the resulting energy error as a function of sparsity, for three classical samplers (Metropolis-Hastings, simulated annealing, and persistent-chain Gibbs). In all three cases, error increases sharply as sparsity increases.
+
+To establish the the best possible (theoretical) performance of a sparse \gls{rbm}, we additionally trained the same four sparsity masks ($N=16$, $h=1$, zephyr, $\alpha=1$) via exact enumeration of all $2^{16}$ visible configurations weighted by the exact $|\Psi(v)|^2$ probability, which removes all training bias from the experiment. We construct four artificial sparsity maps with the sparsity rate (the ratio of selected connection to the number of connections in a fully connected \gls{rbm}) being  $\in\{0.557, 0.682, 0.809, 0.877\}$. Making the \gls{rbm} sparser than necessary allows us to estimate the impact of a native QPU Boltzmann machine for increasing sizes of $N$, that is, the total number of spins. As can be seen in the heatmap \autoref{fig:sparsity-heatmap}, the relative error not only depends on the chosen sparsity map, but also on the $h$ value of the \gls{tfim} to be simulated. 
+\begin{figure}[h]
     \centering
     \begin{subfigure}[b]{0.31\linewidth}
         \centering
@@ -560,17 +571,10 @@ As described in \autoref{sec:solvers:quantum:adiab}, problems implementable on a
         \label{fig:sparse-graph-c}
     \end{subfigure}
 
-    \vspace{0.5em}
+    \vspace{0.3em}
     \includegraphics[width=0.6\linewidth]{figures/sparse_graph_construction/legend.pdf}
 
-    \caption{Construction of a chain-free sparse RBM from a D-Wave Zephyr hardware graph ($N=8$ visible units). \textbf{(a)} Identify internal couplers (green) and external/odd couplers (purple)\textbf{(b)} Creation of bipartite graph by restricting to internal couplers, splitting into hidden unit candidates (red) and visible units (blue). \textbf{(c)} RBM's visible-hidden connectivity mask by selecting the hidden units which maximize connectivity while keeping a min-set-cover. Non-selected candidates (grey) are dropped.}
-    \label{fig:sparse-graph-construction}
-\end{figure}
-We also looked directly at the effect of sparsity on its own, keeping the number of hidden units equal to the number of visible units and only changing how many of the real couplers are removed from the connectivity mask. When removing couplers, we always removed one from the hidden unit with the highest remaining degree, so that no visible or hidden unit was ever left with zero connections. \autoref{fig:sparsity-simple} shows the resulting energy error as a function of sparsity, for three classical samplers (Metropolis-Hastings, simulated annealing, and persistent-chain Gibbs). In all three cases, error increases sharply as sparsity increases.
-
-To establish the the best possible (theoretical) performance of a sparse \gls{rbm}, we additionally trained the same four masks ($N=16$, $h=1$, zephyr, $\alpha=1$) via exact enumeration of all $2^{16}$ visible configurations weighted by the exact $|\Psi(v)|^2$ probability, which removes all training bias from the experiment. We construct four artificial sparsity maps with the sparsity rate (the ratio of selected connection to the number of connections in a fully connected \gls{rbm}) being  $\in\{0.557, 0.682, 0.809, 0.877\}$. Making the \gls{rbm} sparser than necessary allows us to estimate the impact of a native QPU Boltzmann machine for increasing sizes of $N$, that is, the total number of spins. As can be seen in the heatmap \autoref{fig:sparsity-heatmap}, the relative not only depends on the chosen sparsity map, but also on the $h$ value of the \gls{tfim} to be simulated. 
-\begin{figure}[htbp]
-    \centering
+    \vspace{0.8em}
     \begin{subfigure}[b]{0.48\linewidth}
         \centering
         \includegraphics[width=\linewidth]{figures/sparsity/sparsity_ablation_heatmap.pdf}
@@ -584,12 +588,13 @@ To establish the the best possible (theoretical) performance of a sparse \gls{rb
         \caption{}
         \label{fig:sparsity-line}
     \end{subfigure}
-    \caption{Error as a function of sparsity, with the number of hidden units kept equal to the number of visible units in both plots. \textbf{(a)} Relative error $|\varepsilon|/|E_\mathrm{exact}|$ for different values of $h$, trained classically via Metropolis sampling. \textbf{(b)} Energy error per spin, $|\varepsilon|/N$, at $h=1$ across three classical samplers (Metropolis, simulated annealing, and persistent Gibbs), all using identical hyperparameters (300 SR iterations, learning rate $0.05$), against the exact-ansatz floor, which uses noise-free gradients for up to 3000 iterations to escape optimization plateaus. The dotted line marks the exact-ansatz floor at this size. The vertical dashed grey line marks the native hardware floor: the sparsity of the unpruned chain-free embedding for this system size, i.e.\ the fraction of visible-hidden pairs with no real coupler between them before any edges are deliberately removed. All tested sparsity levels lie to its right, since pruning can only remove couplers, never add ones the chip does not have.}
-    \label{fig:sparsity-simple}
+
+    \caption{Construction and performance of a chain-free sparse RBM from a D-Wave Zephyr hardware graph. \textbf{(a)} Identify internal couplers (green) and external/odd couplers (purple) ($N=8$ visible units shown). \textbf{(b)} Creation of bipartite graph by restricting to internal couplers, splitting into hidden unit candidates (red) and visible units (blue). \textbf{(c)} RBM's visible-hidden connectivity mask by selecting the hidden units which maximize connectivity while keeping a min-set-cover. Non-selected candidates (grey) are dropped. \textbf{(d)} Relative error $|\varepsilon|/|E_\mathrm{exact}|$ as a function of sparsity for different values of $h$, trained classically via Metropolis sampling. \textbf{(e)} Energy error per spin, $|\varepsilon|/N$, at $h=1$ across three classical samplers (Metropolis, simulated annealing, and Gibbs), against the exact-ansatz floor.}
+    \label{fig:sparse-embedding}
 \end{figure}
 We conclude that a native Pegasus/Zephyr embedding is not suitable for efficient \gls{rbm} sampling, for the following reasons. Even in the optimal case, representability of the sparse ansatz is limited: the noise-free enumeration gives a lower bound that, in practice is hard to reach. Across three independent classical samplers (Metropolis-Hastings, simulated annealing, and persistent-chain Gibbs), trained under identical hyperparameters and iteration budgets, the per-spin error at every tested sparsity level sits $9.7$--$17.7\times$ above this floor, with no sampler avoiding the gap. Due to budget constraints, we tested the sparse models only on classical hardware.
 \subsubsection{Parallel Embeddings}
-To speed up calculation and save computing time, it is possible to embed multiple smaller, independent problems on the QPU~\cite{Pelofske_2022}. For example, it is possible to gather 1000 independent samples using only 250 annealing runs, by embedding the \gls{rbm} four times on the QPU. We experimentally validate this approach with 3 seeds per $n_\mathrm{parallel} \in \{1,3,5\}$, as \autoref{fig:parallel-embedding} makes visible that training at this iteration budget is not reliable: 4 of the 9 runs diverge (crossed-off markers), including 2 of 3 seeds at $n_\mathrm{parallel}=5$. For the runs that do converge, \autoref{fig:parallel-embedding-qpu-time} indicates that parallel embedding can indeed be used to save QPU time.
+To speed up calculation and save computing time, it is possible to embed multiple smaller, independent problems on the QPU~\cite{Pelofske_2022}. For example, it is possible to gather 1000 independent samples using only 250 annealing runs, by embedding the \gls{rbm} four times on the QPU. We experimentally validate this approach with 3 seeds per $n_\mathrm{parallel} \in \{1,3,5\}$, as \autoref{fig:parallel-embedding} makes visible that training at this iteration budget is not reliable: 4 of the 9 runs diverge (crossed-off markers), including 2 of 3 seeds at $n_\mathrm{parallel}=5$. For the runs that do converge, \autoref{fig:parallel-embedding-qpu-time} indicates that parallel embedding can indeed be used to save QPU time. To find a parallel embedding, we use D-Wave's \texttt{dwave.system.ParallelEmbeddingComposite}.
 \begin{figure}[h]
     \centering
     \begin{subfigure}[b]{0.48\textwidth}
@@ -608,11 +613,21 @@ To speed up calculation and save computing time, it is possible to embed multipl
     \caption{Parallel embedding on a D-Wave QPU: (a) physical embedding layout, (b) resulting training speedup.}
     \label{fig:parallel-embedding}
 \end{figure}
-\subsection{Limitations of variational methods}
-It is well known that capturing quantum dynamics with non-trivial sign structure using a real-valued variational ansatz is computationally hard (\textit{sign problem}). This does not pose a problem for the \gls{tfim} models, as its ground state has only positive amplitudes. More complex models, such as some $J_1$-$J_2$ Heisenberg models, on the other hand cannot be simulated using our methods. The reason for this is that the factors  $e^{-\mathbf{a}\cdot\mathbf{v}/2}$ and $\cosh(\cdot)$ of the ansatz defined in \autoref{eq:ansatz} are strictly positive for real parameters and therefore the ansatz does not allow for the representation of negative amplitudes. 
+\subsection{Sign Problem in Quantum Monte Carlo}
+It is well known that capturing some quantum dynamics with non-trivial sign structure using a real-valued variational ansatz is not possible (\textit{sign problem}). This does not pose a problem for the \gls{tfim} models, as it is a \textit{stoquastic} model\cite{2011772.2011773}. A stoquastic matrix is defined to have only real and non-positive off-diagonal elements. It can easily be seen that the \gls{tfim} is stoquastic from its definition in  \autoref{eq:tfim}: the $\sigma^z_i\sigma^z_j$ terms only contribute diagonal elements, and the off-diagonal elements from the tranverse field $\sigma^x_i\sigma^x_j$ all contribute the same factor $-h$. Some Heisenberg $J1-J2$ models do not have this property and the corresponding \gls{rbm} training converges far from the ground state (see \autoref{fig:convergence_median}). 
 
-\paragraph{The Marshall sign rule}
-For certain Heisenberg models with bipartite lattice structure, the Marshall sign rule~\cite{Marshall_1955} can be used to remove the non-trivial sign structure of the ground state wavefunction by basis transformation. Considering the following unitary transformation on bipartite lattices $A \cup B$, written in the Pauli convention used throughout this work:
+The reason for this is that the factors  $e^{-\mathbf{a}\cdot\mathbf{v}/2}$ and $\cosh(\cdot)$ of the \gls{rbm} ansatz defined in \autoref{eq:ansatz} are strictly positive for real parameters and therefore the ansatz does not allow for the representation of negative amplitudes. 
+\subsubsection{Marshall sign rule}
+\label{sec:marshall}
+\paragraph{Non-stoquasticity of the Heisenberg model} To understand why the sign problem appears in the Heisenberg model and not in the \gls{tfim}, we need to assess the off-diagonal values of the system Hamiltonian. Writing a bond between sites $i$ and $j$ as $H_{ij}=J[\sigma^x_i\sigma^x_j+\sigma^y_i\sigma^y_j+\sigma^z_i\sigma^z_j]$, only the $\sigma^x_i\sigma^x_j+\sigma^y_i\sigma^y_j$ part is off-diagonal (it flips both spins of an antiparallel pair, e.g.\ $\ket{\uparrow\downarrow}\to\ket{\downarrow\uparrow}$), while $\sigma^z_i\sigma^z_j$ leaves the configuration unchanged. Using $\sigma^x\ket{\uparrow}=\ket{\downarrow}$, $\sigma^y\ket{\uparrow}=i\ket{\downarrow}$, and $\sigma^y\ket{\downarrow}=-i\ket{\uparrow}$, the two terms act on the antiparallel pair as
+\begin{equation}
+\left(\sigma^x_i\sigma^x_j+\sigma^y_i\sigma^y_j\right)\ket{\uparrow\downarrow} = \ket{\downarrow\uparrow} + (i)(-i)\ket{\downarrow\uparrow} = 2\ket{\downarrow\uparrow},
+\end{equation}
+Consequently, every antiparallel bond contributes
+\begin{equation}
+\bra{\downarrow\uparrow}H_{ij}\ket{\uparrow\downarrow}=2J.
+\end{equation}
+To restore stoquasticity, it is enough to simply multiply the off-diagonal elements $E_\text{loc}$ contribution by $-1$. This can be motivate by the Marshall sign rule~\cite{Marshall_1955}, which can be used to remove the non-trivial sign structure of the ground state wavefunction by basis transformation. Considering the following unitary transformation on bipartite lattices $A \cup B$ (two sublattices such that every nearest-neighbour bond connects a site in $A$ to one in $B$, as on an alternating chain), written in the Pauli convention:
 \[
 U = \prod_{i \in A} \sigma_i^z,
 \]
@@ -620,20 +635,34 @@ the ground state wavefunction can be written as
 \[
 U |\psi_0\rangle = \sum_{\sigma} |c_\sigma| \, |\sigma\rangle,
 \]
-with only positive amplitudes. This transformation is exact only for the unfrustrated case $J_2=0$, where the lattice is bipartite; for $J_2>0$ the next-nearest-neighbour bonds connect sites within the same sublattice, breaking bipartiteness, so applying the same sign pattern is a heuristic gauge choice rather than a proven sign-removal\cite{Richter_1994,Voigt_2000}. We measure the impact of the sign problem on a given probability distribution by the average sign, the standard figure of merit for the severity of a sign problem\cite{Troyer_2005}; there it is defined as a ratio of partition functions for a finite-temperature path-integral ensemble, whereas here the same ratio is applied directly to a $T=0$ ground-state wavefunction, evaluated on the Marshall-rotated exact ground-state wavefunction $\phi = U|\Psi_0\rangle$ obtained by exact diagonalisation:
+with only positive amplitudes. This flip is exact for every $J_1$ bond, since bipartiteness guarantees each one connects $A$ to $B$. A $J_2$ bond, however, connects two sites of the \emph{same} sublattice so $U$ leaves its sign unchanged. The correction is therefore exact only for $J_2=0$. It has however been show, that the Marshall correction can survive a certain degree of frustration (that is, $J_1, J_2 \geq 0$)\cite{Richter_1994,Voigt_2000}, which we validate experimentally.
+
+We measure the impact of the sign problem on a given probability distribution by the average sign, the standard figure of merit for the severity of a sign problem\cite{Troyer_2005}; there it is defined as a ratio of partition functions for a finite-temperature path-integral ensemble, whereas here the same ratio is applied directly to a $T=0$ ground-state wavefunction, evaluated on the Marshall-rotated exact ground-state wavefunction $\phi = U|\Psi_0\rangle$ obtained by exact diagonalisation:
   \begin{equation}
       \langle s \rangle = \frac{\sum_{\mathbf{v}} \phi(\mathbf{v})}{\sum_{\mathbf{v}} |\phi(\mathbf{v})|}
   \end{equation}
-Evaluated instead on the untransformed $\Psi_0$, this quantity is identically zero for any singlet ground state by SU(2) symmetry ($\sum_{\mathbf{v}}\Psi_0(\mathbf{v})$ vanishes) and is therefore uninformative in that basis; \autoref{fig:marshall-comparison} (bottom) shows both. We do not evaluate $\langle s\rangle$ on the RBM ansatz $\Psi_\theta$, which is strictly positive by construction and would give $\langle s\rangle \equiv 1$ trivially.
+Evaluated instead on the untransformed $\Psi_0$, this quantity is identically zero for any singlet ground state by SU(2) symmetry ($\sum_{\mathbf{v}}\Psi_0(\mathbf{v})$ vanishes) and is therefore uninformative in that basis; \autoref{fig:marshall-comparison-sign} shows both. We do not evaluate $\langle s\rangle$ on the RBM ansatz $\Psi_\theta$, which is strictly positive by construction and would give $\langle s\rangle \equiv 1$ trivially.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.75\linewidth]{figures/marshall_comparison.pdf}
-    \caption{\textbf{(top)} Energy error per site, $(E_\text{RBM}-E_\text{exact})/N$, with and without the Marshall sign correction, against $J_2/J_1$ (median and IQR over seeds). Without the correction, the ansatz's positive-amplitude restriction causes large, roughly constant error across the whole range; with it, error stays near zero up to the Majumdar-Ghosh point ($J_2/J_1=0.5$) before rising. \textbf{(bottom)} The average sign $\langle s\rangle$ in the Marshall-rotated basis versus the untransformed basis: the latter is flat at zero everywhere, confirming it carries no information; the former tracks the same breakdown seen in the top panel.}
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/marshall_comparison/marshall_comparison_energy.pdf}
+        \caption{}
+        \label{fig:marshall-comparison-energy}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/marshall_comparison/marshall_comparison_sign.pdf}
+        \caption{}
+        \label{fig:marshall-comparison-sign}
+    \end{subfigure}
+    \caption{\textbf{(a)} Energy error per site, $(E_\text{RBM}-E_\text{exact})/N$, with and without the Marshall sign correction, against $J_2/J_1$ (median and IQR over seeds). Without the correction, the ansatz's positive-amplitude restriction causes large, roughly constant error across the whole range; with it, error stays near zero up to the Majumdar-Ghosh point ($J_2/J_1=0.5$) before rising. \textbf{(b)} The average sign $\langle s\rangle$ in the Marshall-rotated basis versus the untransformed basis: the latter is flat at zero everywhere, confirming it carries no information; the former tracks the same breakdown seen in panel (a).}
     \label{fig:marshall-comparison}
 \end{figure}
 
-Interestingly, we empirically observe that even for frustrated Heisenberg models with $0\leq\frac{J_2}{J_1}\leq0.5$, the \gls{rbm} with the Marshall sign correction can accurately approach the ground state energy, whereas without the correction the variational energy degrades significantly (\autoref{fig:marshall-comparison}, top). This is consistent with \cite{Richter_1994}'s square-lattice result and \cite{Voigt_2000}'s direct calculation for the 1D chain, both finding that the sign rule can empirically survive frustration over part of the parameter range, even though the proof no longer strictly applies beyond $J_2=0$. Empirically, we observe that the median relative error over independent seeds rises sharply once $J_2/J_1$ exceeds $0.5$ (\autoref{fig:convergence_median}), in line with expectations that stronger frustration increasingly violates the positive-amplitude assumption underlying the ansatz. We did not test a phase-capable ansatz (e.g.\ a complex-valued \gls{rbm} or a separate amplitude-and-phase network); such a comparison is left as future work.
+Interestingly, we empirically observe that even for frustrated Heisenberg models with $0\leq\frac{J_2}{J_1}\leq0.5$, the \gls{rbm} with the Marshall sign correction can accurately approach the ground state energy, whereas without the correction the variational energy degrades significantly (\autoref{fig:marshall-comparison-energy}). This is consistent with \cite{Richter_1994}'s square-lattice result and \cite{Voigt_2000}'s direct calculation for the 1D chain, both finding that the sign rule can empirically survive frustration over part of the parameter range, even though the proof no longer strictly applies beyond $J_2=0$. Empirically, we observe that the median relative error over independent seeds rises sharply once $J_2/J_1$ exceeds $0.5$ (\autoref{fig:convergence_median}), in line with expectations that stronger frustration increasingly violates the positive-amplitude assumption underlying the ansatz. We did not test a phase-capable ansatz (e.g.\ a complex-valued \gls{rbm} or a separate amplitude-and-phase network); such a comparison is left as future work.
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\linewidth]{figures/fig_convergence_median.pdf}
