@@ -1,0 +1,231 @@
+\mode<presentation>
+
+
+% CUSTOMIZE STRUCTURE ELEMENTS. ------------------------------------------------
+\setbeamertemplate{blocks}[default]
+
+
+\setbeamertemplate{section in toc}[square]
+\setbeamertemplate{subsection in toc}[square]
+
+\setbeamertemplate{itemize items}[square]
+\setbeamertemplate{itemize subitem}[triangle]
+\setbeamertemplate{itemize subsubitem}[circle]
+
+% STRUCTURE FRAME TEMPLATE DEFINITIONS. ----------------------------------------
+% Title page.
+\defbeamertemplate*{title page}{sorbonne}{%
+    {%
+	    \begin{tikzpicture}[overlay, remember picture]
+	        \fill[color=sorbonnered] (current page.north west) rectangle ([shift = {(0, -1\paperheight)}] current page.north east);
+	        
+	        \node[anchor=south east, yshift=0.5cm, xshift=-0.5cm] at (current page.south east) {
+	        	\ifx\beamer@mytheme@logo\beamer@mytheme@logomedecine%
+	        		\includegraphics[width=2.5cm]{sorbonne-med-white.png}
+	        	\else% 
+	        		\ifx\beamer@mytheme@logo\beamer@mytheme@logouniversite%
+	        			\includegraphics[width=2.5cm]{sorbonne-univ-white.png}
+		        	\else% 
+  	        		\ifx\beamer@mytheme@logo\beamer@mytheme@logosciences%
+	          			\includegraphics[width=2.5cm]{sorbonne-sciences-white.png}	        			
+			        	\else% 
+    	        		\ifx\beamer@mytheme@logo\beamer@mytheme@logolettres%
+	            			\includegraphics[width=2.5cm]{sorbonne-lettres-white.png}	        			
+		            	\fi%
+		          	\fi%
+		        	\fi%
+	        	\fi%
+	        };
+	        \node[anchor=south east] at (current page.south east) {
+       		        \includegraphics[width=1cm]{cc.png}
+			};
+	        
+	    \end{tikzpicture}
+    }
+    
+    \begin{minipage}[b][0.35\paperheight]{\textwidth}
+        \vspace{\baselineskip}
+        \usebeamerfont{title}
+        \usebeamercolor[fg]{title page header}
+        \inserttitle
+    \end{minipage}
+    
+    \begin{minipage}[t][0.1\paperheight]{\textwidth}
+        \usebeamerfont{subtitle}
+        \usebeamercolor[fg]{title page header}
+        \insertsubtitle
+    \end{minipage}
+    
+    
+    \begin{minipage}[t]{\textwidth}
+        \usebeamercolor[fg]{author}
+        \usebeamerfont{author}
+        \insertauthor
+    \end{minipage}
+    
+    \vspace*{\baselineskip}
+    \begin{minipage}[t]{\textwidth}
+        \usebeamercolor[fg]{institute}
+        \usebeamerfont{institute}
+        \insertinstitute
+    \end{minipage}
+    
+    \vspace*{\baselineskip}
+    \begin{minipage}[t]{\textwidth}
+        \usebeamercolor[fg]{date}
+        \usebeamerfont{date}
+        \insertdate
+    \end{minipage}
+    
+
+    \addtocounter{framenumber}{-1}
+}
+
+% Section page.
+\defbeamertemplate*{section page}{sorbonne}{%
+    {%
+	    \begin{tikzpicture}[overlay, remember picture]
+	        \fill[color=sorbonnered] (current page.north west) rectangle ([shift = {(0, -1\paperheight)}] current page.north east);
+	        
+	        \node[anchor=north west, yshift=-0.3cm, xshift=0.5cm] at (current page.north west) {
+	        	\ifx\beamer@mytheme@logo\beamer@mytheme@logomedecine%
+		        	\includegraphics[width=2.5cm]{sorbonne-med-white.png}
+	        	\else% 
+	        		\ifx\beamer@mytheme@logo\beamer@mytheme@logouniversite%
+	        			\includegraphics[width=2.5cm]{sorbonne-univ-white.png}	        			
+		        	\else% 
+  	        		\ifx\beamer@mytheme@logo\beamer@mytheme@logosciences%
+  	        			\includegraphics[width=2.5cm]{sorbonne-sciences-white.png}	        			
+			        	\else% 
+    	        		\ifx\beamer@mytheme@logo\beamer@mytheme@logolettres%
+    	        			\includegraphics[width=2.5cm]{sorbonne-lettres-white.png}	        			
+	    	        	\fi%
+	  	        	\fi%
+		        	\fi%
+	        	\fi%
+	        };
+	        
+	    \end{tikzpicture}
+    }
+
+    \vspace{6\baselineskip}
+    \begin{minipage}[b][0.2\paperheight]{\textwidth}
+        \usebeamerfont{sectiontitle}
+        \usebeamercolor[fg]{title page header}
+        \begin{center}{\HUGE \thesection}\end{center}
+        
+        \begin{center}
+        \begin{minipage}{0.6\paperwidth}
+        \centering
+        \let\hyperlink\@secondoftwo\insertsection
+
+        \usebeamerfont{subsectiontitle}
+        \usebeamercolor[bg]{frametitle}
+        
+ %       \hspace*{5mm}\insertsubsection
+ 		\vspace{5mm}
+ 		\setbeamercolor{section number projected}{bg=white}
+        \setbeamercolor{subsection number projected}{bg=white}
+        \setbeamercolor{subsection number shaded projected}{bg=sorbonnered}
+        \setbeamercolor{subsection in toc}{fg=white}
+        \setbeamercolor{subsection in toc shaded}{fg=sorbonnered, bg=sorbonnered}
+        \setbeamertemplate{subsection in toc shaded}[default][80]
+        \setbeamertemplate{sections/subsections in toc}[default]
+		\tableofcontents[sectionstyle=hide/hide,subsectionstyle=show/show/hide]
+        
+        \end{minipage}
+        \end{center}
+
+    \end{minipage}
+}
+
+\AtBeginSection[]{%
+    \begin{frame}[plain, noframenumbering]{}
+        \sectionpage
+    \end{frame}%
+}
+
+% Subsection page.
+\defbeamertemplate*{subsection page}{sorbonne}{%
+    {%
+	    \begin{tikzpicture}[overlay, remember picture]
+	        \fill[color=sorbonnered] (current page.north west) rectangle ([shift = {(0, -1\paperheight)}] current page.north east);
+	        
+	        \node[anchor=north west, yshift=-0.3cm, xshift=0.5cm] at (current page.north west) {
+	        	\ifx\beamer@mytheme@logo\beamer@mytheme@logomedecine%
+	        		\includegraphics[width=2.5cm]{sorbonne-med-white.png}
+	        	\else% 
+	        		\ifx\beamer@mytheme@logo\beamer@mytheme@logouniversite%
+	        			\includegraphics[width=2.5cm]{sorbonne-univ-white.png}	        			
+		        	\else% 
+  	        		\ifx\beamer@mytheme@logo\beamer@mytheme@logosciences%
+	          			\includegraphics[width=2.5cm]{sorbonne-sciences-white.png}	        			
+			        	\else% 
+    	        		\ifx\beamer@mytheme@logo\beamer@mytheme@logolettres%
+	            			\includegraphics[width=2.5cm]{sorbonne-lettres-white.png}	        			
+		            	\fi%
+		          	\fi%
+		        	\fi%
+	        	\fi%
+	        };
+	        
+	    \end{tikzpicture}
+    }
+    
+    \vspace{6\baselineskip}
+    \begin{minipage}[b][0.2\paperheight]{\textwidth}
+        \usebeamerfont{sectiontitle}
+        \usebeamercolor[fg]{title page header}
+        \begin{center}{\HUGE \thesection}\end{center}
+        
+        \begin{center}
+        \begin{minipage}{0.6\paperwidth}
+        \centering
+        \let\hyperlink\@secondoftwo\insertsection
+
+        \usebeamerfont{subsectiontitle}
+        \usebeamercolor[bg]{frametitle}
+        
+        %\hspace*{5mm}\insertsubsection
+        \vspace{5mm}
+ 		\setbeamercolor{section number projected}{bg=white}
+        \setbeamercolor{subsection number projected}{bg=white}
+        \setbeamercolor{subsection number shaded projected}{bg=sorbonnered}
+        \setbeamercolor{subsection in toc}{fg=white}
+        \setbeamercolor{subsection in toc shaded}{fg=sorbonnered, bg=sorbonnered}
+        \setbeamertemplate{subsection in toc shaded}[default][80]
+        \setbeamertemplate{sections/subsections in toc}[default]
+
+   		\tableofcontents[sectionstyle=hide/hide,subsectionstyle=show/shaded/hide]
+
+        \end{minipage}
+        \end{center}
+    \end{minipage}
+    
+}
+
+\AtBeginSubsection[]{%
+    \begin{frame}[plain, noframenumbering]{}
+        \subsectionpage
+    \end{frame}%
+}
+
+
+\setbeamertemplate{footline}
+{
+    \leavevmode%
+    \hbox{%
+        \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}%
+            \usebeamerfont{footline}\insertshorttitle
+        \end{beamercolorbox}%
+        \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,center]{section in head/foot}%
+            \usebeamerfont{footline}\insertsection
+        \end{beamercolorbox}%
+        \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,right]{subsection in head/foot}%
+            \usebeamerfont{footline}\insertsubsection\hspace*{2em}
+            \insertframenumber{} / \inserttotalframenumber\hspace*{2ex} 
+        \end{beamercolorbox}}%
+        \vskip0pt%
+    }
+
+\mode<all>

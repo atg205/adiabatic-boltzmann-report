@@ -333,6 +333,8 @@ TSWLatexianTemp*
 ## Build outputs — compiled PDFs must not be committed (they were the only merge conflicts)
 /report.pdf
 /build/
+/presentation/build/
+/presentation/presentation.pdf
 
 ## Not a figure: private document accidentally committed; purge from history separately
 figures/2_5316856890368498963.pdf

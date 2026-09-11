@@ -1,0 +1,173 @@
+% !TEX TS-program = xelatex
+% !TEX encoding = UTF-8 Unicode
+\documentclass[9pt]{beamer}
+\setlength{\itemsep}{2pt}
+\setlength{\parskip}{2pt}
+\setbeamersize{text margin left=5mm, text margin right=5mm}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{listings}
+
+\title{Tolerant testing of stabilizer states}
+\subtitle{in O(n)!}
+\date[2019]{February 2025}
+\author[Euclid]{Lena MERCADER et Philipp HANUSSEK}
+\institute{Quantum Information Master 2 (QI)}
+
+% \usetheme[logo=medecine,style=medecine]{sorbonne} % pour un theme plus rouge et le logo médecine (par défaut)
+% \usetheme[logo=universite,style=universite]{sorbonne} % pour un theme plus bleu foncé et le logo université
+\usetheme[logo=sciences,style=sciences]{sorbonne} % pour un theme plus bleu clair et le logo sciences
+% \usetheme[logo=lettres,style=lettres]{sorbonne} % pour un theme plus jaune et le logo lettres
+% logo et theme sont mixables
+% \usetheme[logo=medecine,style=universite]{sorbonne} % pour un theme plus rouge et le logo médecine
+
+\usepackage[backend=bibtex, logo=authoryear, citelogo=authoryear]{biblatex}
+\bibliography{library.bib}
+%\renewcommand*{\bibfont}{\footnotesize} % si besoin de réduire la taille du texte de la bibliographie
+
+\begin{document}
+
+\begin{frame}[plain]
+\titlepage
+\end{frame}
+
+\begin{frame}
+        \frametitle{Sommaire}
+        \tableofcontents
+        %\tableofcontents[hideallsubsections]
+\end{frame}
+
+\section{The basics: Tolerant testing, stabilizer states, Norm required to understand the article}
+
+\begin{frame}{Classical and Quantum Property Testing}
+
+\textbf{Classical Property Testing}
+
+\begin{itemize}
+    \item Property $P \subseteq \{0,1\}^{\{0,1\}^n}$ (set of Boolean functions)
+    \item Oracle access to an unknown function $g$
+    \item Promise problem:
+    \[
+        \text{either } g \in P
+        \quad \text{or} \quad
+        \mathrm{dist}(g,P) \ge \varepsilon
+    \]
+    where
+    \[
+        \mathrm{dist}(g,P)
+        =
+        \min_{f \in P} \Pr_x[g(x)\neq f(x)]
+    \]
+    \item Goal: decide which case holds using few queries
+\end{itemize}
+
+\vspace{0.3cm}
+
+\textbf{Quantum Property Testing}
+
+\begin{itemize}
+    \item Property $P$ = set of $n$-qubit quantum states
+    \item Access to independent copies of an unknown state $|\psi\rangle$
+    \item Promise problem:
+    \[
+        \text{either } |\psi\rangle \in P
+        \quad \text{or} \quad
+        \mathrm{dist}(|\psi\rangle,P) \ge \varepsilon
+    \]
+    where
+    \[
+        \mathrm{dist}(|\psi\rangle,P)
+        =
+        \min_{|\phi\rangle \in P}
+        \sqrt{1 - |\langle \psi | \phi \rangle|^2}
+    \]
+    \item Goal: decide using few copies and joint measurements
+\end{itemize}
+
+\textbf{Why Tolerant Testing is Harder}
+\begin{itemize}
+    \item Direct (exact) testing: check stabilizer generators $\rightarrow$ single-copy measurement suffices
+    \item Tolerant testing: must estimate correlations / norms with high precision
+    \item Noise or small deviations can hide stabilizer structure
+    \item Requires \textit{statistical sampling, many copies, careful analysis} → higher complexity
+\end{itemize}
+
+\end{frame}
+
+
+\begin{frame} 
+\frametitle{There Is No Largest Prime Number} 
+\framesubtitle{The proof uses \textit{reductio ad absurdum}.} 
+\begin{theorem}
+	There is no \textbf{largest} prime number. \end{theorem} 
+\begin{enumerate} 
+	\item<1-| alert@1> Suppose $p$ were the largest prime number. 
+	\item<2-> Let $q$ be the product of the first $p$ numbers. 
+	\item<3-> Then $q+1$ is not divisible by any of them. 
+	\item<1-> But $q + 1$ is greater than $1$, thus divisible by some prime
+	number not in the first $p$ numbers.
+\end{enumerate}
+\end{frame}
+
+\section{The quantum algorithm}
+
+
+\begin{frame}{Blocks}
+
+\begin{block}{Bloc standard}
+  $$1 + e^{i \pi} = 0.$$
+\end{block}
+
+\begin{alertblock}{Alerte !}
+$$P(x) = \frac{1}{{\sigma \sqrt {2\pi } }}e^{{{ - \left( {x - \mu } \right)^2 } \mathord{\left/ {\vphantom {{ - \left( {x - \mu } \right)^2 } {2\sigma ^2 }}} \right. \kern-\nulldelimiterspace} {2\sigma ^2 }}}$$
+\end{alertblock}
+\begin{exampleblock}{Ca par exemple !}
+  $$E = m C^2$$
+\end{exampleblock}
+
+\end{frame}
+
+\begin{frame}[fragile]{Code}
+\begin{lstlisting}
+
+// Gestion du contexte ete2013
+// Utilisation d'un nouveau template
+if (%variables['ctpage'] == "ete2013") {
+    variables['template_files']=array('page-ete');
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Code}
+\begin{verbatim}
+
+// Gestion du contexte ete2013
+// Utilisation d'un nouveau template
+if (%variables['ctpage'] == "ete2013") {
+variables['template_files']=array('page-ete');
+}
+\end{verbatim}
+\end{frame}
+
+\begin{frame}{Un papier}
+
+\begin{alertblock}{\citetitle{Ioannidis_2005} \cite{Ioannidis_2005}}
+
+Triste réalité.	
+	
+\end{alertblock}
+
+\end{frame}
+
+\section{References}
+
+\begin{frame}[allowframebreaks]{References}
+
+\printbibliography[heading=none]
+
+\end{frame}
+
+\finalframe{Merci pour votre attention}
+
+\end{document}

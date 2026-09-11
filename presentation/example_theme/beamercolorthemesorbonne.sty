@@ -1,0 +1,95 @@
+\mode<presentation>
+
+\DeclareOptionBeamer{logo}{\def\beamer@mytheme@logo{#1}}
+\ExecuteOptionsBeamer{logo=medecine} % medecine will be default if nothing is given
+\ProcessOptionsBeamer
+
+\def\beamer@mytheme@logomedecine{medecine}%
+\def\beamer@mytheme@logouniversite{universite}%
+\def\beamer@mytheme@logosciences{sciences}%
+\def\beamer@mytheme@logolettres{lettres}%
+
+\DeclareOptionBeamer{style}{\def\beamer@mytheme@style{#1}}
+\ExecuteOptionsBeamer{style=medecine} % medecine will be default if nothing is given
+\ProcessOptionsBeamer
+
+\def\beamer@mytheme@stylemedecine{medecine}%
+\def\beamer@mytheme@styleuniversite{universite}%
+\def\beamer@mytheme@stylesciences{sciences}%
+\def\beamer@mytheme@stylelettres{lettres}%
+
+
+\ifx\beamer@mytheme@style\beamer@mytheme@stylemedecine%
+\definecolor{sorbonnered}{HTML}{AC182E} % medecine
+\else% 
+    \ifx\beamer@mytheme@style\beamer@mytheme@styleuniversite%
+        \definecolor{sorbonnered}{HTML}{1D2769} % universite
+    \else% 
+        \ifx\beamer@mytheme@style\beamer@mytheme@stylesciences%
+            \definecolor{sorbonnered}{HTML}{52B5E5} % sciences
+        \else% 
+          \ifx\beamer@mytheme@style\beamer@mytheme@stylelettres%
+              \definecolor{sorbonnered}{HTML}{FFB700} % lettres
+          \fi%
+        \fi%
+    \fi%
+\fi%
+
+
+% define colors
+\definecolor{main}{HTML}{263068}
+\definecolor{alert}{HTML}{AC182E}
+\definecolor{example}{RGB}{0, 110, 0}
+
+% Settings
+\setbeamercolor{title page header}{fg=white}
+\setbeamercolor{author}{fg=white}
+\setbeamercolor{date}{fg=white}
+\setbeamercolor{institute}{fg=white}
+
+\setbeamercolor{normal text}{fg=main, bg=white}
+\setbeamercolor{alerted text}{fg=alert, bg=white}
+
+\setbeamercolor{titlelike}{fg=main, bg=white}
+\setbeamercolor{frametitle}{parent={titlelike}}
+
+
+\setbeamercolor{footline}{fg=main, bg=white}
+\setbeamercolor{title in head/foot}{fg=main, bg=white}
+\setbeamercolor{section in head/foot}{fg=main, bg=white}
+\setbeamercolor{subsection in head/foot}{fg=main, bg=white}
+
+\setbeamercolor{block title}{bg=main!80!white, fg=white}
+\setbeamercolor{block body}{bg=main!10!white, fg=main}
+
+\setbeamercolor{block title alerted}{bg=alert, fg=white}
+\setbeamercolor{block body alerted}{bg=alert!10!white, fg=main}
+
+\setbeamercolor{block title example}{bg=example, fg=white}
+\setbeamercolor{block body example}{bg=example!10!white, fg=main}
+
+\setbeamercolor{itemize item}{fg=main}
+\setbeamercolor{itemize subitem}{fg=main}
+\setbeamercolor{itemize subsubitem}{fg=main}
+
+\setbeamercolor{enumerate item}{fg=main!70!black}
+\setbeamercolor{enumerate subitem}{fg=main!70!black}
+
+\setbeamercolor{description item}{fg=main!70!black}
+\setbeamercolor{description subitem}{fg=main!70!black}
+
+\setbeamercolor{caption name}{fg=main}
+
+\setbeamercolor{section in toc}{fg=main}
+\setbeamercolor{subsection in toc}{fg=main}
+\setbeamercolor{section number projected}{bg=main}
+\setbeamercolor{subsection number projected}{bg=main}
+
+\setbeamercolor{bibliography item}{fg=main}
+\setbeamercolor{bibliography entry author}{fg=main!70!black}
+\setbeamercolor{bibliography entry title}{fg=main}
+\setbeamercolor{bibliography entry location}{fg=main}
+\setbeamercolor{bibliography entry note}{fg=main}
+
+\mode
+<all>

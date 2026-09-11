@@ -8,7 +8,7 @@
 \usepackage{graphicx}
 \usepackage{physics}
 \usepackage{bm}
-\usepackage{glossaries}
+\usepackage[automake]{glossaries}
 \usepackage[hidelinks]{hyperref}
 \usepackage{subcaption}
 \usepackage{algorithm}
@@ -55,6 +55,7 @@ Philipp Hanussek\\[0.5em]
 }
 \title{\includegraphics[height=1.8cm]{figures/logo/sorbonne-sciences.png}\hspace{2em}\includegraphics[height=1.8cm]{figures/logo/iitislogo.png}\\[1em]Toward Quantum Competitiveness in Adiabatic Quantum Computing: A Comparative Study of Variational Algorithms}
 
+\setcounter{section}{-1}
 \begin{document}
 \maketitle
 
@@ -70,6 +71,9 @@ We compare classical samplers, quantum annealers, and physics-inspired hardware 
 \printglossary[type=\acronymtype]
 \clearpage
 
+\section{Local Context}
+The internship was conducted at the Institute of Applied and Theoretical Informatics, Polish Academy of Sciences, in Gliwice from March 1st to August 31st, under the supervision of dr hab. Bartłomiej Gardas of the Quantum Systems of Informatics group. The task given was to broaden the work conducted in \cite{Gardas_2018}, to develop a framework to systematically test different samplers used in Boltzmann machines to simulate many-body systems. During the internship, I participated in the KCIK (National Quantum Information Centre) Symposium, which was held in Sopot, Poland, and presented a poster with the title "Quantum-inspired dynamical models on quantum
+and classical annealers". All implementations and experiments described in this work were conducted by me, unless otherwise stated.
 \section{Overview}
 Since the development of programmable quantum processors, many claims regarding quantum advantage have been made. Often, these advantage claims did not last long. In this work, we focus exclusively on the D-Wave Quantum Annealer, which leverages quantum technology to solve \gls{qubo} problems. D-Wave is among the first companies to commercially sell quantum computers. In 2025, researchers from D-Wave claimed to have solved a scientifically relevant problem faster using quantum technology than it would have been possible on classical devices~\cite{King_2025}. However, it is currently an open question whether the D-Wave Quantum Annealer is able to solve other problems well, and possibly faster than conventional computers. In this work, we assess D-Wave's ability to sample from a probability distribution, to approximate the ground state of different statistical mechanical models using variational algorithms.  
 \subsection{Previous work}
@@ -297,13 +301,13 @@ E_\text{loc}(\mathbf v) = J_1\sum_i v_iv_{i+1} + J_2\sum_i v_iv_{i+2}
 \end{equation}
 The local energy formulation given here is an extension of the version given in Carleo et al.\cite{Carleo_2017}, as it includes the additional terms to take into account the next-nearest-neighbour $J_2$ coupling\cite{Sorella_1998}. In this work, the \gls{rbm} is restricted to be real-valued (in contrast to the complex-valued \gls{rbm} used in \cite{Carleo_2017}). Consequently, we need to apply a sign correction $s$ to the $J_1$ term.
 
-\item Calculating the \textbf{log-derivatives}\cite{Gardas_2018}: Since the ansatz \eqref{eq:ansatz} already has the hidden units traced out, the gradient observable $O_k$ needed for \gls{sr} (\autoref{sec:stochsticreconfig}) can likewise be evaluated from the visible units alone. Writing $\theta_j = b_j + \sum_i W_{ij} v_i$,
+\item Calculating the \textbf{log-derivatives}\cite{Gardas_2018}: Since the ansatz \eqref{eq:ansatz} already has the hidden units traced out, the gradient observable $O_k$ needed for \gls{sr} (\autoref{sec:stochsticreconfig}) can likewise be evaluated from the visible units alone. Writing $\phi_j = b_j + \sum_i W_{ij} v_i$,
 \begin{equation}
 \frac{\partial \log \Psi(\mathbf v)}{\partial \theta_k} = \frac{1}{2}
 \begin{cases}
 -v_i, & \theta_k = a_i\\
-\tanh(\theta_j), & \theta_k = b_j\\
-v_i \tanh(\theta_j), & \theta_k = W_{ij}.
+\tanh(\phi_j), & \theta_k = b_j\\
+v_i \tanh(\phi_j), & \theta_k = W_{ij}.
 \end{cases}
 \end{equation}
 \item Updating the \textbf{parameters} $\boldsymbol\theta=\{\mathbf a,\mathbf b,\mathbf W\}$ via \gls{sr}, as detailed in \autoref{sec:stochsticreconfig}.
@@ -641,7 +645,7 @@ with only positive amplitudes. This flip is exact for every $J_1$ bond, since bi
     \label{fig:marshall-comparison}
 \end{figure}
 
-We validate this experimentally in \autoref{fig:marshall-comparison}: applying the Marshall sign correction reduces the ground-state energy error by several orders of magnitude compared to the uncorrected ansatz, confirming that the correction works in practice. Consistent with \cite{Richter_1994}'s square-lattice result and \cite{Voigt_2000}'s direct calculation for the 1D chain, this improvement persists over a range of frustration $J_2/J_1$ before degrading, verifying that the sign rule can empirically survive frustration beyond its proven regime of $J_2=0$. We did not test a phase-capable ansatz (e.g.\ a complex-valued \gls{rbm}) and leave it to future work.
+We validate this experimentally in \autoref{fig:marshall-comparison}: applying the Marshall sign correction reduces the ground-state energy error by several orders of magnitude compared to the uncorrected ansatz, confirming that the correction works in practice. Consistent with \cite{Richter_1994}\cite{Voigt_2000}, this improvement persists over a range of frustration $J_2/J_1$ before degrading, verifying that the sign rule can empirically survive frustration beyond its proven regime of $J_2=0$. We did not test a phase-capable ansatz (e.g.\ a complex-valued \gls{rbm}) and leave it to future work.
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\linewidth]{figures/fig_convergence_median.pdf}
@@ -750,7 +754,7 @@ JAX also offers automatic differentiation, but we do not use it, since gradients
 
 \subsection{Hardware and Software Configuration}
 \label{sec:hw_config}
-All classical computation (classical and training loop) run locally via JAX on a single NVIDIA TITAN RTX GPU (24\,GB, driver 560.35.03, CUDA 12.6). The FPGA backend runs on external hardware. D-Wave experiments use the \texttt{Advantage\_system6} (Pegasus) and \texttt{Advantage2\_system1} (Zephyr) solvers and were run between 2026-05-11 and 2026-08-10. Forward-anneal runs use a $20\,\mu\mathrm{s}$ anneal time and \texttt{num\_reads} equal to the sample count, with \texttt{auto\_scale} disabled and with D-Wave's default chain strength. Embeddings are cached per \texttt{(n\_visible, solver)} using \texttt{minorminer}'s biclique embedder. FPGA runs use \texttt{Float32} precision, a $120\,\mathrm{MHz}$ core clock, and 1024 parallel replicas. Its reported time is an on-device cycle count divided by this clock frequency. All stochastic components are seeded per run directly and deterministically from the stated per-run integer seed: \texttt{jax.random.PRNGKey(seed)} is split to separately seed model initialization and the sampler before training starts.
+All classical computation (classical and training loop) run locally via JAX on a single NVIDIA TITAN RTX GPU (24\,GB, driver 560.35.03, CUDA 12.6). The FPGA backend runs on external hardware. Access to the FPGA with a pre-installed sampler was provided by the institute. D-Wave experiments use the \texttt{Advantage\_system6} (Pegasus) and \texttt{Advantage2\_system1} (Zephyr) solvers and were run between 2026-05-11 and 2026-08-10. Forward-anneal runs use a $20\,\mu\mathrm{s}$ anneal time and \texttt{num\_reads} equal to the sample count, with \texttt{auto\_scale} disabled and with D-Wave's default chain strength. Embeddings are cached per \texttt{(n\_visible, solver)} using \texttt{minorminer}'s biclique embedder. FPGA runs use \texttt{Float32} precision, a $120\,\mathrm{MHz}$ core clock, and 1024 parallel replicas. Its reported time is an on-device cycle count divided by this clock frequency. All stochastic components are seeded per run directly and deterministically from the stated per-run integer seed: \texttt{jax.random.PRNGKey(seed)} is split to separately seed model initialization and the sampler before training starts.
 
 \paragraph{Solver internal parameters.}
 Each classical sampler in panels (a)-(b) has its own internal mixing/integration parameters, held fixed across every $(N,\text{seed})$ cell (see \autoref{tab:classical_sampler_params}). Metropolis and Simulated Annealing restart their $200$-chain ensemble from a uniform-random configuration at every \gls{sr} iteration. Gibbs instead uses Persistent Contrastive Divergence (PCD), described in \autoref{sec:gibbs}.

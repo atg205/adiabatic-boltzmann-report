@@ -1,0 +1,78 @@
+
+% Section Quantum Ising Models
+
+% Frame Quantum Ising Model
+
+% text : give hamiltonian
+% will come back later when talking about Quantum Annealing ;)
+% then the pennylane figure credit https://pennylane.ai/datasets/transverse-field-ising-model
+
+Continue description:
+
+Frame Heisenberg model
+
+Give Heisenberg model Hamiltonian we actually use in the report (e.g. XXZ or something i dont remember)
+- text: 
+- main difference to Ising: spin exchange instead of flipping, next nearest neighbor coupling
+- goal in both cases: finding the \textbf{ground state} (and sampling from it)
+
+Frame Example model: Ground state 
+
+- add tfim equation on the top
+- add figure 6 from the report on the bottom, caption: samples from a trained model with 16 spins 
+
+Section Restricted Boltzmann Machines
+
+Frame Introduction
+
+- classical neural network with a layer of visible and hidden units
+- give eq 14 rbm energy function 
+- bottom: fig 4 only subfig a , hidden - visible connections
+
+Frame Training process
+
+1. Sampling from the Boltzmann distribution 
+(? given by what equation again??)
+2. Calculating the local energies 
+give E_loc formula 18
+
+
+Probably new slide Training process 2
+3. Calculate the log derivatives (giv eq 21)
+4. Update the parameters using GD / Stochastic Reconfiguration
+
+Section Samplers
+frame Sampler Overview
+- text: Classial Markov-Chain-Monte-Carlo samplers (Metropolis/Gibbs) on GPU and FPGA
+- quantum samplers: D-Wave Quantum Annealer 
+add image https://mathwithbaddrawings.com/2018/10/31/im-going-on-a-random-walk/ 2018-5-28-random-walk 
+
+frame D-Wave Quantum annealer 
+
+-text move from 
+begin equation driver hamiltonian
+- to problem hamiltonian
+give problem hamiltonian
+
+Stays in the ground state according to the adiabatic theorem (mark somehow as important)
+
+frame Temperature adjustment
+
+- D-Wave Sampler has unknown temperature -> influenced by ... (idk)
+- Cem estimates the temperature from samples
+- add fig 8 both subfigs, only subcaption
+
+section Results
+
+frame methodology
+- sample matched framework 
+- put in the tte equation
+- maybe some other crucial info idk
+
+frame tte results 
+- put in the tte result slide 
+- one line idk what
+
+frame energy consumption results
+- put in the energy results 
+-one line bla bla 

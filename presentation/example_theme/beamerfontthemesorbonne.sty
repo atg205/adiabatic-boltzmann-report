@@ -1,0 +1,50 @@
+\mode<presentation>
+
+% SET FONTS. -------------------------------------------------------------------
+
+\usepackage{ifxetex}
+\ifxetex
+  \usepackage{fontspec}
+  \usefonttheme{professionalfonts}
+  \setsansfont{Fira Sans Light}
+  \setmonofont{Fira Code Light}
+\else
+  % cmbright/Fira Sans require texlive-fontsextra; fall back to
+  % Latin Modern Sans (texlive-latexrecommended, already available).
+  \usepackage{lmodern}
+  \renewcommand{\familydefault}{\sfdefault}
+  \usepackage{sfmath}
+  \usepackage{mathtools}
+\fi
+
+
+% for big numbers in section slides
+\newcommand\HUGE{\@setfontsize\Huge{100}{30}} 
+
+\setbeamerfont{title}{size=\huge, shape=\scshape\bfseries}
+\setbeamerfont{subtitle}{size=\large, shape=\scshape\bfseries, parent=structure}
+\setbeamerfont{author}{size=\large, shape=\scshape}
+
+\setbeamerfont{institute}{size=\large, shape=\scshape}
+\setbeamerfont{date}{size=\large, shape=\scshape}
+
+\setbeamerfont{sectiontitle}{size=\Large, shape=\scshape\bfseries}
+\setbeamerfont{subsectiontitle}{size=\normalsize, shape=\scshape\bfseries}
+\setbeamerfont{frametitle}{size=\Large, shape=\scshape\bfseries}
+
+\setbeamerfont{footline}{size=\tiny}
+
+\setbeamerfont{focusframe}{size=\huge, shape=\scshape\bfseries}
+
+\setbeamerfont{description item}{shape=\bfseries}
+
+\setbeamerfont{caption name}{shape=\bfseries}
+
+\setbeamerfont{bibliography item}{size=\small, shape=\scshape\bfseries}
+\setbeamerfont{bibliography entry author}{size=\small, shape=\scshape\bfseries}
+\setbeamerfont{bibliography entry title}{size=\small, series=\scshape\bfseries}
+\setbeamerfont{bibliography entry location}{size=\small, shape=\scshape\normalfont}
+\setbeamerfont{bibliography entry note}{size=\small, shape=\scshape\normalfont}
+
+\mode
+<all>

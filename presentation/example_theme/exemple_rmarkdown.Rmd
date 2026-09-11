@@ -1,0 +1,114 @@
+---
+title: Un cours intéressant
+subtitle: et didactique !
+short_title: Un titre court
+author: Euclid of Alexandria \texttt{euclid@alexandria.edu}
+institute: Alexandria department
+date: Novembre 2019
+fontsize: 11pt
+bibliography: library.bib
+csl: elsevier-vancouver.csl
+header-includes: 
+- |
+  ```{=latex}
+  % \pgfpagesuselayout{2 on 1}[a4paper] % décommenter si besoin d'un support de cours à imprimer
+  \usepackage{graphicx}
+  \usepackage{rotating}
+  \usepackage{hyperref}
+  \usepackage{caption}
+  \usepackage[normalem]{ulem} % des commandes pour souligner les choses importantes http://texdoc.net/texmf-dist/doc/generic/ulem/ulem.pdf
+  \usepackage{wasysym} % qq symboles maths http://mirrors.ibiblio.org/CTAN/macros/latex/contrib/wasysym/wasysym.pdf
+  \usepackage{bbm} % pour \mathbbm{1}
+  \setbeamertemplate{caption}[numbered] % affichage de "Figure 1"
+  \usetheme[style=medecine,logo=medecine]{sorbonne} % modifier le style si besoin
+  ```
+output:
+    beamer_presentation: 
+      includes:
+        before_body: toc.tex
+        after_body: merci.tex
+      keep_tex: yes
+      highlight: tango
+      template: "default.beamer"
+      latex_engine: xelatex # commenter (ainsi que la ligne suivante) pour compiler avec pdflatex
+      pandoc_args: "--variable=mathspec"
+---
+
+```{r, echo=FALSE}
+default.size <- "scriptsize" ## Taille du code R par defaut (choix possible : "normalsize", "tiny", "scriptsize", 'footnotesize", "small", "large", "Large", "LARGE", "huge", "Huge"). C'est la seule option à toucher, ne pas modifier ce qu'il y a ci-dessous !
+knitr::opts_chunk$set(size = default.size) ## 
+def.chunk.hook  <- knitr::knit_hooks$get("chunk")
+knitr::knit_hooks$set(chunk = function(x, options) {
+  x <- def.chunk.hook(x, options)
+  ifelse(options$size != "normalsize", paste0("\n \\", options$size,"\n\n", x, "\n\n \\normalsize"), x)
+})
+```
+
+# In the morning
+
+### Getting up
+
+- Turn off alarm
+- Get out of bed
+
+### Breakfast
+
+- Eat eggs
+- Drink coffee
+
+### Work
+
+First Euler observed that
+$$1 + e^{i \pi} = 0.$$
+
+Then, Gauss discovered the normal distribution:
+$$P(x) = \frac{1}{{\sigma \sqrt {2\pi } }}e^{{{ - \left( {x - \mu } \right)^2 } \mathord{\left/ {\vphantom {{ - \left( {x - \mu } \right)^2 } {2\sigma ^2 }}} \right. \kern-\nulldelimiterspace} {2\sigma ^2 }}}$$
+
+Finally, Einstein proclaimed: 
+$$E = m C^2$$
+
+At the end, Ioannidis concluded that most published research findings are false [see @Ioannidis_2005]
+
+---
+
+
+```{r}
+summary(cars)
+```
+
+---
+
+```{r, size = "normalsize"}
+summary(cars)
+```
+
+---
+
+```{r}
+plot(cars)
+```
+
+# In the evening
+
+## Dinner
+
+### Miam!
+
+- Eat spaghetti
+- Drink wine
+
+## Going to sleep
+
+### Two simple steps!
+
+- Get in bed
+- Count sheep
+
+::: {.alertblock}
+### And now...
+Good night!
+:::
+
+# References
+
+### References

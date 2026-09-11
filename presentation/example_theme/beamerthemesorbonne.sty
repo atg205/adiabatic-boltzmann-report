@@ -1,0 +1,64 @@
+\mode<presentation>
+
+% Requirement
+\RequirePackage{tikz}
+
+% Settings
+\useinnertheme{sorbonne}
+\useoutertheme{sorbonne}
+\usefonttheme{sorbonne}
+% logo medecine ou universite
+\DeclareOptionBeamer{logo}{
+    \PassOptionsToPackage{logo=#1}{beamercolorthemesorbonne}
+}
+\ExecuteOptionsBeamer{logo=medecine}
+\ProcessOptionsBeamer
+
+\DeclareOptionBeamer{style}{
+    \PassOptionsToPackage{style=#1}{beamercolorthemesorbonne}
+}
+\ExecuteOptionsBeamer{style=medecine}
+\ProcessOptionsBeamer
+
+\usecolortheme{sorbonne}
+
+
+
+\setbeamertemplate{navigation symbols}{}
+
+%% Final frame with sorbonne logo
+\newcommand{\finalframe}[1]{
+	\begin{frame}[noframenumbering,plain]
+	\begin{tikzpicture}[overlay, remember picture]
+	\fill[color=sorbonnered] (current page.north west) rectangle ([shift = {(0, -1\paperheight)}] current page.north east);
+	\node[yshift=-3cm, font=\large\color{white},text width=10cm,text badly centered] at (current page.90) {\uppercase\expandafter{#1}};
+	
+	\node[anchor=center] at (current page.center) {
+                    \ifx\beamer@mytheme@logo\beamer@mytheme@logomedecine%
+                    \includegraphics[width=4cm]{sorbonne-med-white.png}
+                    \else% 
+        	             \ifx\beamer@mytheme@logo\beamer@mytheme@logouniversite%
+                       \includegraphics[width=4cm]{sorbonne-univ-white.png}
+                       \else% 
+        	                \ifx\beamer@mytheme@logo\beamer@mytheme@logosciences%
+                          \includegraphics[width=4cm]{sorbonne-sciences-white.png}
+                          \else% 
+           	                \ifx\beamer@mytheme@logo\beamer@mytheme@logolettres%
+                            \includegraphics[width=4cm]{sorbonne-lettres-white.png}
+          	                \fi%
+        	                \fi%
+        	            \fi%
+                    \fi%
+	};
+
+	\node[anchor=south] at (current page.south) {
+		\color{white}\tiny\centering\url{sorbonne-universite.fr}
+	};
+
+	\end{tikzpicture}
+
+\end{frame}
+}
+
+
+\mode<all>
