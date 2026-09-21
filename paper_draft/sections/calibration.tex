@@ -1,0 +1,56 @@
+\section{Calibration accuracy and residual non-Gibbs distortion}
+\label{sec:calibration}
+
+This section reports what is already measurable with exact enumeration at small $N$: how far a calibrated annealer sample actually sits from the intended visible distribution, independent of any $\betaeff$ fit.
+
+\subsection{Effect of input scale and automatic normalization}
+
+Figure~\ref{fig:autoscale} sweeps the input coefficient scale $\beta_x$ on a small ($N=8$) Pegasus-embedded network. With the solver's automatic coefficient normalization enabled, rescaling all programmed coefficients by $1/\beta_x$ has little effect on either $\DTV(\widehat q,\pi_\theta)$ or the fitted $\widehat\beta_{\mathrm{LS}}$: normalization divides by a quantity that scales with the same factor, canceling the intended change. With normalization disabled, both quantities respond to $\beta_x$: the recorded $\DTV$ falls from $\approx0.63$ to $\approx0.30$ near $\beta_x=5$ before rising again, against a finite-sample reference of $\approx0.19$ at this sample count. Reaching the right scale improves the histogram; it does not make the sampled distribution statistically indistinguishable from an ideal sample of $\pi_\theta$ at that sample count.
+
+\begin{figure}[t]
+\centering
+\panel{.48}{\textbf{(a)}\\\includegraphics[width=\linewidth]{figures/dtv_autoscale_dtv_N8.pdf}}\hfill
+\panel{.48}{\textbf{(b)}\\\includegraphics[width=\linewidth]{figures/dtv_autoscale_beta_N8.pdf}}
+\caption{Effect of automatic coefficient normalization on a small ($N=8$) Pegasus-embedded network. (a) Total-variation distance to the enumerated $\pi_\theta$. (b) Fitted $\widehat\beta_{\mathrm{LS}}$ (Eq.~\eqref{eq:cem-ls}). Disabling normalization lets the input scale $\beta_x$ change the sampled law; enabling it cancels the attempted adjustment. The reference line is a finite-sample floor at this sample count, not a lower bound.}
+\label{fig:autoscale}
+\end{figure}
+
+\subsection{Sampler comparison against the exact trial distribution}
+
+Figure~\ref{fig:classical} compares classical samplers against the exactly enumerated distribution of trained $N=M=8$ networks at two field values. Metropolis and block Gibbs sampling remain close to the finite-sample reference across the tested effort range; simulated annealing starts far from it at low effort and approaches the other two as its schedule lengthens. \missinginline{no QPU curve is plotted on these same axes} -- the evaluation's item O2 (Sec.~\ref{sec:code-gaps}) asks for exactly this comparison, and it is not yet available: the only existing QPU $\DTV$ measurement is the single auto-scale point of Fig.~\ref{fig:autoscale}, taken at a different instance, sample count, and effort axis than Fig.~\ref{fig:classical}, so the two cannot be read against each other.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/dtv_classical_N8_M8.pdf}\\[2pt]
+\includegraphics[width=\linewidth]{figures/dtv_classical_N8_M8_dist.pdf}
+\caption{Sampling diagnostics for trained $N=M=8$ Ising networks at $h=0.5$ and $h=2$. Top: total-variation distance from the enumerated trial distribution vs.\ sampling effort. Bottom: ranked probabilities of the trial distribution itself.}
+\label{fig:classical}
+\end{figure}
+
+\missing{\textbf{Matched QPU-vs-classical sampling-quality benchmark (evaluation item O2).} A QPU $\DTV$ curve at $N=8$, on the same instance, sample count, and effort axis as Fig.~\ref{fig:classical}, together with the corresponding $\widehat\beta_{\mathrm{LS}}$ and $\widehat\beta_{\mathrm{MLE}}$ (Sec.~\ref{sec:cem-mle}) reported alongside it. This is an experiment, not a re-plot: it requires new small-$N$ QPU sampling runs instrumented to log the joint $(v,h)$ pairs needed for both CEM estimators.}
+
+\subsection{Consistency between conditional and visible fits}
+
+Figure~\ref{fig:cemvalidation} compares the pooled-CEM estimate $\widehat\beta_{\mathrm{LS}}$ against a direct visible-distribution fit $\widehat\beta_{\mathrm{KL}}=\arg\min_\beta\DKL(\widehat q\Vert\pi_{\theta,\beta})$, obtainable only where $\pi_{\theta,\beta}$ can be enumerated ($N=8,12$). Many points lie near the diagonal, but checkpoint-averaged offsets of order $0.06$–$0.08$ appear, and at least one fit sits at the search boundary $\beta=50$. Agreement is therefore neither uniform nor evidence of exact calibration; it is consistent with -- but does not by itself demonstrate -- the counterexample of Sec.~\ref{sec:cem-limits}, in which the pooled hidden loss can be minimized at the correct $\beta$ even when the visible marginal is substantially wrong.
+
+\begin{figure}[t]
+\centering
+\panel{.48}{\textbf{(a)}\\\includegraphics[width=\linewidth]{figures/cem_validation_calibration.pdf}}\hfill
+\panel{.48}{\textbf{(b)}\\\includegraphics[width=\linewidth]{figures/cem_validation_bias.pdf}}
+\caption{(a) Pooled-CEM $\widehat\beta_{\mathrm{LS}}$ against the enumerated visible-fit $\widehat\beta_{\mathrm{KL}}$, $N=8,12$. (b) Checkpoint-averaged offsets. A boundary estimate is annotated and must not be read as a resolved optimum.}
+\label{fig:cemvalidation}
+\end{figure}
+
+Figure~\ref{fig:cem} illustrates the least-squares fit itself for a representative $N=16$ network: the pooled conditional loss $\mathcal L(\beta)$ has a clear minimum distinguishing $\widehat\beta_{\mathrm{LS}}\approx1.94$ from the candidates $\beta\in\{0.5,1,5\}$.
+
+\begin{figure}[t]
+\centering
+\panel{.48}{\textbf{(a)}\\\includegraphics[width=\linewidth]{figures/cem_matching_candidates.pdf}}\hfill
+\panel{.48}{\textbf{(b)}\\\includegraphics[width=\linewidth]{figures/cem_matching_objective.pdf}}
+\caption{Pooled least-squares CEM for a representative $N=16$, $h=1$ network. (a) Binned hidden responses against candidate conditional curves. (b) $\mathcal L(\beta)$, Eq.~\eqref{eq:cem-ls}, minimized near $\beta=1.94$.}
+\label{fig:cem}
+\end{figure}
+
+\missing{\textbf{Residual reported as a number, not only ``very close.''} Per the evaluation, Fig.~\ref{fig:cemvalidation} and Fig.~\ref{fig:cem} should be accompanied by numerical RMSE, relative error, bias, and boundary-hit frequency across the full $(N,h,\beta_x,\mathrm{seed})$ grid, not a qualitative description. This is a re-tabulation of already-collected fit results and does not require new hardware time, but no script currently outputs these summary statistics (Sec.~\ref{sec:code-gaps}).}
+
+\missing{\textbf{Conditional-MLE column.} Once $\widehat\beta_{\mathrm{MLE}}$ (Eq.~\eqref{eq:score}) is implemented (Sec.~\ref{sec:cem-mle}), Figs.~\ref{fig:cemvalidation}--\ref{fig:cem} should carry a third series comparing it to $\widehat\beta_{\mathrm{LS}}$ and $\widehat\beta_{\mathrm{KL}}$ on identical data.}

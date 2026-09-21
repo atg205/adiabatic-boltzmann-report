@@ -1,0 +1,27 @@
+\section{Independent validation methodology}
+\label{sec:validation}
+
+The central methodological weakness identified in review of the source report is that ``convergence'' was determined from the rolling mean of the \emph{training-time} logged energy (Eqs.~\eqref{eq:rollingmean}--\eqref{eq:crossing} below), computed from samples drawn by the very sampler under test. The local energy is an unbiased estimator of the variational energy $E_\theta=\sum_v\pi_\theta(v)\Eloc(v)$ only when its samples are drawn from $\pi_\theta$ itself (Eq.~\eqref{eq:born}); if a sampler returns a distorted distribution $q\ne\pi_\theta$, it can simultaneously bias the SR update, bias its own logged training energy, and produce an apparently early threshold crossing, all consistently with one another. Because the pooled-CEM diagnostic of Sec.~\ref{sec:thermometry} does not certify the visible distribution (Sec.~\ref{sec:cem-limits}), a QPU-trained ansatz's convergence cannot be taken at face value from its own training log. This section specifies the independent evaluator that Secs.~\ref{sec:calibration}--\ref{sec:tta} then apply.
+
+\subsection{Frozen-ansatz re-evaluation protocol}
+\label{sec:protocol}
+
+At each checkpointed SR iteration $t$, the parameters $\theta_t$ are frozen and evaluated by a procedure that shares no randomness with the training sampler:
+\begin{enumerate}
+\item \textbf{Exact enumeration, $N\lesssim20$--$24$.} $E_{\theta_t}=\sum_v\pi_{\theta_t}(v)\Eloc(v)$ is computed by direct summation over all $2^N$ configurations, giving a training-independent, sampling-noise-free reference energy and, via $\pi_{\theta_t}$, an exact visible-distribution reference against which any sampler's histogram can be compared with $\DTV$ or $\DKL$.
+\item \textbf{Independent multi-chain reference sampling, larger $N$.} A long block-Gibbs or Metropolis chain (Eq.~\eqref{eq:condmean}), seeded independently of the training run and of any QPU calls, estimates $\widetilde E_q=\sum_vq(v)\Eloc(v)$ with multiple independent chains, reported mixing diagnostics (e.g.\ split-$\hat R$ or an integrated autocorrelation time), and confidence intervals corrected for the resulting autocorrelation rather than treated as i.i.d.
+\item \textbf{Energy variance as a second criterion.} Because an exact eigenstate has $\operatorname{Var}_{\pi_\theta}(\Eloc)=0$, a checkpoint is reported with both its estimated energy error and its estimated local-energy variance; a small variance under correct averaging is evidence of proximity to \emph{an} eigenstate, not by itself evidence that it is the ground state.
+\end{enumerate}
+A crossing at tolerance $\epsilon$ (Sec.~\ref{sec:tta}) is declared only when an upper confidence bound on the \emph{independently} estimated energy error, from step 1 or 2, falls below $\epsilon$. Until this evaluation is performed, we follow the evaluation's suggested terminology and refer to the training-log-based statistic used in the source report as a seed \emph{satisfying the training-energy criterion}, not as a validated seed.
+
+\subsection{Training-time crossing statistic, for reference}
+\label{sec:trainingcrossing}
+
+The source report's crossing statistic, which the re-evaluation above supersedes, uses a rolling mean of the logged training energy $\widehat E_t$ over a window $w$,
+\begin{equation}
+\overline E_t=\frac1{t-t_0+1}\sum_{\tau=t_0}^t\widehat E_\tau,\quad t_0=\max(1,t-w+1),\quad \delta_t=\frac{|\overline E_t-E_0|}{N},
+\label{eq:rollingmean}
+\end{equation}
+and the first sustained crossing $t^\star=\min\{t\le T-w+1:\delta_s<\epsilon\ \forall s\in\{t,\dots,t+w-1\}\}$, undefined within budget $T$ if no such $t^\star$ exists. We retain this definition because Sec.~\ref{sec:tta} reports both the training-time and the independently validated crossing side by side, so that the size of the gap between them -- rather than only the corrected number -- is visible.
+
+\missing{\textbf{Implementation and execution of the frozen-ansatz re-evaluator.} No script in the audited repository re-evaluates a checkpointed RBM by exact enumeration or by an independent, separately seeded sampling chain; the only enumeration code found operates on small hand-built diagnostic examples (Sec.~\ref{sec:cem-limits}), not on checkpoints saved from a training run (Sec.~\ref{sec:code-gaps}, item T2). This is, in the evaluation's words, ``the most important methodological repair'' and is listed first among the placeholders in Sec.~\ref{sec:code-gaps} because every downstream number in Secs.~\ref{sec:calibration}--\ref{sec:tta} that is labelled ``independently validated'' depends on it. Concretely still needed: (i) a checkpoint-loading harness that reconstructs $\theta_t$ without touching the training RNG state; (ii) an exact-enumeration evaluator for $N\le24$; (iii) an independent multi-chain Gibbs/Metropolis evaluator with a mixing diagnostic for larger $N$; (iv) re-running both over the archived checkpoints for at least the cells entering Fig.~\ref{fig:tta-grid} [PLACEHOLDER] and Table~\ref{tab:crossover} [PLACEHOLDER].}

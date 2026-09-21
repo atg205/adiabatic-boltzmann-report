@@ -1,0 +1,72 @@
+\documentclass[aps,prapplied,reprint,superscriptaddress,longbibliography]{revtex4-2}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,bm,graphicx,booktabs}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+
+\newcommand{\vct}[1]{\boldsymbol{#1}}
+\newcommand{\Eloc}{E_{\mathrm{loc}}}
+\newcommand{\DTV}{D_{\mathrm{TV}}}
+\newcommand{\DKL}{D_{\mathrm{KL}}}
+\newcommand{\avg}[1]{\left\langle #1\right\rangle}
+\newcommand{\betaeff}{\beta_{\mathrm{eff}}}
+\newcommand{\betahw}{\beta_{\mathrm{hw}}}
+\newcommand{\panel}[2]{\begin{minipage}[t]{#1\textwidth}\centering #2\end{minipage}}
+
+% ---------------------------------------------------------------------------
+% \missing{}: visually flags analyses/figures/code that do not exist yet.
+% Every use is also logged in MISSING.md at the repository root of this draft.
+% ---------------------------------------------------------------------------
+\newcommand{\missing}[1]{%
+  \begin{quote}\color{red!70!black}\itshape
+  [MISSING ANALYSIS -- #1]
+  \end{quote}%
+}
+\newcommand{\missinginline}[1]{\textcolor{red!70!black}{\itshape[missing: #1]}}
+
+\begin{document}
+
+\title{Pooled Conditional Thermometry for Quantum-Annealer-Assisted\\ Neural Quantum States}
+
+\author{Philipp Hanussek}
+\email{philipp.hanussek@etu.sorbonne-universite.fr}
+\affiliation{Institute of Theoretical and Applied Informatics, Polish Academy of Sciences, Ba\l{}tycka 5, Gliwice, 44-100, Poland}
+\affiliation{Sorbonne Universit\'e, Facult\'e des Sciences et Ing\'enierie, 75005 Paris, France}
+
+\author{Zakaria Mzaouali}
+\email{z.mzaouali@extern.fz-juelich.de}
+\affiliation{J\"ulich Supercomputing Centre, Forschungszentrum J\"ulich, Wilhelm-Johnen-Stra{\ss}e, J\"ulich, 52428, Germany}
+\affiliation{Institut f\"ur Theoretische Physik, Universit\"at T\"ubingen, Auf der Morgenstelle 14, 72076 T\"ubingen, Germany}
+
+\author{\L{}ukasz Pawela}
+\affiliation{Institute of Theoretical and Applied Informatics, Polish Academy of Sciences, Ba\l{}tycka 5, Gliwice, 44-100, Poland}
+\affiliation{Quantumz.io Sp.\ z o.\ o., Pu\l{}awska 12/3, 02-566 Warsaw, Poland}
+
+\author{Bart\l{}omiej Gardas}
+\email{bgardas@iitis.pl}
+\affiliation{Institute of Theoretical and Applied Informatics, Polish Academy of Sciences, Ba\l{}tycka 5, Gliwice, 44-100, Poland}
+\affiliation{Quantumz.io Sp.\ z o.\ o., Pu\l{}awska 12/3, 02-566 Warsaw, Poland}
+
+\date{\today}
+
+\begin{abstract}
+Quantum annealers can supply configurations for neural-network variational Monte Carlo, but a returned sample is only useful if its distribution -- not merely its energy -- is known. We introduce a partition-function-free, online conditional-thermometry estimator for restricted-Boltzmann-machine (RBM) wavefunctions sampled by a quantum annealer: every visible configuration observed during training is treated as its own conditioning vector, and all paired hidden observations are pooled into a single effective-inverse-temperature estimate, at no additional device cost. We derive this estimator as a conditional maximum-likelihood problem, relate it to the least-squares construction used in earlier work, and quantify its residual disagreement with the full visible distribution on small transverse-field-Ising-model (TFIM) systems where exact enumeration is possible. Building on this diagnostic, we benchmark two generations of D-Wave hardware (Pegasus, Zephyr) against classical Markov-chain samplers and a field-programmable-gate-array (FPGA) sampler under an independently validated time-to-accuracy criterion, and we report the hardware-resource cost (physical qubits, chain length, embedding success) of the quantum-annealer arm alongside its device time. \missinginline{headline result pending re-run of items in Sec.~\ref{sec:limitations}} We find [PLACEHOLDER: state the corrected, size- and criterion-conditional crossover result once independently validated TTA data are available] rather than an unconditional claim that quantum annealing overtakes classical sampling.
+\end{abstract}
+
+\maketitle
+
+\input{sections/introduction}
+\input{sections/thermometry}
+\input{sections/validation}
+\input{sections/calibration}
+\input{sections/tta}
+\input{sections/resources}
+\input{sections/limitations}
+\input{sections/conclusion}
+\input{sections/appendices}
+
+\clearpage
+\bibliography{references}
+\end{document}

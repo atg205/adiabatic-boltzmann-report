@@ -1,0 +1,27 @@
+\section{Limitations and the conditions under which a crossover is observed}
+\label{sec:limitations}
+
+\subsection{Correcting the headline claim}
+\label{sec:headline}
+
+The source report's abstract and conclusion state that \emph{both} Pegasus and Zephyr overtake FPGA in $\mathrm{TTE}_{99}$ at the largest tested size. The underlying figure does not support this for both devices: at $N=64$, FPGA's $\mathrm{TTE}_{99}$ is $0.87\,\mathrm s$, and the report's own results text calls this ``clearly higher than Pegasus'' -- it does not make the corresponding claim for Zephyr, whose plotted value sits above FPGA's at that size. The defensible statement, and the one this paper adopts, is:
+
+\begin{quote}
+Under the device-time metric and the $h=0.5$, $\epsilon=0.1$ convergence criterion, Pegasus(+CEM) has a lower estimated $\mathrm{TTE}_{99}$ than FPGA at $N=64$. Zephyr(+CEM) does not. This is a single observed crossover at one size, one field, and one tolerance, using the training-log crossing statistic of Sec.~\ref{sec:trainingcrossing} and the retry formula whose limitations are discussed in Sec.~\ref{sec:tte-issue} -- not evidence of asymptotic scaling, and not evidence of quantum advantage.
+\end{quote}
+
+Every occurrence of the broader ``both QPUs overtake FPGA'' claim in the source material -- abstract, results discussion of Fig.~\ref{fig:tte-baseline}, and conclusion -- should be replaced by this statement or removed.
+
+\subsection{Why the crossover should not yet be generalized}
+
+Three independent limitations, each already established in this paper, bound how far the corrected statement above can be pushed:
+\begin{enumerate}
+\item \textbf{Validation.} The crossing itself is read from the training log (Sec.~\ref{sec:trainingcrossing}), not from the independent evaluator of Sec.~\ref{sec:validation}; Sec.~\ref{sec:cem-limits} shows explicitly that a stable training-time energy is compatible with a substantially wrong visible distribution.
+\item \textbf{Retry accounting.} The $\mathrm{TTE}_{99}$ values being compared understate the cost of unsuccessful seeds (Sec.~\ref{sec:tte-issue}), and the ranking at $N=64$ is decided by exactly the seeds this affects.
+\item \textbf{Criterion dependence.} The crossover is reported at one $(\epsilon,h)$ cell out of the space described in Sec.~\ref{sec:eps-h}; whether it persists, disappears, or reverses under a tighter tolerance or a different field is, at present, unknown rather than merely uncertain -- the $\{0.1,0.05,0.02,0.01\}\times\{0.5,1.0,2.0\}$ grid needed to answer this has not been run.
+\end{enumerate}
+A single number that survives all three checks -- an independently validated, survival-corrected $\mathrm{TTE}_{99}$ crossover confirmed across at least two tolerances and two fields -- does not yet exist. \missing{Table~\ref{tab:crossover} [PLACEHOLDER]: the corrected crossover result, filled in once Secs.~\ref{sec:validation}, \ref{sec:tte-issue}, and \ref{sec:eps-h}'s placeholders are resolved.}
+
+\subsection{Scope excluded from the central claim}
+
+Three further results from the source report are retained only as short, explicitly scoped appendices (App.~\ref{app:sparse}--\ref{app:marshall}) rather than folded into the thermometry-and-validation narrative above, following the evaluation's recommendation: the sparse hardware-native RBM ablation (App.~\ref{app:sparse}), simultaneous embeddings (App.~\ref{app:parallel}), and the Marshall-sign study on frustrated Heisenberg chains (App.~\ref{app:marshall}). None of these three bears on the effective-temperature estimator that is this paper's central contribution, and each has its own, separately scoped limitations recorded in its appendix.
