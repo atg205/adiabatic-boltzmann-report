@@ -17,7 +17,7 @@ Figure~\ref{fig:autoscale} sweeps the input coefficient scale $\beta_x$ on a sma
 
 \subsection{Sampler comparison against the exact trial distribution}
 
-Figure~\ref{fig:classical} compares classical samplers against the exactly enumerated distribution of trained $N=M=8$ networks at two field values. Metropolis and block Gibbs sampling remain close to the finite-sample reference across the tested effort range; simulated annealing starts far from it at low effort and approaches the other two as its schedule lengthens. \missinginline{no QPU curve is plotted on these same axes} -- the evaluation's item O2 (Sec.~\ref{sec:code-gaps}) asks for exactly this comparison, and it is not yet available: the only existing QPU $\DTV$ measurement is the single auto-scale point of Fig.~\ref{fig:autoscale}, taken at a different instance, sample count, and effort axis than Fig.~\ref{fig:classical}, so the two cannot be read against each other.
+Figure~\ref{fig:classical} compares classical samplers against the exactly enumerated distribution of trained $N=M=8$ networks at two field values. Metropolis and block Gibbs sampling remain close to the finite-sample reference across the tested effort range; simulated annealing starts far from it at low effort and approaches the other two as its schedule lengthens. \missinginline{no QPU curve is plotted on these same axes} -- a separate audit of the source report (\texttt{audyt\_cld\_bg.md}, finding O2: ``No matched QPU-versus-classical sampling-quality benchmark'') asks for exactly this comparison, and it is not yet available here: the only existing QPU $\DTV$ measurement is the single auto-scale point of Fig.~\ref{fig:autoscale}, taken at a different instance, sample count, and effort axis than Fig.~\ref{fig:classical}, so the two cannot be read against each other.
 
 \begin{figure}[t]
 \centering
@@ -27,7 +27,9 @@ Figure~\ref{fig:classical} compares classical samplers against the exactly enume
 \label{fig:classical}
 \end{figure}
 
-A matched comparison turns out to already exist in the archived training logs, just never plotted this way. Every training run at $N\le16$ logs \texttt{kl\_exact}: the exact-enumeration $\DKL(\widehat q\Vert\pi_\theta)$ between that iteration's empirical sample histogram and the \emph{current} $\theta$'s own exactly enumerated Born distribution (\texttt{src/encoder.py}, gated by \texttt{KL\_EXACT\_MAX\_N=16}), computed identically for classical and QPU-driven runs. Figure~\ref{fig:kl-solver} plots it against SR iteration for all six solvers at $N=8,16$, closing the evaluation's item O2 with no new experiments.
+A matched comparison turns out to already exist in the archived training logs, just never plotted this way. Every training run at $N\le16$ logs \texttt{kl\_exact}: the exact-enumeration $\DKL(\widehat q\Vert\pi_\theta)$ between that iteration's empirical sample histogram and the \emph{current} $\theta$'s own exactly enumerated Born distribution (\texttt{src/encoder.py}, gated by \texttt{KL\_EXACT\_MAX\_N=16}), computed identically for classical and QPU-driven runs. Figure~\ref{fig:kl-solver} plots it against SR iteration for all six solvers at $N=8,16$, closing audit finding O2 above with no new experiments.
+
+\paragraph{Status.} \textbf{O2: closed}, in substance: a matched classical-vs-QPU sampling-quality comparison, on identical axes, now exists at $N=8,16$. One narrower part of the original finding is not fully addressed -- it also asked for the fitted $\beta_{\mathrm{eff}}$ to be reported alongside; we show CEM's downstream effect on distributional fidelity (Fig.~\ref{fig:kl-cem}) rather than tabulating $\widehat\beta_{\mathrm{LS}}$ itself next to Fig.~\ref{fig:kl-solver}.
 
 \begin{figure*}[t]
 \centering
