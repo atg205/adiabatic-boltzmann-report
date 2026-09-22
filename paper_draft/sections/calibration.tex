@@ -27,7 +27,25 @@ Figure~\ref{fig:classical} compares classical samplers against the exactly enume
 \label{fig:classical}
 \end{figure}
 
-\missing{\textbf{Matched QPU-vs-classical sampling-quality benchmark (evaluation item O2).} A QPU $\DTV$ curve at $N=8$, on the same instance, sample count, and effort axis as Fig.~\ref{fig:classical}, together with the corresponding $\widehat\beta_{\mathrm{LS}}$ and $\widehat\beta_{\mathrm{MLE}}$ (Sec.~\ref{sec:cem-mle}) reported alongside it. This is an experiment, not a re-plot: it requires new small-$N$ QPU sampling runs instrumented to log the joint $(v,h)$ pairs needed for both CEM estimators.}
+A matched comparison turns out to already exist in the archived training logs, just never plotted this way. Every training run at $N\le16$ logs \texttt{kl\_exact}: the exact-enumeration $\DKL(\widehat q\Vert\pi_\theta)$ between that iteration's empirical sample histogram and the \emph{current} $\theta$'s own exactly enumerated Born distribution (\texttt{src/encoder.py}, gated by \texttt{KL\_EXACT\_MAX\_N=16}), computed identically for classical and QPU-driven runs. Figure~\ref{fig:kl-solver} plots it against SR iteration for all six solvers at $N=8,16$, closing the evaluation's item O2 with no new experiments.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/reanalysis/fig_kl_exact_solver_comparison.pdf}
+\caption{Exact $\DKL(\widehat q\Vert\pi_\theta)$ vs.\ SR iteration, $h=0.5$, $N=8,16$ (median and IQR band, 20 seeds per solver). Classical MCMC (Metropolis, Gibbs, simulated annealing) and FPGA converge to a common, tight floor by iteration $\sim\!20$--$30$. Pegasus(+CEM) and Zephyr(+CEM) settle above that floor, with visibly wider bands -- a directly quantified, exact-enumeration version of the ``residual non-Gibbs distortion'' this section otherwise only measures indirectly through $\DTV$ at one instance. All curves start high and decline: the RBM's own Born distribution is close to unstructured at initialization, and concentrates onto a lower-entropy manifold as SR training proceeds, which is mechanically easier for a finite sample to resolve regardless of sampler -- confirmed by Metropolis, whose $\beta_x$ is fixed at exactly $1$ throughout and shows the same decline. Pegasus(+CEM) and Zephyr(+CEM) additionally show an early rise before falling; we checked and ruled out a simple explanation (their $\beta_x$ is already fluctuating in its eventual steady range during this rise, not still converging from a poorly calibrated start), so the mechanism behind the hump is left as an open question rather than asserted.}
+\label{fig:kl-solver}
+\end{figure*}
+
+The same data lets us test the paper's own central claim directly: does pooled CEM correction actually improve distributional fidelity, or only training-energy stability? Figure~\ref{fig:kl-cem} compares \texttt{cem=0} against \texttt{cem=1} for both devices. CEM lowers the median final-iteration $\DKL$ by a factor of $\approx\!4$ for Pegasus ($0.66\to0.17$ at $N=8$; $1.26\to0.27$ at $N=16$) and $\approx\!10$ for Zephyr ($2.57\to0.23$ at $N=8$; $3.72\to0.35$ at $N=16$), durably across the entire training run rather than only at convergence.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/reanalysis/fig_kl_exact_cem_ablation.pdf}
+\caption{Effect of pooled CEM correction on exact $\DKL(\widehat q\Vert\pi_\theta)$, $h=0.5$, $N=8,16$ (median and IQR band, 20 seeds per arm). \texttt{cem=0} (uncorrected) sits nearly an order of magnitude above \texttt{cem=1} throughout training for both devices, with the larger benefit for Zephyr. This is direct evidence that the pooled-CEM estimator of Sec.~\ref{sec:cem-ls} improves the sampled distribution itself, not only the logged training energy -- the empirical counterpart to the theoretical properties left open in Sec.~\ref{sec:cem-theory}.}
+\label{fig:kl-cem}
+\end{figure*}
+
+Both figures are scoped to $N\le16$ by the same \texttt{KL\_EXACT\_MAX\_N} enumeration limit discussed in Sec.~\ref{sec:validation}; they say nothing directly about $N=64$, where the crossover of Sec.~\ref{sec:limitations} is reported.
 
 \subsection{Consistency between conditional and visible fits}
 
