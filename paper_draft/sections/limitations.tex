@@ -4,23 +4,27 @@
 \subsection{Correcting the headline claim}
 \label{sec:headline}
 
-The source report's abstract and conclusion state that \emph{both} Pegasus and Zephyr overtake FPGA in $\mathrm{TTE}_{99}$ at the largest tested size. The underlying figure does not support this for both devices: at $N=64$, FPGA's $\mathrm{TTE}_{99}$ is $0.87\,\mathrm s$, and the report's own results text calls this ``clearly higher than Pegasus'' -- it does not make the corresponding claim for Zephyr, whose plotted value sits above FPGA's at that size. The defensible statement, and the one this paper adopts, is:
+The source report's abstract and conclusion state that \emph{both} Pegasus and Zephyr overtake FPGA in $\mathrm{TTE}_{99}$ at the largest tested size. The underlying figure does not support this for both devices: at $N=64$, FPGA's $\mathrm{TTE}_{99}$ is $0.87\,\mathrm s$, and the report's own results text calls this ``clearly higher than Pegasus'' -- it does not make the corresponding claim for Zephyr, whose plotted value sits above FPGA's at that size.
+
+Rather than restate this using the retry-adjusted $\mathrm{TTE}_{99}$ statistic itself -- Sec.~\ref{sec:tte-issue} explains why we do not treat that statistic, corrected or not, as reliable -- we restate it directly from the achieved-error-vs-time curves of Fig.~\ref{fig:error-vs-time-grid}. At $N=64$, $h=0.5$, the median curves cross $\epsilon=0.1$ at $0.47\,\mathrm s$ (Pegasus+CEM), $0.59\,\mathrm s$ (FPGA), and $0.84\,\mathrm s$ (Zephyr+CEM) -- Pegasus ahead of FPGA, Zephyr behind it, in the same direction as the original (uncorrected) claim -- but all three within less than a factor of two of each other, with visibly overlapping IQR bands across only 20 seeds each. The defensible statement, and the one this paper adopts, is:
 
 \begin{quote}
-Under the device-time metric and the $h=0.5$, $\epsilon=0.1$ convergence criterion, Pegasus(+CEM) has a lower estimated $\mathrm{TTE}_{99}$ than FPGA at $N=64$. Zephyr(+CEM) does not. This is a single observed crossover at one size, one field, and one tolerance, using the training-log crossing statistic of Sec.~\ref{sec:trainingcrossing} and the retry formula whose limitations are discussed in Sec.~\ref{sec:tte-issue} -- not evidence of asymptotic scaling, and not evidence of quantum advantage.
+Under the device-time metric and the $h=0.5$, $\epsilon=0.1$ convergence criterion, at $N=64$ the median time to reach $\epsilon$ orders Pegasus(+CEM) $<$ FPGA $<$ Zephyr(+CEM) $<$ Gibbs, all within a factor of $\sim\!2$ of each other and with overlapping seed-to-seed spread, while Metropolis and simulated annealing cross more than an order of magnitude later. Only Pegasus's median sits below FPGA's; Zephyr's does not. This is a single observed ordering at one size, one field, and one tolerance -- not evidence of asymptotic scaling, and not evidence of quantum advantage.
 \end{quote}
 
 Every occurrence of the broader ``both QPUs overtake FPGA'' claim in the source material -- abstract, results discussion of Fig.~\ref{fig:tte-baseline}, and conclusion -- should be replaced by this statement or removed.
+
+\paragraph{Caveat.} This correction is scoped to $h=0.5$; Sec.~\ref{sec:eps-h} explains that generalizing it to other fields is an open, explicitly flagged question, not something this draft tests. The ordering above also compares \emph{medians} with visibly overlapping IQR bands (Fig.~\ref{fig:error-vs-time-grid}) at only 20 seeds per solver -- it should be read as a directional observation, not a statistically decisive ranking; no confidence interval or significance test on the ordering itself is reported here.
 
 \subsection{Why the crossover should not yet be generalized}
 
 Three independent limitations, each already established in this paper, bound how far the corrected statement above can be pushed:
 \begin{enumerate}
 \item \textbf{Validation.} The crossing itself is read from the training log (Sec.~\ref{sec:trainingcrossing}), not from the independent evaluator of Sec.~\ref{sec:validation}; Sec.~\ref{sec:cem-limits} shows explicitly that a stable training-time energy is compatible with a substantially wrong visible distribution.
-\item \textbf{Retry accounting.} The $\mathrm{TTE}_{99}$ values being compared understate the cost of unsuccessful seeds (Sec.~\ref{sec:tte-issue}), and the ranking at $N=64$ is decided by exactly the seeds this affects.
+\item \textbf{Statistical precision.} The corrected ordering above compares medians from only 20 seeds per solver, with IQR bands that visibly overlap between Pegasus(+CEM), FPGA, and Zephyr(+CEM) at $N=64$ (Fig.~\ref{fig:error-vs-time-grid}); no significance test or bootstrap CI on the ordering itself is reported, so the direction should not be read as a statistically decisive result. (This replaces the original concern about the retry-adjusted $\mathrm{TTE}_{99}$ statistic itself, Sec.~\ref{sec:tte-issue}, which this draft no longer relies on.)
 \item \textbf{Criterion dependence.} The crossover is reported at one $(\epsilon,h)$ cell out of the space described in Sec.~\ref{sec:eps-h}; whether it persists, disappears, or reverses under a tighter tolerance or a different field is, at present, unknown rather than merely uncertain -- the $\{0.1,0.05,0.02,0.01\}\times\{0.5,1.0,2.0\}$ grid needed to answer this has not been run.
 \end{enumerate}
-A single number that survives all three checks -- an independently validated, survival-corrected $\mathrm{TTE}_{99}$ crossover confirmed across at least two tolerances and two fields -- does not yet exist. \missing{Table~\ref{tab:crossover} [PLACEHOLDER]: the corrected crossover result, filled in once Secs.~\ref{sec:validation}, \ref{sec:tte-issue}, and \ref{sec:eps-h}'s placeholders are resolved.}
+A result that survives all three checks -- an independently validated, statistically supported crossing-time ordering confirmed across at least two tolerances and two fields -- does not yet exist. \missing{Table~\ref{tab:crossover} [PLACEHOLDER]: the corrected crossover result, filled in once Secs.~\ref{sec:validation} and \ref{sec:eps-h}'s remaining ($h$-sweep) placeholder are resolved and a proper CI on the ordering itself has been computed.}
 
 \subsection{Scope excluded from the central claim}
 
