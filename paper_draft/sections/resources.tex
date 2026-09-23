@@ -14,7 +14,27 @@ Stochastic reconfiguration itself is excluded from the sampler-vs-sampler compar
 
 The reported near-flat scaling of QPU access time with $N$ (fitted exponents $\propto N^{0.16}$ and $\propto N^{0.05}$ over only four sizes, $N\in\{8,16,32,64\}$) reflects a fixed $20\,\mu\mathrm s$ anneal time and a fixed read count per call; it says nothing by itself about how the physical resources consumed by minor embedding grow with $N$, since a dense $K_{N,N}$ RBM requires longer coupler chains as $N$ grows. \texttt{src/sampler.py} (the D-Wave sampling paths, e.g.\ around line 1478 and 1588) reads only \texttt{info["timing"]["qpu\_access\_time"]} from the returned sample set; grepping the repository for chain-break fraction, physical-qubit count, or embedding-success telemetry (\texttt{chain\_break\_fraction}, \texttt{broken\_chain}, \texttt{num\_qubits}, \texttt{embedding\_success}) returns no hits. The existing embedding-algorithm scripts (\texttt{scripts/exper/embedding\_algo\_comparison.py}, \texttt{parallel\_embedding\_experiment.py}, \texttt{parallel\_embedding\_bench.py}) compare how the choice of embedding algorithm affects training outcome and QPU time, not the qubit-count/chain-length/rescaling telemetry needed here, and no programming/anneal/readout time breakdown is recorded anywhere.
 
-\missing{\textbf{Per-$N$ hardware-resource table.} Table~\ref{tab:resources} [PLACEHOLDER] should report, for each tested $N$: number of physical qubits used, mean and maximum chain length, chain-break fraction, coefficient-rescaling range, embedding success rate, number of simultaneously available embeddings, and separate programming/anneal/readout time components. None of these fields are currently captured by \texttt{src/sampler.py}'s D-Wave path; capturing them requires reading additional fields already present in the D-Wave SDK's returned \texttt{SampleSet.info} (e.g.\ \texttt{embedding\_context}, per-read \texttt{chain\_break\_fraction}) that the current code discards, plus persisting them alongside the existing per-run cache (Sec.~\ref{sec:code-gaps}, item T4). A more honest timing model, $t(N)=t_0+aN^p$ with $t_0$ a fixed call overhead, should be fit once these resource series exist; with only four $N$ values any such fit remains descriptive.}
+Physical qubit count and chain length, at least, do not require new hardware access: the archived result files log an \texttt{embedding\_info} field (present for $N=8,32,64$, both devices; absent for $N=16$) that already gives exactly this, unused until now. The $N=16$ gap is closeable offline: both devices' live hardware-graph snapshots are cached on disk (\texttt{embeddings/\_hwgraph\_\{Advantage\_system6,Advantage2\_system1\}\_live.json}, the same topology used to generate the other sizes' embeddings), so re-running \texttt{minorminer.busclique} locally against that cached graph -- no QPU or network access -- gives a directly comparable number. Table~\ref{tab:resources} reports the complete series.
+
+\begin{table}[h]
+\caption{Physical qubits and chain length for the dense $K_{N,N}$ biclique embedding, both devices. $N=16$ recomputed offline from the cached live hardware-graph snapshot (\texttt{minorminer.busclique}, no QPU access); all other cells read from archived \texttt{embedding\_info}.}
+\label{tab:resources}
+\begin{ruledtabular}
+\begin{tabular}{lrrrrr}
+& \multicolumn{2}{c}{Pegasus} & \multicolumn{2}{c}{Zephyr} \\
+$N$ & qubits & mean chain & qubits & mean chain \\
+\hline
+8 & 22 & 1.38 & 16 & 1.00 \\
+16 & 64 & 2.00 & 48 & 1.50 \\
+32 & 212 & 3.31 & 192 & 3.00 \\
+64 & 768 & 6.00 & 956 & 7.47 \\
+\end{tabular}
+\end{ruledtabular}
+\end{table}
+
+Zephyr is cheaper than Pegasus at every size up to $N=32$, then crosses over: at $N=64$ -- the size at which the corrected crossover claim of Sec.~\ref{sec:limitations} is made -- Zephyr requires both more physical qubits (956 vs.\ 768) and longer chains (mean $7.47$ vs.\ $6.00$) than Pegasus, a concrete hardware-resource correlate of Zephyr's consistently worse showing there.
+
+\missing{\textbf{Remaining resource fields.} Chain-break fraction, coefficient-rescaling range, embedding success rate, number of simultaneously available embeddings, and separate programming/anneal/readout time components are still not captured anywhere (Sec.~\ref{sec:code-gaps}, item T5) -- these require reading additional fields from the D-Wave SDK's \texttt{SampleSet.info} that the current code discards, which is only obtainable from a live QPU call, not a re-analysis. A more honest timing model, $t(N)=t_0+aN^p$ with $t_0$ a fixed call overhead, should be fit once these remaining resource series exist; with only four $N$ values any such fit remains descriptive.}
 
 \subsection{FPGA sampler: documentation and fidelity}
 \label{sec:fpga}

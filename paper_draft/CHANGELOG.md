@@ -95,6 +95,32 @@ mention in the abstract/intro/conclusion. The supporting figures/scripts
 in the manuscript. Sec. `cem-ls` (the least-squares estimator actually used everywhere)
 is untouched.
 
+### 2026-09-23 — T5: QPU hardware-resource telemetry — **partially closed**
+
+**Source:** evaluation, main issue 4, *"The reported power laws are not credible
+scaling evidence"* — asks for physical-qubit count, chain length, chain-break
+fraction, embedding success rate, and a programming/anneal/readout time breakdown per
+$N$, instead of an unexplained four-point timing exponent.
+
+**Done:** discovered `embedding_info` (qubit count, mean/max chain length) is already
+logged in the archived result files for $N=8,32,64$ (both devices), unused — same
+pattern as `kl_exact`/O2. $N=16$ is genuinely absent from every archived file (checked
+multiple seeds), but closeable **offline**: both devices' live hardware-graph snapshots
+are cached on disk (`embeddings/_hwgraph_{Advantage_system6,Advantage2_system1}_live.json`),
+so re-running `minorminer.busclique` against that cached graph reproduces the same kind
+of number with no QPU or network access at all (`analyze_embedding.py`). Added
+Table~\ref{tab:resources} and one sentence to `resources.tex`: **Zephyr is cheaper than
+Pegasus up to N=32, then crosses over — at N=64 (the size the corrected crossover claim
+is made at) Zephyr needs more qubits (956 vs. 768) and longer chains (7.47 vs. 6.00)**, a
+concrete hardware correlate of its worse showing there. No figure added to the
+manuscript per author's request (table + sentence only); `fig_qpu_resource_scaling.*`
+kept in `figures/reanalysis/` for reference.
+
+**Still open** (genuinely needs a live QPU call, not reanalysis): chain-break fraction,
+coefficient-rescaling range, embedding success rate, number of simultaneously available
+embeddings, programming/anneal/readout time breakdown. Left as an explicit `\missing{}`
+in `resources.tex` and noted in the T5 row of the code-gap table.
+
 ### 2026-09-22 — Novelty-positioning citations
 
 **Source:** evaluation, novelty section — names a 2025 online-calibration paper
