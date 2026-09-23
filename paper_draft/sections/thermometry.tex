@@ -37,23 +37,6 @@ The pooled least-squares estimator reuses the $(v^{(r)},h^{(r)})$ pairs already 
 \end{equation}
 minimized by bounded scalar search over $\beta\in[0.01,50]$ in the implementation we audit. This is the estimator used in the source report and is the one for which Sec.~\ref{sec:calibration} reports residual visible-distribution error.
 
-\subsection{Conditional maximum likelihood}
-\label{sec:cem-mle}
-
-Equation~\eqref{eq:cem-ls} treats each hidden bit's conditional distribution as though it were Gaussian around $\tanh(\beta\phi_j)$; the correct conditional model under Eq.~\eqref{eq:tempered} is Bernoulli. The conditional log-likelihood of the pooled hidden observations given the visible configurations, under a single inverse temperature $\beta$, is
-\begin{equation}
-\ell(\beta)=\sum_{r=1}^S\sum_{j=1}^M\Big[\beta\,h_j^{(r)}\Theta_j^{(r)}-\log\big(2\cosh(\beta\Theta_j^{(r)})\big)\Big],
-\label{eq:cem-mle}
-\end{equation}
-where $\Theta_j^{(r)}\equiv\phi_j(v^{(r)})=b_j+\sum_kv_k^{(r)}W_{kj}$. The conditional maximum-likelihood estimator $\widehat\beta_{\mathrm{MLE}}=\arg\max_\beta\ell(\beta)$ solves the score equation
-\begin{equation}
-\sum_{r,j}\Theta_j^{(r)}\Big[h_j^{(r)}-\tanh\!\big(\beta\Theta_j^{(r)}\big)\Big]=0.
-\label{eq:score}
-\end{equation}
-Equation~\eqref{eq:score} differs from the stationarity condition of Eq.~\eqref{eq:cem-ls} by the weight $\Theta_j^{(r)}$ multiplying each residual instead of a uniform weight; the two estimators therefore agree only in special cases (e.g. all $|\Theta_j^{(r)}|$ equal) and otherwise up-weight configurations with the largest conditional fields under the MLE. Because $\ell(\beta)$ is concave in $\beta$ for fixed $\{\Theta_j^{(r)},h_j^{(r)}\}$ (it is the log-likelihood of an exponential-family model in its natural parameter), Eq.~\eqref{eq:score} has at most one interior root, which bounded Newton or bisection on $[0.01,50]$ finds directly.
-
-No code in the audited repository implemented Eq.~\eqref{eq:score} (Sec.~\ref{sec:code-gaps}, item T1); the archived joint $(v^{(r)},h^{(r)})$ samples themselves are also not retained for any real annealer run, so a direct re-analysis on recorded QPU data is not possible, and $\widehat\beta_{\mathrm{MLE}}$ has not been substituted for $\widehat\beta_{\mathrm{LS}}$ inside the actual training loop used anywhere else in this paper -- every QPU-trained result reported elsewhere still used the least-squares estimator. Appendix~\ref{app:mle-check} reports a minimal validity check of the new estimator on a controlled synthetic reference, showing it is not biased and has a modest efficiency advantage; that check is a precondition for trusting $\widehat\beta_{\mathrm{MLE}}$ at all, not evidence that it helps on real hardware.
-
 \subsection{What agreement of hidden conditionals does not imply}
 \label{sec:cem-limits}
 
@@ -67,19 +50,4 @@ If the hidden conditionals are exactly correct at some $\beta_0$, that value min
 \DTV(q(v),\pi_\theta(v))=\frac{\cosh(0.6)}{\cosh(-0.2)+\cosh(0.6)}\approx0.5375.
 \label{eq:counterexample}
 \end{equation}
-Any pooled-CEM estimate -- least-squares or MLE -- is therefore a diagnostic of the hidden-layer response scale, not a certificate of the full visible distribution; Sec.~\ref{sec:calibration} reports the residual visible-distribution error directly rather than inferring it from $\widehat\beta$ alone.
-
-\subsection{Statistical properties: what remains to be established}
-\label{sec:cem-theory}
-
-The evaluation that motivated this paper asked for a genuine theoretical treatment of the estimator in Eq.~\eqref{eq:score}, beyond exhibiting the score equation. This subsection records, as explicit open items rather than folding them silently into future work, what such a treatment requires.
-
-\missing{\textbf{Identifiability and consistency under the ideal Gibbs model.} Show that if $(v^{(r)},h^{(r)})_{r=1}^S$ are i.i.d.\ draws from Eq.~\eqref{eq:tempered} at true parameter $\beta_0$, then $\widehat\beta_{\mathrm{MLE}}\to\beta_0$ as $S\to\infty$. This follows from standard exponential-family M-estimation theory (Eq.~\eqref{eq:cem-mle} is a one-parameter canonical exponential family in $\beta$ conditional on $\{\Theta_j^{(r)}\}$) but has not been written out or numerically checked against simulated data in this project.}
-
-\missing{\textbf{Fisher information / asymptotic variance.} The conditional Fisher information is $I(\beta)=\sum_{r,j}(\Theta_j^{(r)})^2\,\mathrm{sech}^2(\beta\Theta_j^{(r)})$, giving asymptotic variance $I(\beta)^{-1}$ under i.i.d.\ sampling. A worked comparison of this variance to the least-squares estimator's asymptotic variance (via the sandwich formula, since Eq.~\eqref{eq:cem-ls} is not the true likelihood) is not yet computed.}
-
-\missing{\textbf{Block bootstrap / sandwich variance under correlated QPU reads.} Successive anneals from the same problem instance are not necessarily independent (shared programming, drift). A block bootstrap over SR iterations, or a sandwich estimator using the empirical score covariance, would give a defensible confidence interval for $\widehat\beta_{\mathrm{MLE}}$; no such interval is currently reported for any $\widehat\beta$ in this project.}
-
-\missing{\textbf{Misspecification when one scalar $\beta$ is insufficient.} If the true sampler departs from Eq.~\eqref{eq:tempered} (e.g.\ has qubit- or chain-dependent effective temperatures), $\widehat\beta_{\mathrm{MLE}}$ converges to a well-defined pseudo-true value under standard M-estimation theory, but the size of the resulting misspecification bias is not quantified here. A diagnostic residual (e.g.\ a per-$j$ or per-chain breakdown of Eq.~\eqref{eq:conditionalproof}) is a natural next step.}
-
-\missing{\textbf{A bound linking $|\widehat\beta-\beta_0|$ to bias in the SR force vector.} Because $\betaeff$ enters training only through the samples used to form $F_k=\avg{O_k\Eloc}-\avg{O_k}\avg{\Eloc}$, a first-order sensitivity bound $\|\delta F\|\lesssim c(\theta)\,|\widehat\beta-\beta_0|$ would connect the thermometry error directly to the optimization it feeds. Deriving $c(\theta)$ and checking it numerically against the archived training trajectories is unstarted.}
+Any pooled-CEM estimate is therefore a diagnostic of the hidden-layer response scale, not a certificate of the full visible distribution; Sec.~\ref{sec:calibration} reports the residual visible-distribution error directly rather than inferring it from $\widehat\beta$ alone.

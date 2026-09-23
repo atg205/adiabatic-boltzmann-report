@@ -43,7 +43,7 @@ The same data lets us test the paper's own central claim directly: does pooled C
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{figures/reanalysis/fig_kl_exact_cem_ablation.pdf}
-\caption{Effect of pooled CEM correction on exact $\DKL(\widehat q\Vert\pi_\theta)$, $h=0.5$, $N=8,16$ (median and IQR band, 20 seeds per arm). \texttt{cem=0} (uncorrected) sits nearly an order of magnitude above \texttt{cem=1} throughout training for both devices, with the larger benefit for Zephyr. This is direct evidence that the pooled-CEM estimator of Sec.~\ref{sec:cem-ls} improves the sampled distribution itself, not only the logged training energy -- the empirical counterpart to the theoretical properties left open in Sec.~\ref{sec:cem-theory}.}
+\caption{Effect of pooled CEM correction on exact $\DKL(\widehat q\Vert\pi_\theta)$, $h=0.5$, $N=8,16$ (median and IQR band, 20 seeds per arm). \texttt{cem=0} (uncorrected) sits nearly an order of magnitude above \texttt{cem=1} throughout training for both devices, with the larger benefit for Zephyr. This is direct evidence that the pooled-CEM estimator of Sec.~\ref{sec:cem-ls} improves the sampled distribution itself, not only the logged training energy.}
 \label{fig:kl-cem}
 \end{figure*}
 
@@ -73,4 +73,3 @@ Figure~\ref{fig:cem} illustrates the least-squares fit itself for a representati
 
 \missing{\textbf{Residual reported as a number, not only ``very close.''} Per the evaluation, Fig.~\ref{fig:cemvalidation} and Fig.~\ref{fig:cem} should be accompanied by numerical RMSE, relative error, bias, and boundary-hit frequency across the full $(N,h,\beta_x,\mathrm{seed})$ grid, not a qualitative description. This is a re-tabulation of already-collected fit results and does not require new hardware time, but no script currently outputs these summary statistics (Sec.~\ref{sec:code-gaps}).}
 
-\missing{\textbf{Conditional-MLE column.} Once $\widehat\beta_{\mathrm{MLE}}$ (Eq.~\eqref{eq:score}) is implemented (Sec.~\ref{sec:cem-mle}), Figs.~\ref{fig:cemvalidation}--\ref{fig:cem} should carry a third series comparing it to $\widehat\beta_{\mathrm{LS}}$ and $\widehat\beta_{\mathrm{KL}}$ on identical data.}
