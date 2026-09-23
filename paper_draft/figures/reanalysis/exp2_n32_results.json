@@ -1,0 +1,27 @@
+[
+  {
+    "seed": 90,
+    "wall_s": 129.223863363266,
+    "out_file": "/home/atg205/Documents/Dokumentte/Uni/UPMC/stage2gl/adiabatic-boltzmann/results/tfim_1d/32/dimod/pegasus/result_1d_h0.5_rbmfull_nh32_lr0.08_reg0.05_ns200_seed90_iter100_cem1_sigma1.0.json.gz"
+  },
+  {
+    "seed": 91,
+    "wall_s": 132.99138259887695,
+    "out_file": "/home/atg205/Documents/Dokumentte/Uni/UPMC/stage2gl/adiabatic-boltzmann/results/tfim_1d/32/dimod/pegasus/result_1d_h0.5_rbmfull_nh32_lr0.08_reg0.05_ns200_seed91_iter100_cem1_sigma1.0.json.gz"
+  },
+  {
+    "seed": 92,
+    "wall_s": 101.01889896392822,
+    "out_file": "/home/atg205/Documents/Dokumentte/Uni/UPMC/stage2gl/adiabatic-boltzmann/results/tfim_1d/32/dimod/pegasus/result_1d_h0.5_rbmfull_nh32_lr0.08_reg0.05_ns200_seed92_iter100_cem1_sigma1.0.json.gz"
+  },
+  {
+    "seed": 93,
+    "wall_s": 123.57590198516846,
+    "out_file": "/home/atg205/Documents/Dokumentte/Uni/UPMC/stage2gl/adiabatic-boltzmann/results/tfim_1d/32/dimod/pegasus/result_1d_h0.5_rbmfull_nh32_lr0.08_reg0.05_ns200_seed93_iter100_cem1_sigma1.0.json.gz"
+  },
+  {
+    "seed": 94,
+    "wall_s": 126.24740767478943,
+    "out_file": "/home/atg205/Documents/Dokumentte/Uni/UPMC/stage2gl/adiabatic-boltzmann/results/tfim_1d/32/dimod/pegasus/result_1d_h0.5_rbmfull_nh32_lr0.08_reg0.05_ns200_seed94_iter100_cem1_sigma1.0.json.gz"
+  }
+]

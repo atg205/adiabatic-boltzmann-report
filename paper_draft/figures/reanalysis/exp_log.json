@@ -1,0 +1,186 @@
+{
+  "events": [
+    {
+      "t": 1790169648.7090342,
+      "tag": "exp1-pre-seed0",
+      "cumulative_ms": 2104201.0425601294,
+      "session_spent_ms": 0.0
+    },
+    {
+      "t": 1790169659.4922452,
+      "tag": "exp1-post-seed0",
+      "cumulative_ms": 2104232.0569201293,
+      "session_spent_ms": 31.014359999913722
+    },
+    {
+      "t": 1790169659.4923725,
+      "tag": "exp1-pre-seed1",
+      "cumulative_ms": 2104232.0569201293,
+      "session_spent_ms": 31.014359999913722
+    },
+    {
+      "t": 1790169664.9820254,
+      "tag": "exp1-post-seed1",
+      "cumulative_ms": 2104263.0712801293,
+      "session_spent_ms": 62.028719999827445
+    },
+    {
+      "t": 1790169664.9822884,
+      "tag": "exp1-pre-seed2",
+      "cumulative_ms": 2104263.0712801293,
+      "session_spent_ms": 62.028719999827445
+    },
+    {
+      "t": 1790169670.4034727,
+      "tag": "exp1-post-seed2",
+      "cumulative_ms": 2104294.085640129,
+      "session_spent_ms": 93.04307999974117
+    },
+    {
+      "t": 1790169670.403747,
+      "tag": "exp1-pre-seed3",
+      "cumulative_ms": 2104294.085640129,
+      "session_spent_ms": 93.04307999974117
+    },
+    {
+      "t": 1790169675.2356226,
+      "tag": "exp1-post-seed3",
+      "cumulative_ms": 2104325.100000129,
+      "session_spent_ms": 124.05743999965489
+    },
+    {
+      "t": 1790169675.2358139,
+      "tag": "exp1-pre-seed4",
+      "cumulative_ms": 2104325.100000129,
+      "session_spent_ms": 124.05743999965489
+    },
+    {
+      "t": 1790169684.6872785,
+      "tag": "exp1-post-seed4",
+      "cumulative_ms": 2104356.114360129,
+      "session_spent_ms": 155.0717999995686
+    },
+    {
+      "t": 1790169684.687545,
+      "tag": "exp1-pre-seed5",
+      "cumulative_ms": 2104356.114360129,
+      "session_spent_ms": 155.0717999995686
+    },
+    {
+      "t": 1790169690.3332303,
+      "tag": "exp1-post-seed5",
+      "cumulative_ms": 2104387.128720129,
+      "session_spent_ms": 186.08615999948233
+    },
+    {
+      "t": 1790169690.3338256,
+      "tag": "exp1-pre-seed6",
+      "cumulative_ms": 2104387.128720129,
+      "session_spent_ms": 186.08615999948233
+    },
+    {
+      "t": 1790169694.415062,
+      "tag": "exp1-post-seed6",
+      "cumulative_ms": 2104418.143080129,
+      "session_spent_ms": 217.10051999939606
+    },
+    {
+      "t": 1790169694.415364,
+      "tag": "exp1-pre-seed7",
+      "cumulative_ms": 2104418.143080129,
+      "session_spent_ms": 217.10051999939606
+    },
+    {
+      "t": 1790169699.2452035,
+      "tag": "exp1-post-seed7",
+      "cumulative_ms": 2104449.1574401287,
+      "session_spent_ms": 248.11487999930978
+    },
+    {
+      "t": 1790169699.2453601,
+      "tag": "exp1-pre-seed8",
+      "cumulative_ms": 2104449.1574401287,
+      "session_spent_ms": 248.11487999930978
+    },
+    {
+      "t": 1790169704.0130384,
+      "tag": "exp1-post-seed8",
+      "cumulative_ms": 2104480.1718001286,
+      "session_spent_ms": 279.1292399992235
+    },
+    {
+      "t": 1790169704.0132184,
+      "tag": "exp1-pre-seed9",
+      "cumulative_ms": 2104480.1718001286,
+      "session_spent_ms": 279.1292399992235
+    },
+    {
+      "t": 1790169707.943689,
+      "tag": "exp1-post-seed9",
+      "cumulative_ms": 2104511.1861601286,
+      "session_spent_ms": 310.1435999991372
+    },
+    {
+      "t": 1790169707.948345,
+      "tag": "exp2-pre-seed90",
+      "cumulative_ms": 2104511.1861601286,
+      "session_spent_ms": 310.1435999991372
+    },
+    {
+      "t": 1790169837.4068825,
+      "tag": "exp2-post-seed90",
+      "cumulative_ms": 2108055.4089601343,
+      "session_spent_ms": 3854.36640000483
+    },
+    {
+      "t": 1790169837.4070802,
+      "tag": "exp2-pre-seed91",
+      "cumulative_ms": 2108055.4089601343,
+      "session_spent_ms": 3854.36640000483
+    },
+    {
+      "t": 1790169970.4227567,
+      "tag": "exp2-post-seed91",
+      "cumulative_ms": 2111599.654960138,
+      "session_spent_ms": 7398.6124000083655
+    },
+    {
+      "t": 1790169970.4230633,
+      "tag": "exp2-pre-seed92",
+      "cumulative_ms": 2111599.654960138,
+      "session_spent_ms": 7398.6124000083655
+    },
+    {
+      "t": 1790170071.4715772,
+      "tag": "exp2-post-seed92",
+      "cumulative_ms": 2115143.9377601375,
+      "session_spent_ms": 10942.89520000806
+    },
+    {
+      "t": 1790170071.4721851,
+      "tag": "exp2-pre-seed93",
+      "cumulative_ms": 2115143.9377601375,
+      "session_spent_ms": 10942.89520000806
+    },
+    {
+      "t": 1790170195.0907257,
+      "tag": "exp2-post-seed93",
+      "cumulative_ms": 2118688.166160144,
+      "session_spent_ms": 14487.123600014485
+    },
+    {
+      "t": 1790170195.091031,
+      "tag": "exp2-pre-seed94",
+      "cumulative_ms": 2118688.166160144,
+      "session_spent_ms": 14487.123600014485
+    },
+    {
+      "t": 1790170321.369359,
+      "tag": "exp2-post-seed94",
+      "cumulative_ms": 2122232.39296015,
+      "session_spent_ms": 18031.35040002037
+    }
+  ],
+  "session_baseline_ms": 2104201.0425601294,
+  "aborted": false
+}
