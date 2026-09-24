@@ -7,7 +7,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-MAIN=presentation
+MAIN=${MAIN:-presentation}
 
 case "${1:-}" in
     clean)

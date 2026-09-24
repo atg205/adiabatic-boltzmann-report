@@ -3,3 +3,4 @@ $out_dir = 'build';
 $ENV{'TEXINPUTS'} = './example_theme//:' . ($ENV{'TEXINPUTS'} // '');
 $ENV{'BIBINPUTS'} = './example_theme:' . ($ENV{'BIBINPUTS'} // '');
 $ENV{'BSTINPUTS'} = './example_theme:' . ($ENV{'BSTINPUTS'} // '');
+$bibtex_fudge = 0; # run bibtex from this dir so ../bib resolves
