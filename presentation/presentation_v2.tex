@@ -328,50 +328,6 @@ $N_{36}$ & $N_{35}$ & $N_{34}$ & $N_{33}$ & & & & \\
 \footnotesize Top: success frequency~\cite{willsch2024state}. Bottom: runs with ground state in samples~\cite{Hanussek_2024_BSc}
 \end{frame}
 
-\section{Quantum Ising Models}
-
-\begin{frame}{Quantum Ising Model}
-\begin{block}{TFIM Hamiltonian~\cite{mpg}}
-\begin{equation*}
-H=-J\sum_i\sigma_i^z\sigma_{i+1}^z-h\sum_i\sigma_i^x
-\end{equation*}
-\end{block}
-\begin{itemize}
-    \item we already saw something similar earlier ;)
-\end{itemize}
-
-\vfill
-\centering
-\includegraphics[width=0.75\linewidth]{figures/pennylane-datasets-hero-transverse-field-ising-model-a6af9251bad913ac2741c3f82019b38197417aa2.png}\\
-{\scriptsize Image: PennyLane Datasets, \url{https://pennylane.ai/datasets/transverse-field-ising-model}}
-\end{frame}
-
-\begin{frame}{Heisenberg model (XXX)}
-\begin{block}{Heisenberg Hamiltonian~\cite{Heisenberg_1928}}
-\begin{equation*}
-H = J_1 \sum_{i} \boldsymbol{\sigma}_i \cdot \boldsymbol{\sigma}_{i+1} + J_2 \sum_{i} \boldsymbol{\sigma}_i \cdot \boldsymbol{\sigma}_{i+2}
-\end{equation*}
-\footnotesize $\boldsymbol\sigma_i = (\sigma_i^x,\sigma_i^y,\sigma_i^z)$, so $\boldsymbol\sigma_i\cdot\boldsymbol\sigma_j = \sigma_i^x\sigma_j^x+\sigma_i^y\sigma_j^y+\sigma_i^z\sigma_j^z$
-\end{block}
-\begin{itemize}
-    \item main difference to Ising: spin exchange instead of flipping, next nearest neighbor coupling
-    \item goal in both cases: finding the \textbf{ground state} (and sampling from it)
-\end{itemize}
-\end{frame}
-
-\begin{frame}{Example model: Ground state}
-\begin{block}{TFIM Hamiltonian~\cite{mpg}}
-\begin{equation*}
-H=-J\sum_i\sigma_i^z\sigma_{i+1}^z-h\sum_i\sigma_i^x
-\end{equation*}
-\end{block}
-
-\vfill
-\centering
-\includegraphics[width=0.82\linewidth]{../figures/spin_ordering_across_qpt.pdf}\\
-\footnotesize samples from a trained model with 16 spins
-\end{frame}
-
 \section{Restricted Boltzmann Machines}
 
 \begin{frame}{Introduction}
@@ -449,6 +405,50 @@ E_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})=\mathbf{a}\cdot \mathbf{v} -\mathbf
 \end{enumerate}
 \end{frame}
 
+\section{Quantum Ising Models}
+
+\begin{frame}{Quantum Ising Model}
+\begin{block}{TFIM Hamiltonian~\cite{mpg}}
+\begin{equation*}
+H=-J\sum_i\sigma_i^z\sigma_{i+1}^z-h\sum_i\sigma_i^x
+\end{equation*}
+\end{block}
+\begin{itemize}
+    \item we already saw something similar earlier ;)
+\end{itemize}
+
+\vfill
+\centering
+\includegraphics[width=0.75\linewidth]{figures/pennylane-datasets-hero-transverse-field-ising-model-a6af9251bad913ac2741c3f82019b38197417aa2.png}\\
+{\scriptsize Image: PennyLane Datasets, \url{https://pennylane.ai/datasets/transverse-field-ising-model}}
+\end{frame}
+
+\begin{frame}{Heisenberg model (XXX)}
+\begin{block}{Heisenberg Hamiltonian~\cite{Heisenberg_1928}}
+\begin{equation*}
+H = J_1 \sum_{i} \boldsymbol{\sigma}_i \cdot \boldsymbol{\sigma}_{i+1} + J_2 \sum_{i} \boldsymbol{\sigma}_i \cdot \boldsymbol{\sigma}_{i+2}
+\end{equation*}
+\footnotesize $\boldsymbol\sigma_i = (\sigma_i^x,\sigma_i^y,\sigma_i^z)$, so $\boldsymbol\sigma_i\cdot\boldsymbol\sigma_j = \sigma_i^x\sigma_j^x+\sigma_i^y\sigma_j^y+\sigma_i^z\sigma_j^z$
+\end{block}
+\begin{itemize}
+    \item main difference to Ising: spin exchange instead of flipping, next nearest neighbor coupling
+    \item goal in both cases: finding the \textbf{ground state} (and sampling from it)
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Example model: Ground state}
+\begin{block}{TFIM Hamiltonian~\cite{mpg}}
+\begin{equation*}
+H=-J\sum_i\sigma_i^z\sigma_{i+1}^z-h\sum_i\sigma_i^x
+\end{equation*}
+\end{block}
+
+\vfill
+\centering
+\includegraphics[width=0.82\linewidth]{../figures/spin_ordering_across_qpt.pdf}\\
+\footnotesize samples from a trained model with 16 spins
+\end{frame}
+
 \section{Samplers}
 
 \begin{frame}{Sampler Overview}
@@ -503,20 +503,8 @@ E_{\boldsymbol\theta}(\mathbf{v},\mathbf{h})=\mathbf{a}\cdot \mathbf{v} -\mathbf
 \end{frame}
 
 \begin{frame}{Results: Error vs.\ Sampling Time}
-\begin{columns}[c,onlytextwidth]
-\begin{column}{0.64\textwidth}
 \centering
-\includegraphics[height=6.9cm]{../figures/error_vs_time_slide.pdf}
-\end{column}
-\begin{column}{0.34\textwidth}
-\small
-\begin{itemize}
-    \item TFIM, $h=0.5$; horizontal line: $\varepsilon=0.1$
-    \item $N=64$: Pegasus, FPGA and Zephyr cross $\varepsilon=0.1$ within a factor $\sim2$ ($0.47$, $0.59$, $0.84$\,s), IQR bands overlap
-    \item Metropolis and SA cross more than $10\times$ later ($11.5$, $17.1$\,s)
-\end{itemize}
-\end{column}
-\end{columns}
+\includegraphics[width=\linewidth,height=7.2cm,keepaspectratio]{../figures/error_vs_time_slide.pdf}
 \end{frame}
 
 
